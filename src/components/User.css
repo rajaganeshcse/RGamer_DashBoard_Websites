@@ -1,0 +1,33 @@
+.users {
+  padding: 20px;
+}
+
+.user-row {
+  display: grid;
+  grid-template-columns: 
+    60px      /* profile */
+    1fr       /* name */
+    2fr       /* email */
+    1fr       /* coins */
+    1fr       /* tickets */
+    1.5fr     /* referral */
+    1fr       /* token */
+    1.5fr;    /* created at */
+
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+.user-row.header {
+  font-weight: bold;
+  background: #f5f5f5;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
