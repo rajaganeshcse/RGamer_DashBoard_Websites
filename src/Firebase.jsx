@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { db, auth } from "../Firebase";
+import { db, auth } from "../firebase"; // ✅ CORRECT IMPORT
 
 function Firebase() {
   const [users, setUsers] = useState([]);
@@ -11,6 +11,7 @@ function Firebase() {
   useEffect(() => {
     let unsubUsers = null;
 
+    // 🔐 Auth listener
     const unsubAuth = onAuthStateChanged(auth, (user) => {
       if (!user) {
         console.warn("User not logged in");
@@ -22,13 +23,13 @@ function Firebase() {
       console.log("Logged in as:", user.uid);
       setLoggedIn(true);
 
-      // 🔥 Fetch users after auth
+      // 🔥 Fetch users only after login
       unsubUsers = onSnapshot(
         collection(db, "users"),
         (snapshot) => {
-          const list = snapshot.docs.map(doc => ({
+          const list = snapshot.docs.map((doc) => ({
             id: doc.id,
-            ...doc.data()
+            ...doc.data(),
           }));
           setUsers(list);
           setLoading(false);
@@ -40,12 +41,14 @@ function Firebase() {
       );
     });
 
-    // ✅ Proper cleanup
+    // ✅ Cleanup listeners
     return () => {
       unsubAuth();
       if (unsubUsers) unsubUsers();
     };
   }, []);
+
+  /* ================= UI STATES ================= */
 
   if (loading) return <h3>Loading users...</h3>;
   if (!loggedIn) return <h3>Please login to view users</h3>;
@@ -56,7 +59,7 @@ function Firebase() {
 
       {users.length === 0 && <p>No users found</p>}
 
-      {users.map(user => (
+      {users.map((user) => (
         <div key={user.id} style={card}>
           <img
             src={user.profile_image || "/default.png"}
@@ -65,16 +68,16 @@ function Firebase() {
           />
 
           <div>
-            <h3>{user.name}</h3>
-            <p>Email: {user.email}</p>
-            <p>Coins: 💰 {user.coins}</p>
-            <p>Tickets: 🎟️ {user.tickets}</p>
-            <p>Wallet Token: 🎮 {user.walletToken || "-"}</p>
+            <h3>{user.name || "No Name"}</h3>
+            <p>Email: {user.email || "-"}</p>
+            <p>Coins: 💰 {user.coins ?? 0}</p>
+            <p>Tickets: 🎟️ {user.tickets ?? 0}</p>
+            <p>Wallet Token: 🎮 {user.walletToken ?? "-"}</p>
             <p>Role: {user.role || "user"}</p>
-            <p>Referral Code: {user.referralCode}</p>
+            <p>Referral Code: {user.referralCode || "-"}</p>
             <p>
               Daily Bonus:{" "}
-              {user.daily_bonus?.claimed_date || "Not claimed"}
+              {user.dailyBonusClaimedDate || "Not claimed"}
             </p>
           </div>
         </div>
@@ -82,6 +85,8 @@ function Firebase() {
     </div>
   );
 }
+
+/* ================= STYLES ================= */
 
 const card = {
   display: "flex",
@@ -91,7 +96,7 @@ const card = {
   borderRadius: 8,
   marginBottom: 12,
   alignItems: "center",
-  background: "#fff"
+  background: "#fff",
 };
 
 const avatar = {
@@ -99,7 +104,7 @@ const avatar = {
   height: 70,
   borderRadius: "50%",
   objectFit: "cover",
-  border: "1px solid #ccc"
+  border: "1px solid #ccc",
 };
 
 export default Firebase;

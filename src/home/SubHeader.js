@@ -9,8 +9,9 @@ const SubHeader = () => {
       <ul>
         <li onClick={() => navigate("/user")}>User</li>
         <li onClick={()=> navigate("/redeem")}>Redeem Request</li>
-        <li>Referral</li>
-        <li>Tournament</li>
+        <li onClick={()=> navigate("admin/LuckyDrawAdmin")}>LuckyDrawAdmin</li>
+        <li onClick={()=> navigate("/admin")}>Tournament</li>
+        
       </ul>
     </nav>
   );
