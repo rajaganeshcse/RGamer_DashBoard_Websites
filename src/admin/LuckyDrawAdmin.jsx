@@ -267,6 +267,7 @@ const LuckyDrawAdmin = () => {
     const unsubOpen = onSnapshot(openQuery, (snapshot) => {
       const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
       const opens = docs.filter((d) => d.status === "OPEN" || d.status === "LOCK" || d.status === "CLOSING");
+      opens.sort((a, b) => (a.rewardCoins || 0) - (b.rewardCoins || 0));
       setOpenDraws(opens);
       setLoading(false);
     });
