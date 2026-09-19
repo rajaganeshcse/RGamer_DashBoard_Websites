@@ -16,12 +16,12 @@ import { db } from "../Firebase";
 /* ================= DEFAULT PRESETS ================= */
 
 const PRESETS = [
-  { participationLimit: 5, rewardCoins: 25, ticketCost: 5, label: "5 Participants → 25 Coins" },
-  { participationLimit: 10, rewardCoins: 100, ticketCost: 10, label: "10 Participants → 100 Coins" },
-  { participationLimit: 20, rewardCoins: 200, ticketCost: 20, label: "20 Participants → 200 Coins" },
-  { participationLimit: 25, rewardCoins: 250, ticketCost: 25, label: "25 Participants → 250 Coins" },
-  { participationLimit: 50, rewardCoins: 500, ticketCost: 50, label: "50 Participants → 500 Coins" },
-  { participationLimit: 100, rewardCoins: 1000, ticketCost: 100, label: "100 Participants → 1000 Coins" }
+  { participationLimit: 5, rewardCoins: 25, ticketCost: 1, label: "5 Participants → 25 Coins (Cost: 1 Ticket)" },
+  { participationLimit: 10, rewardCoins: 100, ticketCost: 1, label: "10 Participants → 100 Coins (Cost: 1 Ticket)" },
+  { participationLimit: 20, rewardCoins: 200, ticketCost: 1, label: "20 Participants → 200 Coins (Cost: 1 Ticket)" },
+  { participationLimit: 25, rewardCoins: 250, ticketCost: 1, label: "25 Participants → 250 Coins (Cost: 1 Ticket)" },
+  { participationLimit: 50, rewardCoins: 500, ticketCost: 1, label: "50 Participants → 500 Coins (Cost: 1 Ticket)" },
+  { participationLimit: 100, rewardCoins: 1000, ticketCost: 1, label: "100 Participants → 1000 Coins (Cost: 1 Ticket)" }
 ];
 
 /* ================= STYLES ================= */

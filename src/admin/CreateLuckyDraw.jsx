@@ -4,12 +4,12 @@ import { db } from "../Firebase";
 import { useNavigate } from "react-router-dom";
 
 const PRESETS = [
-  { participationLimit: 5, rewardCoins: 25, ticketCost: 5, label: "5 Slots → 25 Coins (5 Tickets)" },
-  { participationLimit: 10, rewardCoins: 100, ticketCost: 10, label: "10 Slots → 100 Coins (10 Tickets)" },
-  { participationLimit: 20, rewardCoins: 200, ticketCost: 20, label: "20 Slots → 200 Coins (20 Tickets)" },
-  { participationLimit: 25, rewardCoins: 250, ticketCost: 25, label: "25 Slots → 250 Coins (25 Tickets)" },
-  { participationLimit: 50, rewardCoins: 500, ticketCost: 50, label: "50 Slots → 500 Coins (50 Tickets)" },
-  { participationLimit: 100, rewardCoins: 1000, ticketCost: 100, label: "100 Slots → 1000 Coins (100 Tickets)" }
+  { participationLimit: 5, rewardCoins: 25, ticketCost: 1, label: "5 Slots → 25 Coins (1 Ticket)" },
+  { participationLimit: 10, rewardCoins: 100, ticketCost: 1, label: "10 Slots → 100 Coins (1 Ticket)" },
+  { participationLimit: 20, rewardCoins: 200, ticketCost: 1, label: "20 Slots → 200 Coins (1 Ticket)" },
+  { participationLimit: 25, rewardCoins: 250, ticketCost: 1, label: "25 Slots → 250 Coins (1 Ticket)" },
+  { participationLimit: 50, rewardCoins: 500, ticketCost: 1, label: "50 Slots → 500 Coins (1 Ticket)" },
+  { participationLimit: 100, rewardCoins: 1000, ticketCost: 1, label: "100 Slots → 1000 Coins (1 Ticket)" }
 ];
 
 const styles = {
