@@ -1,20 +1,38 @@
 import React from "react";
 import "./Header.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const SubHeader = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const isActive = (path) => location.pathname === path;
+
   return (
     <nav className="sub-header">
       <ul>
-        <li onClick={() => navigate("/user")}>User</li>
-        <li onClick={()=> navigate("/redeem")}>Redeem Request</li>
-        <li onClick={()=> navigate("admin/LuckyDrawAdmin")}>LuckyDrawAdmin</li>
-        <li onClick={()=> navigate("/admin")}>Tournament</li>
-        
+        <li className={isActive("/user") || isActive("/") ? "active" : ""} onClick={() => navigate("/user")}>
+          👤 Users
+        </li>
+        <li className={isActive("/redeem") ? "active" : ""} onClick={() => navigate("/redeem")}>
+          💳 Redeem Requests
+        </li>
+        <li className={isActive("/admin/LuckyDrawAdmin") ? "active" : ""} onClick={() => navigate("/admin/LuckyDrawAdmin")}>
+          🎯 Lucky Draw Admin
+        </li>
+        <li className={isActive("/admin/createluckydraw") ? "active" : ""} onClick={() => navigate("/admin/createluckydraw")}>
+          ⚙️ Draw Settings
+        </li>
+        <li className={isActive("/admin/winner-history") ? "active" : ""} onClick={() => navigate("/admin/winner-history")}>
+          🏆 Winner History
+        </li>
+        <li className={isActive("/admin/createtour") ? "active" : ""} onClick={() => navigate("/admin/createtour")}>
+          ⚔️ Tournaments
+        </li>
       </ul>
     </nav>
   );
 };
 
 export default SubHeader;
+
