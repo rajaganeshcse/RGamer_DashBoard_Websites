@@ -12,6 +12,8 @@ import LuckyDrawAdmin from "./admin/LuckyDrawAdmin";
 import CreateLuckyDraw from "./admin/CreateLuckyDraw";
 import LuckyDrawUsers from "./admin/LuckyDrawUsers";
 import WinnerHistory from "./admin/WinnerHistory";
+import DeleteRequests from "./admin/DeleteRequests";
+import ProtectedRoute from "./admin/ProtectedRoute";
 
 // 🔥 AUTO LUCKY DRAW WATCHER
 import { useAutoLuckyDrawWatcher } from "./admin/useAutoLuckyDrawWatcher";
@@ -31,19 +33,21 @@ const AppRoutes = () => {
           <Route path="user" element={<Users />} />
           <Route path="redeem" element={<Redeem />} />
 
-          {/* ADMIN PANEL */}
-        <Route path="/admin" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/createtour" element={<CreateTournament />} />
-        <Route path="/admin/LuckyDrawAdmin" element={<LuckyDrawAdmin/>} />
-        <Route path="/admin/createluckydraw" element={<CreateLuckyDraw />} />
-        <Route path="/admin/lucky-draw/:drawId" element={<LuckyDrawUsers />}/>
-        <Route path="/admin/winner-history" element={<WinnerHistory />} />
+          {/* PUBLIC ADMIN LOGIN */}
+          <Route path="/admin" element={<AdminLogin />} />
+
+          {/* 🔒 PROTECTED ADMIN DASHBOARD ROUTES */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/createtour" element={<CreateTournament />} />
+            <Route path="/admin/LuckyDrawAdmin" element={<LuckyDrawAdmin />} />
+            <Route path="/admin/createluckydraw" element={<CreateLuckyDraw />} />
+            <Route path="/admin/lucky-draw/:drawId" element={<LuckyDrawUsers />} />
+            <Route path="/admin/winner-history" element={<WinnerHistory />} />
+            <Route path="/admin/delete-requests" element={<DeleteRequests />} />
+          </Route>
 
         </Route>
-
-        
-
 
       </Routes>
     </BrowserRouter>
