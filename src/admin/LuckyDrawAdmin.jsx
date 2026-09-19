@@ -153,7 +153,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "10px 0",
+    padding: "8px 0",
     borderBottom: "1px solid #334155"
   },
   statLabel: {
@@ -166,11 +166,11 @@ const styles = {
     color: "#f8fafc"
   },
   progressTrack: {
-    height: "10px",
+    height: "8px",
     background: "#0f172a",
     borderRadius: "6px",
     overflow: "hidden",
-    marginTop: "16px",
+    marginTop: "12px",
     border: "1px solid #334155"
   },
   progressBar: (pct) => ({
@@ -239,12 +239,12 @@ const LuckyDrawAdmin = () => {
   const [ticketCost, setTicketCost] = useState(10);
   const [savingConfig, setSavingConfig] = useState(false);
 
-  // Active Draw & History State
-  const [activeDraw, setActiveDraw] = useState(null);
+  // Active Draws & History State
+  const [openDraws, setOpenDraws] = useState([]);
   const [historyList, setHistoryList] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  /* ===== FETCH CURRENT CONFIG & LISTEN TO ACTIVE DRAW & HISTORY ===== */
+  /* ===== FETCH CURRENT CONFIG & LISTEN TO ACTIVE DRAWS & HISTORY ===== */
   useEffect(() => {
     // 1. Fetch Admin Config
     const fetchConfig = async () => {
@@ -262,12 +262,12 @@ const LuckyDrawAdmin = () => {
     };
     fetchConfig();
 
-    // 2. Real-time Listener for Active Draw
+    // 2. Real-time Listener for Active OPEN Draws Across All Presets
     const openQuery = query(collection(db, "lucky_draws"), orderBy("createdAt", "desc"));
     const unsubOpen = onSnapshot(openQuery, (snapshot) => {
       const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-      const open = docs.find((d) => d.status === "OPEN" || d.status === "LOCK" || d.status === "CLOSING");
-      setActiveDraw(open || (docs.length > 0 ? docs[0] : null));
+      const opens = docs.filter((d) => d.status === "OPEN" || d.status === "LOCK" || d.status === "CLOSING");
+      setOpenDraws(opens);
       setLoading(false);
     });
 
@@ -321,7 +321,7 @@ const LuckyDrawAdmin = () => {
       // 2. Add to history collection
       await addDoc(collection(db, "lucky_draw_config_history"), configData);
 
-      alert("✅ Configuration Saved Successfully!\n\nThis configuration will automatically be used for the NEXT draw.");
+      alert("✅ Configuration Saved Successfully!\n\nThis configuration will automatically be used for the NEXT draw of this preset category.");
     } catch (err) {
       console.error("Save config error:", err);
       alert("❌ Failed to save configuration: " + err.message);
@@ -329,15 +329,6 @@ const LuckyDrawAdmin = () => {
       setSavingConfig(false);
     }
   };
-
-  const currentParticipation = activeDraw
-    ? (activeDraw.currentParticipation ?? activeDraw.filledSlots ?? 0)
-    : 0;
-  const maxParticipation = activeDraw
-    ? (activeDraw.participationLimit ?? activeDraw.totalSlots ?? participationLimit)
-    : participationLimit;
-  const remainingSlots = Math.max(0, maxParticipation - currentParticipation);
-  const progressPercent = maxParticipation > 0 ? Math.min(100, Math.floor((currentParticipation / maxParticipation) * 100)) : 0;
 
   return (
     <div style={styles.page}>
@@ -348,7 +339,7 @@ const LuckyDrawAdmin = () => {
             <span>🎯</span> Lucky Draw Management
           </div>
           <div style={styles.subtitle}>
-            Authoritative Draw Configuration, Live Active Draw Status & Winner History
+            Active Open Preset Category Draws (5, 10, 20, 25, 50, 100) & Automatic Draw Generation
           </div>
         </div>
         <button
@@ -367,14 +358,14 @@ const LuckyDrawAdmin = () => {
         </button>
       </div>
 
-      <div style={styles.grid}>
-        {/* ================= 1. ADMIN CONFIGURATION PANEL ================= */}
+      {/* ================= 1. ADMIN CONFIGURATION PANEL ================= */}
+      <div style={{ marginBottom: "32px" }}>
         <div style={styles.card}>
           <div style={styles.cardHeader}>
-            <span>⚙️ Draw Configuration Settings</span>
+            <span>⚙️ Draw Configuration Settings & Presets</span>
           </div>
 
-          <div style={styles.label}>Select Default Preset:</div>
+          <div style={styles.label}>Supported Presets:</div>
           <div style={styles.presetGroup}>
             {PRESETS.map((preset, idx) => {
               const isActive =
@@ -387,13 +378,13 @@ const LuckyDrawAdmin = () => {
                   style={styles.presetBtn(isActive)}
                   onClick={() => applyPreset(preset)}
                 >
-                  {preset.participationLimit} Users → {preset.rewardCoins} Coins
+                  {preset.participationLimit} Users → {preset.rewardCoins} Coins (Cost: {preset.ticketCost})
                 </button>
               );
             })}
           </div>
 
-          <form onSubmit={handleSaveConfig}>
+          <form onSubmit={handleSaveConfig} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", alignItems: "end" }}>
             <div style={styles.formGroup}>
               <label style={styles.label}>Participation Limit (Slots)</label>
               <input
@@ -430,89 +421,90 @@ const LuckyDrawAdmin = () => {
               />
             </div>
 
-            <button type="submit" disabled={savingConfig} style={styles.btnSave}>
+            <button type="submit" disabled={savingConfig} style={{ ...styles.btnSave, marginTop: 0 }}>
               {savingConfig ? "Saving..." : "Save Configuration"}
             </button>
           </form>
 
           <div style={styles.infoRule}>
-            📌 <b>IMPORTANT CONFIGURATION RULE:</b> When an existing draw is active, updating configuration settings does NOT alter that active draw. Every draw snapshots its configuration at creation. The new configuration applies to the <b>NEXT</b> draw.
+            📌 <b>ALL PRESET CATEGORIES ACTIVE SIMULTANEOUSLY:</b> Backend maintains an active OPEN draw for each preset category (5, 10, 20, 25, 50, 100). When any draw fills and completes, the next draw for that category is automatically created!
           </div>
-        </div>
-
-        {/* ================= 2. LIVE ACTIVE DRAW STATUS CARD ================= */}
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <span>🔥 Active Lucky Draw Status</span>
-            <span style={styles.liveBadge}>LIVE</span>
-          </div>
-
-          {loading ? (
-            <p style={{ color: "#94a3b8" }}>Loading active draw...</p>
-          ) : !activeDraw ? (
-            <p style={{ color: "#94a3b8" }}>No active draw found. Backend will automatically create one on request.</p>
-          ) : (
-            <div>
-              <div style={styles.statRow}>
-                <span style={styles.statLabel}>DRAW ID</span>
-                <span style={{ ...styles.statVal, color: "#38bdf8", fontSize: "16px" }}>
-                  #{activeDraw.drawId || activeDraw.id}
-                </span>
-              </div>
-
-              <div style={styles.statRow}>
-                <span style={styles.statLabel}>Status</span>
-                <span style={styles.statusBadge(activeDraw.status)}>
-                  {activeDraw.status}
-                </span>
-              </div>
-
-              <div style={styles.statRow}>
-                <span style={styles.statLabel}>Participation</span>
-                <span style={styles.statVal}>
-                  {currentParticipation} / {maxParticipation}
-                </span>
-              </div>
-
-              <div style={styles.statRow}>
-                <span style={styles.statLabel}>Remaining Slots</span>
-                <span style={{ ...styles.statVal, color: remainingSlots > 0 ? "#4ade80" : "#ef4444" }}>
-                  {remainingSlots} slots
-                </span>
-              </div>
-
-              <div style={styles.statRow}>
-                <span style={styles.statLabel}>Reward</span>
-                <span style={{ ...styles.statVal, color: "#f59e0b" }}>
-                  🎁 {activeDraw.rewardCoins ?? rewardCoins} Coins
-                </span>
-              </div>
-
-              <div style={styles.statRow}>
-                <span style={styles.statLabel}>Ticket Cost</span>
-                <span style={styles.statVal}>
-                  🎟️ {activeDraw.ticketCost ?? ticketCost} Tickets / entry
-                </span>
-              </div>
-
-              <div style={styles.statRow}>
-                <span style={styles.statLabel}>Created Time</span>
-                <span style={{ ...styles.statVal, fontSize: "12px", color: "#94a3b8" }}>
-                  {activeDraw.createdAt?.toDate ? activeDraw.createdAt.toDate().toLocaleString() : "Server Managed"}
-                </span>
-              </div>
-
-              <div style={styles.progressTrack}>
-                <div style={styles.progressBar(progressPercent)} />
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px", fontSize: "11px", color: "#94a3b8" }}>
-                <span>Progress</span>
-                <span>{progressPercent}% Filled</span>
-              </div>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* ================= 2. LIVE ACTIVE DRAWS GRID ================= */}
+      <div style={{ marginBottom: "20px" }}>
+        <h3 style={{ fontSize: "18px", color: "#38bdf8", marginBottom: "16px" }}>
+          🔥 Active Open Preset Category Draws ({openDraws.length})
+        </h3>
+      </div>
+
+      {loading ? (
+        <p style={{ color: "#94a3b8" }}>Loading active draws...</p>
+      ) : openDraws.length === 0 ? (
+        <p style={{ color: "#94a3b8" }}>No active open draws found. Backend will automatically generate them on startup/request.</p>
+      ) : (
+        <div style={styles.grid}>
+          {openDraws.map((draw) => {
+            const currentPart = draw.currentParticipation ?? draw.filledSlots ?? 0;
+            const maxPart = draw.participationLimit ?? draw.totalSlots ?? 10;
+            const remSlots = Math.max(0, maxPart - currentPart);
+            const pct = maxPart > 0 ? Math.min(100, Math.floor((currentPart / maxPart) * 100)) : 0;
+
+            return (
+              <div key={draw.id || draw.drawId} style={styles.card}>
+                <div style={styles.cardHeader}>
+                  <span style={{ color: "#38bdf8", fontWeight: "800" }}>#{draw.drawId || draw.id}</span>
+                  <span style={styles.liveBadge}>OPEN ({maxPart} Slots)</span>
+                </div>
+
+                <div style={styles.statRow}>
+                  <span style={styles.statLabel}>Participation Category</span>
+                  <span style={{ ...styles.statVal, color: "#f59e0b" }}>
+                    {maxPart} Participants
+                  </span>
+                </div>
+
+                <div style={styles.statRow}>
+                  <span style={styles.statLabel}>Reward Coins</span>
+                  <span style={{ ...styles.statVal, color: "#4ade80" }}>
+                    🪙 {draw.rewardCoins} Coins
+                  </span>
+                </div>
+
+                <div style={styles.statRow}>
+                  <span style={styles.statLabel}>Ticket Cost</span>
+                  <span style={styles.statVal}>
+                    🎟️ {draw.ticketCost} Tickets / entry
+                  </span>
+                </div>
+
+                <div style={styles.statRow}>
+                  <span style={styles.statLabel}>Current Entries</span>
+                  <span style={styles.statVal}>
+                    {currentPart} / {maxPart}
+                  </span>
+                </div>
+
+                <div style={styles.statRow}>
+                  <span style={styles.statLabel}>Remaining Slots</span>
+                  <span style={{ ...styles.statVal, color: remSlots > 0 ? "#4ade80" : "#ef4444" }}>
+                    {remSlots} slots left
+                  </span>
+                </div>
+
+                <div style={styles.progressTrack}>
+                  <div style={styles.progressBar(pct)} />
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px", fontSize: "11px", color: "#94a3b8" }}>
+                  <span>Progress</span>
+                  <span>{pct}% Filled</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* ================= 3. DRAW HISTORY TABLE ================= */}
       <div style={styles.tableContainer}>
@@ -533,7 +525,7 @@ const LuckyDrawAdmin = () => {
                 <th style={styles.th}>Participation</th>
                 <th style={styles.th}>Reward</th>
                 <th style={styles.th}>Ticket Cost</th>
-                <th style={styles.th}>Winning Token</th>
+                <th style={styles.th}>Winning Token (5 Digit)</th>
                 <th style={styles.th}>Winner UID</th>
                 <th style={styles.th}>Status</th>
                 <th style={styles.th}>Completed At</th>
