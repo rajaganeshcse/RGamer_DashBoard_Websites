@@ -4,333 +4,572 @@ import {
   onSnapshot,
   orderBy,
   query,
-  deleteDoc,
-  doc
+  doc,
+  setDoc,
+  addDoc,
+  serverTimestamp,
+  getDoc
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { db } from "../Firebase";
+
+/* ================= DEFAULT PRESETS ================= */
+
+const PRESETS = [
+  { participationLimit: 5, rewardCoins: 25, ticketCost: 5, label: "5 Participants → 25 Coins" },
+  { participationLimit: 10, rewardCoins: 100, ticketCost: 10, label: "10 Participants → 100 Coins" },
+  { participationLimit: 20, rewardCoins: 200, ticketCost: 20, label: "20 Participants → 200 Coins" },
+  { participationLimit: 25, rewardCoins: 250, ticketCost: 25, label: "25 Participants → 250 Coins" },
+  { participationLimit: 50, rewardCoins: 500, ticketCost: 50, label: "50 Participants → 500 Coins" },
+  { participationLimit: 100, rewardCoins: 1000, ticketCost: 100, label: "100 Participants → 1000 Coins" }
+];
 
 /* ================= STYLES ================= */
 
 const styles = {
   page: {
     padding: "24px",
-    background: "#f4f6fb",
-    minHeight: "100vh"
+    background: "#0f172a",
+    minHeight: "100vh",
+    color: "#f8fafc",
+    fontFamily: "'Inter', sans-serif"
   },
-
   header: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
+    marginBottom: "24px",
+    paddingBottom: "16px",
+    borderBottom: "1px solid #1e293b"
+  },
+  title: {
+    fontSize: "26px",
+    fontWeight: "800",
+    color: "#f8fafc",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px"
+  },
+  subtitle: {
+    fontSize: "14px",
+    color: "#94a3b8",
+    marginTop: "4px"
+  },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+    gap: "24px",
+    marginBottom: "32px"
+  },
+  card: {
+    background: "#1e293b",
+    borderRadius: "16px",
+    padding: "24px",
+    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)",
+    border: "1px solid #334155"
+  },
+  cardHeader: {
+    fontSize: "18px",
+    fontWeight: "700",
+    marginBottom: "16px",
+    color: "#38bdf8",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  presetGroup: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "8px",
     marginBottom: "20px"
   },
-
-  title: {
-    fontSize: "22px",
-    fontWeight: "bold"
-  },
-
-  actions: {
-    display: "flex",
-    gap: "12px"
-  },
-
-  btnPrimary: {
-    padding: "10px 16px",
+  presetBtn: (active) => ({
+    padding: "8px 12px",
     borderRadius: "8px",
-    border: "none",
-    background: "#6A1BFF",
-    color: "#fff",
-    fontWeight: "bold",
-    cursor: "pointer"
-  },
-
-  btnOutline: {
-    padding: "10px 16px",
-    borderRadius: "8px",
-    border: "1px solid #6A1BFF",
-    background: "#fff",
-    color: "#6A1BFF",
-    fontWeight: "bold",
-    cursor: "pointer"
-  },
-
-  sectionTitle: {
-    marginTop: "24px",
-    marginBottom: "10px",
-    fontSize: "16px",
-    fontWeight: "bold",
-    color: "#444"
-  },
-
-  card: {
-    background: "#ffffff",
-    borderRadius: "14px",
-    padding: "16px",
-    marginBottom: "14px",
-    boxShadow: "0 6px 16px rgba(0,0,0,0.08)",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-    cursor: "pointer"
-  },
-
-  cardHover: {
-    transform: "translateY(-2px)",
-    boxShadow: "0 10px 22px rgba(0,0,0,0.12)"
-  },
-
-  rowTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-
-  id: {
+    border: active ? "1px solid #38bdf8" : "1px solid #334155",
+    background: active ? "rgba(56, 189, 248, 0.15)" : "#0f172a",
+    color: active ? "#38bdf8" : "#cbd5e1",
     fontSize: "12px",
-    color: "#888"
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "all 0.2s ease"
+  }),
+  formGroup: {
+    marginBottom: "16px"
   },
-
-  status: (status) => ({
+  label: {
+    display: "block",
+    fontSize: "13px",
+    fontWeight: "600",
+    color: "#94a3b8",
+    marginBottom: "6px"
+  },
+  input: {
+    width: "100%",
+    padding: "10px 14px",
+    borderRadius: "8px",
+    border: "1px solid #334155",
+    background: "#0f172a",
+    color: "#f8fafc",
+    fontSize: "15px",
+    fontWeight: "600",
+    boxSizing: "border-box",
+    outline: "none"
+  },
+  btnSave: {
+    width: "100%",
+    padding: "12px",
+    borderRadius: "10px",
+    border: "none",
+    background: "linear-gradient(135deg, #38bdf8 0%, #2563eb 100%)",
+    color: "#ffffff",
+    fontSize: "15px",
+    fontWeight: "700",
+    cursor: "pointer",
+    marginTop: "12px",
+    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)",
+    transition: "transform 0.1s ease"
+  },
+  infoRule: {
+    background: "rgba(234, 179, 8, 0.1)",
+    border: "1px solid rgba(234, 179, 8, 0.3)",
+    borderRadius: "10px",
+    padding: "12px 14px",
+    fontSize: "12px",
+    color: "#fde047",
+    marginTop: "16px",
+    lineHeight: "1.5"
+  },
+  liveBadge: {
     padding: "4px 10px",
     borderRadius: "20px",
+    background: "rgba(34, 197, 94, 0.2)",
+    color: "#4ade80",
     fontSize: "12px",
-    fontWeight: "bold",
-    color: "#fff",
-    background:
-      status === "COMPLETED" ? "#2e7d32" : "#ff9800"
-  }),
-
-  deleteBtn: {
-    padding: "6px 10px",
+    fontWeight: "700",
+    border: "1px solid rgba(34, 197, 94, 0.4)"
+  },
+  statRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "10px 0",
+    borderBottom: "1px solid #334155"
+  },
+  statLabel: {
+    color: "#94a3b8",
+    fontSize: "13px"
+  },
+  statVal: {
+    fontWeight: "700",
+    fontSize: "14px",
+    color: "#f8fafc"
+  },
+  progressTrack: {
+    height: "10px",
+    background: "#0f172a",
     borderRadius: "6px",
-    border: "none",
-    background: "#e53935",
-    color: "#fff",
-    fontSize: "12px",
-    fontWeight: "bold",
-    cursor: "pointer"
+    overflow: "hidden",
+    marginTop: "16px",
+    border: "1px solid #334155"
   },
-
-  reward: {
-    marginTop: "8px",
-    fontSize: "16px",
-    fontWeight: "bold"
-  },
-
-  slots: {
-    marginTop: "4px",
-    fontSize: "13px",
-    color: "#555"
-  },
-
-  progressWrap: {
-    marginTop: "8px",
-    height: "8px",
-    background: "#e0e0e0",
-    borderRadius: "6px",
-    overflow: "hidden"
-  },
-
-  progress: (percent) => ({
+  progressBar: (pct) => ({
     height: "100%",
-    width: `${percent}%`,
-    background:
-      percent === 100 ? "#4caf50" : "#6A1BFF",
-    transition: "width 0.4s ease"
+    width: `${pct}%`,
+    background: "linear-gradient(90deg, #38bdf8, #4ade80)",
+    borderRadius: "6px",
+    transition: "width 0.5s ease"
   }),
-
-  waiting: {
-    marginTop: "10px",
-    color: "#ff9800",
-    fontSize: "13px"
+  tableContainer: {
+    background: "#1e293b",
+    borderRadius: "16px",
+    padding: "24px",
+    border: "1px solid #334155",
+    overflowX: "auto"
   },
-
-  completed: {
-    marginTop: "10px",
-    color: "#2e7d32",
-    fontSize: "13px"
-  }
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    textAlign: "left"
+  },
+  th: {
+    padding: "12px 16px",
+    color: "#94a3b8",
+    fontSize: "12px",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    borderBottom: "1px solid #334155"
+  },
+  td: {
+    padding: "14px 16px",
+    color: "#e2e8f0",
+    fontSize: "13px",
+    borderBottom: "1px solid #334155"
+  },
+  tokenBadge: {
+    fontFamily: "monospace",
+    background: "#0f172a",
+    padding: "4px 8px",
+    borderRadius: "6px",
+    color: "#f59e0b",
+    fontWeight: "700",
+    border: "1px solid #334155",
+    letterSpacing: "1px"
+  },
+  statusBadge: (status) => ({
+    padding: "4px 10px",
+    borderRadius: "20px",
+    fontSize: "11px",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    background: status === "COMPLETED" ? "rgba(34, 197, 94, 0.2)" : "rgba(234, 179, 8, 0.2)",
+    color: status === "COMPLETED" ? "#4ade80" : "#fde047",
+    border: status === "COMPLETED" ? "1px solid rgba(34, 197, 94, 0.3)" : "1px solid rgba(234, 179, 8, 0.3)"
+  })
 };
 
-/* ================= COMPONENT ================= */
+/* ================= MAIN COMPONENT ================= */
 
 const LuckyDrawAdmin = () => {
-
-  const [openDraws, setOpenDraws] = useState([]);
-  const [completedDraws, setCompletedDraws] = useState([]);
-  const [hoverId, setHoverId] = useState(null);
-  const [loading, setLoading] = useState(true);
-
   const navigate = useNavigate();
 
-  /* ===== LOAD DRAWS (LATEST FIRST) ===== */
+  // Admin Config State
+  const [participationLimit, setParticipationLimit] = useState(10);
+  const [rewardCoins, setRewardCoins] = useState(100);
+  const [ticketCost, setTicketCost] = useState(10);
+  const [savingConfig, setSavingConfig] = useState(false);
 
+  // Active Draw & History State
+  const [activeDraw, setActiveDraw] = useState(null);
+  const [historyList, setHistoryList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  /* ===== FETCH CURRENT CONFIG & LISTEN TO ACTIVE DRAW & HISTORY ===== */
   useEffect(() => {
-
-    const q = query(
-      collection(db, "lucky_draws"),
-      orderBy("createdAt", "desc")
-    );
-
-    const unsub = onSnapshot(q, (snap) => {
-
-      const open = [];
-      const completed = [];
-
-      snap.docs.forEach(docSnap => {
-        const d = docSnap.data();
-
-        const item = {
-          id: docSnap.id,
-          status: d.status,
-          rewardCoins: d.rewardCoins ?? 0,
-          filledSlots: d.filledSlots ?? 0,
-          totalSlots: d.totalSlots ?? 0,
-          winnerUid: d.winnerUid || null
-        };
-
-        if (item.status === "COMPLETED") {
-          completed.push(item);
-        } else {
-          open.push(item);
+    // 1. Fetch Admin Config
+    const fetchConfig = async () => {
+      try {
+        const configDoc = await getDoc(doc(db, "lucky_draw_config", "current"));
+        if (configDoc.exists()) {
+          const data = configDoc.data();
+          if (data.participationLimit) setParticipationLimit(data.participationLimit);
+          if (data.rewardCoins) setRewardCoins(data.rewardCoins);
+          if (data.ticketCost) setTicketCost(data.ticketCost);
         }
-      });
+      } catch (err) {
+        console.error("Failed to load config:", err);
+      }
+    };
+    fetchConfig();
 
-      setOpenDraws(open);
-      setCompletedDraws(completed);
+    // 2. Real-time Listener for Active Draw
+    const openQuery = query(collection(db, "lucky_draws"), orderBy("createdAt", "desc"));
+    const unsubOpen = onSnapshot(openQuery, (snapshot) => {
+      const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const open = docs.find((d) => d.status === "OPEN" || d.status === "LOCK" || d.status === "CLOSING");
+      setActiveDraw(open || (docs.length > 0 ? docs[0] : null));
       setLoading(false);
     });
 
-    return () => unsub();
+    // 3. Real-time Listener for Draw History
+    const historyQuery = query(collection(db, "drawHistory"), orderBy("completedAt", "desc"));
+    const unsubHistory = onSnapshot(historyQuery, (snapshot) => {
+      const history = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setHistoryList(history);
+    });
 
+    return () => {
+      unsubOpen();
+      unsubHistory();
+    };
   }, []);
 
-  /* ===== DELETE HANDLER ===== */
+  /* ===== APPLY PRESET ===== */
+  const applyPreset = (preset) => {
+    setParticipationLimit(preset.participationLimit);
+    setRewardCoins(preset.rewardCoins);
+    setTicketCost(preset.ticketCost);
+  };
 
-  const handleDelete = async (e, drawId) => {
-    e.stopPropagation();
+  /* ===== SAVE CONFIGURATION ===== */
+  const handleSaveConfig = async (e) => {
+    e.preventDefault();
 
-    const ok = window.confirm(
-      "Are you sure you want to delete this Lucky Draw?\n\nThis action cannot be undone."
-    );
+    const p = Number(participationLimit);
+    const r = Number(rewardCoins);
+    const c = Number(ticketCost);
 
-    if (!ok) return;
+    if (p <= 0 || r <= 0 || c <= 0) {
+      alert("⚠️ All configuration values must be greater than zero!");
+      return;
+    }
 
     try {
-      await deleteDoc(doc(db, "lucky_draws", drawId));
-      alert("Lucky Draw deleted successfully");
+      setSavingConfig(true);
+
+      const configData = {
+        participationLimit: p,
+        rewardCoins: r,
+        ticketCost: c,
+        updatedAt: serverTimestamp(),
+        updatedBy: "ADMIN_WEB"
+      };
+
+      // 1. Update current config doc
+      await setDoc(doc(db, "lucky_draw_config", "current"), configData);
+
+      // 2. Add to history collection
+      await addDoc(collection(db, "lucky_draw_config_history"), configData);
+
+      alert("✅ Configuration Saved Successfully!\n\nThis configuration will automatically be used for the NEXT draw.");
     } catch (err) {
-      console.error("Delete failed:", err);
-      alert("Failed to delete draw");
+      console.error("Save config error:", err);
+      alert("❌ Failed to save configuration: " + err.message);
+    } finally {
+      setSavingConfig(false);
     }
   };
 
-  if (loading) {
-    return <p style={{ padding: 20 }}>Loading Lucky Draws…</p>;
-  }
-
-  /* ===== DRAW CARD ===== */
-
-  const renderCard = (draw) => {
-
-    const percent =
-      draw.totalSlots > 0
-        ? Math.floor((draw.filledSlots / draw.totalSlots) * 100)
-        : 0;
-
-    return (
-      <div
-        key={draw.id}
-        style={{
-          ...styles.card,
-          ...(hoverId === draw.id ? styles.cardHover : {})
-        }}
-        onMouseEnter={() => setHoverId(draw.id)}
-        onMouseLeave={() => setHoverId(null)}
-        onClick={() =>
-          navigate(`/admin/lucky-draw/${draw.id}`)
-        }
-      >
-        <div style={styles.rowTop}>
-          <span style={styles.id}>#{draw.id.slice(0, 6)}</span>
-
-          <div style={{ display: "flex", gap: "8px" }}>
-            <span style={styles.status(draw.status)}>
-              {draw.status}
-            </span>
-
-            <button
-              style={styles.deleteBtn}
-              onClick={(e) => handleDelete(e, draw.id)}
-            >
-              🗑 Delete
-            </button>
-          </div>
-        </div>
-
-        <div style={styles.reward}>
-          🎁 Win {draw.rewardCoins} Coins
-        </div>
-
-        <div style={styles.slots}>
-          Slots: {draw.filledSlots} / {draw.totalSlots} ({percent}%)
-        </div>
-
-        <div style={styles.progressWrap}>
-          <div style={styles.progress(percent)} />
-        </div>
-
-        {draw.status === "OPEN" && (
-          <div style={styles.waiting}>
-            ⏳ Waiting for users to join…
-          </div>
-        )}
-
-        {draw.status === "COMPLETED" && (
-          <div style={styles.completed}>
-            ✅ Winner: <b>{draw.winnerUid || "—"}</b>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  /* ===== UI ===== */
+  const currentParticipation = activeDraw
+    ? (activeDraw.currentParticipation ?? activeDraw.filledSlots ?? 0)
+    : 0;
+  const maxParticipation = activeDraw
+    ? (activeDraw.participationLimit ?? activeDraw.totalSlots ?? participationLimit)
+    : participationLimit;
+  const remainingSlots = Math.max(0, maxParticipation - currentParticipation);
+  const progressPercent = maxParticipation > 0 ? Math.min(100, Math.floor((currentParticipation / maxParticipation) * 100)) : 0;
 
   return (
     <div style={styles.page}>
-
       {/* HEADER */}
       <div style={styles.header}>
-        <div style={styles.title}>🎯 Lucky Draw Admin</div>
+        <div>
+          <div style={styles.title}>
+            <span>🎯</span> Lucky Draw Management
+          </div>
+          <div style={styles.subtitle}>
+            Authoritative Draw Configuration, Live Active Draw Status & Winner History
+          </div>
+        </div>
+        <button
+          style={{
+            padding: "10px 18px",
+            borderRadius: "10px",
+            background: "#1e293b",
+            color: "#38bdf8",
+            border: "1px solid #334155",
+            fontWeight: "700",
+            cursor: "pointer"
+          }}
+          onClick={() => navigate("/admin/winner-history")}
+        >
+          🏆 Full Winner History
+        </button>
+      </div>
 
-        <div style={styles.actions}>
-          <button
-            style={styles.btnPrimary}
-            onClick={() => navigate("/admin/createluckydraw")}
-          >
-            ➕ Create Draw
-          </button>
+      <div style={styles.grid}>
+        {/* ================= 1. ADMIN CONFIGURATION PANEL ================= */}
+        <div style={styles.card}>
+          <div style={styles.cardHeader}>
+            <span>⚙️ Draw Configuration Settings</span>
+          </div>
 
-          <button
-            style={styles.btnOutline}
-            onClick={() => navigate("/admin/winner-history")}
-          >
-            🏆 Winner History
-          </button>
+          <div style={styles.label}>Select Default Preset:</div>
+          <div style={styles.presetGroup}>
+            {PRESETS.map((preset, idx) => {
+              const isActive =
+                participationLimit === preset.participationLimit &&
+                rewardCoins === preset.rewardCoins &&
+                ticketCost === preset.ticketCost;
+              return (
+                <button
+                  key={idx}
+                  style={styles.presetBtn(isActive)}
+                  onClick={() => applyPreset(preset)}
+                >
+                  {preset.participationLimit} Users → {preset.rewardCoins} Coins
+                </button>
+              );
+            })}
+          </div>
+
+          <form onSubmit={handleSaveConfig}>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Participation Limit (Slots)</label>
+              <input
+                type="number"
+                style={styles.input}
+                value={participationLimit}
+                onChange={(e) => setParticipationLimit(e.target.value)}
+                placeholder="e.g. 10"
+                required
+              />
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Reward Coins</label>
+              <input
+                type="number"
+                style={styles.input}
+                value={rewardCoins}
+                onChange={(e) => setRewardCoins(e.target.value)}
+                placeholder="e.g. 100"
+                required
+              />
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Ticket Cost (Tickets)</label>
+              <input
+                type="number"
+                style={styles.input}
+                value={ticketCost}
+                onChange={(e) => setTicketCost(e.target.value)}
+                placeholder="e.g. 10"
+                required
+              />
+            </div>
+
+            <button type="submit" disabled={savingConfig} style={styles.btnSave}>
+              {savingConfig ? "Saving..." : "Save Configuration"}
+            </button>
+          </form>
+
+          <div style={styles.infoRule}>
+            📌 <b>IMPORTANT CONFIGURATION RULE:</b> When an existing draw is active, updating configuration settings does NOT alter that active draw. Every draw snapshots its configuration at creation. The new configuration applies to the <b>NEXT</b> draw.
+          </div>
+        </div>
+
+        {/* ================= 2. LIVE ACTIVE DRAW STATUS CARD ================= */}
+        <div style={styles.card}>
+          <div style={styles.cardHeader}>
+            <span>🔥 Active Lucky Draw Status</span>
+            <span style={styles.liveBadge}>LIVE</span>
+          </div>
+
+          {loading ? (
+            <p style={{ color: "#94a3b8" }}>Loading active draw...</p>
+          ) : !activeDraw ? (
+            <p style={{ color: "#94a3b8" }}>No active draw found. Backend will automatically create one on request.</p>
+          ) : (
+            <div>
+              <div style={styles.statRow}>
+                <span style={styles.statLabel}>DRAW ID</span>
+                <span style={{ ...styles.statVal, color: "#38bdf8", fontSize: "16px" }}>
+                  #{activeDraw.drawId || activeDraw.id}
+                </span>
+              </div>
+
+              <div style={styles.statRow}>
+                <span style={styles.statLabel}>Status</span>
+                <span style={styles.statusBadge(activeDraw.status)}>
+                  {activeDraw.status}
+                </span>
+              </div>
+
+              <div style={styles.statRow}>
+                <span style={styles.statLabel}>Participation</span>
+                <span style={styles.statVal}>
+                  {currentParticipation} / {maxParticipation}
+                </span>
+              </div>
+
+              <div style={styles.statRow}>
+                <span style={styles.statLabel}>Remaining Slots</span>
+                <span style={{ ...styles.statVal, color: remainingSlots > 0 ? "#4ade80" : "#ef4444" }}>
+                  {remainingSlots} slots
+                </span>
+              </div>
+
+              <div style={styles.statRow}>
+                <span style={styles.statLabel}>Reward</span>
+                <span style={{ ...styles.statVal, color: "#f59e0b" }}>
+                  🎁 {activeDraw.rewardCoins ?? rewardCoins} Coins
+                </span>
+              </div>
+
+              <div style={styles.statRow}>
+                <span style={styles.statLabel}>Ticket Cost</span>
+                <span style={styles.statVal}>
+                  🎟️ {activeDraw.ticketCost ?? ticketCost} Tickets / entry
+                </span>
+              </div>
+
+              <div style={styles.statRow}>
+                <span style={styles.statLabel}>Created Time</span>
+                <span style={{ ...styles.statVal, fontSize: "12px", color: "#94a3b8" }}>
+                  {activeDraw.createdAt?.toDate ? activeDraw.createdAt.toDate().toLocaleString() : "Server Managed"}
+                </span>
+              </div>
+
+              <div style={styles.progressTrack}>
+                <div style={styles.progressBar(progressPercent)} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px", fontSize: "11px", color: "#94a3b8" }}>
+                <span>Progress</span>
+                <span>{progressPercent}% Filled</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* OPEN */}
-      <div style={styles.sectionTitle}>🔓 Open Draws</div>
-      {openDraws.length === 0 && <p>No open draws</p>}
-      {openDraws.map(renderCard)}
+      {/* ================= 3. DRAW HISTORY TABLE ================= */}
+      <div style={styles.tableContainer}>
+        <div style={{ ...styles.cardHeader, marginBottom: "20px" }}>
+          <span>📜 Completed Draw History</span>
+          <span style={{ fontSize: "13px", color: "#94a3b8" }}>Showing last {historyList.length} completed draws</span>
+        </div>
 
-      {/* COMPLETED */}
-      <div style={styles.sectionTitle}>📜 Completed Draws</div>
-      {completedDraws.length === 0 && <p>No completed draws</p>}
-      {completedDraws.map(renderCard)}
-
+        {historyList.length === 0 ? (
+          <p style={{ color: "#94a3b8", textAlign: "center", padding: "20px" }}>
+            No completed draws recorded yet. Completed draws will automatically populate here with full winner & token details.
+          </p>
+        ) : (
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>Draw ID</th>
+                <th style={styles.th}>Participation</th>
+                <th style={styles.th}>Reward</th>
+                <th style={styles.th}>Ticket Cost</th>
+                <th style={styles.th}>Winning Token</th>
+                <th style={styles.th}>Winner UID</th>
+                <th style={styles.th}>Status</th>
+                <th style={styles.th}>Completed At</th>
+              </tr>
+            </thead>
+            <tbody>
+              {historyList.map((item) => (
+                <tr key={item.id || item.drawId}>
+                  <td style={{ ...styles.td, fontWeight: "700", color: "#38bdf8" }}>
+                    #{item.drawId || item.id}
+                  </td>
+                  <td style={styles.td}>{item.participationLimit || item.totalSlots || 0}</td>
+                  <td style={{ ...styles.td, color: "#f59e0b", fontWeight: "700" }}>
+                    🪙 {item.rewardCoins || item.rewardAmount || 0}
+                  </td>
+                  <td style={styles.td}>🎟️ {item.ticketCost || "-"}</td>
+                  <td style={styles.td}>
+                    <span style={styles.tokenBadge}>{item.winningToken || "—"}</span>
+                  </td>
+                  <td style={{ ...styles.td, fontFamily: "monospace" }}>
+                    {item.winningUserId || item.winnerUid || "—"}
+                  </td>
+                  <td style={styles.td}>
+                    <span style={styles.statusBadge(item.status || "COMPLETED")}>
+                      {item.status || "COMPLETED"}
+                    </span>
+                  </td>
+                  <td style={{ ...styles.td, color: "#94a3b8", fontSize: "12px" }}>
+                    {item.completedAt?.toDate ? item.completedAt.toDate().toLocaleString() : (item.completedAt || "—")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 };
