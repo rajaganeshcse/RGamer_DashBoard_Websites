@@ -20,6 +20,8 @@ export default function NotificationsAdmin() {
 
   // Daily Settings State
   const [dailyEnabled, setDailyEnabled] = useState(true);
+  const [dailyHour, setDailyHour] = useState(6);
+  const [dailyMinute, setDailyMinute] = useState(0);
   const [dailyTitle, setDailyTitle] = useState("🎁 Your Daily Rewards Are Ready!");
   const [dailyMessage, setDailyMessage] = useState("Claim your daily bonus, play games, complete tasks and start earning today.");
   const [dailyImage, setDailyImage] = useState("");
@@ -65,6 +67,8 @@ export default function NotificationsAdmin() {
         if (snap.exists()) {
           const data = snap.data();
           setDailyEnabled(data.enabled ?? true);
+          setDailyHour(data.hour ?? 6);
+          setDailyMinute(data.minute ?? 0);
           setDailyTitle(data.title || "🎁 Your Daily Rewards Are Ready!");
           setDailyMessage(data.message || "Claim your daily bonus, play games, complete tasks and start earning today.");
           setDailyImage(data.imageUrl || "");
@@ -226,6 +230,15 @@ export default function NotificationsAdmin() {
     }
   };
 
+  // Helper for 12H IST display
+  const formatTime12H = (h, m) => {
+    const period = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    const mStr = m < 10 ? `0${m}` : m;
+    const hStr = h12 < 10 ? `0${h12}` : h12;
+    return `${hStr}:${mStr} ${period} IST`;
+  };
+
   // Save Daily Notification Settings
   const handleSaveDailySettings = async (e) => {
     e.preventDefault();
@@ -234,8 +247,8 @@ export default function NotificationsAdmin() {
 
     const settingsObj = {
       enabled: dailyEnabled,
-      hour: 6,
-      minute: 0,
+      hour: parseInt(dailyHour, 10),
+      minute: parseInt(dailyMinute, 10),
       timezone: "Asia/Kolkata",
       title: dailyTitle,
       message: dailyMessage,
@@ -259,7 +272,7 @@ export default function NotificationsAdmin() {
         console.log("Backend sync skipped:", bErr.message);
       }
 
-      setDailyStatusMsg({ text: "✅ Daily 6:00 AM IST notification settings saved!", isError: false });
+      setDailyStatusMsg({ text: `✅ Daily notification scheduled for ${formatTime12H(dailyHour, dailyMinute)} saved!`, isError: false });
     } catch (err) {
       setDailyStatusMsg({ text: "❌ Error saving daily settings: " + err.message, isError: true });
     } finally {
@@ -273,7 +286,7 @@ export default function NotificationsAdmin() {
       <div style={styles.headerBanner}>
         <h2 style={styles.headerTitle}>🔔 FCM Notification Management Center</h2>
         <p style={styles.headerSubtitle}>
-          Dispatch manual push notifications, configure 6:00 AM IST daily earning reminders, and track delivery history.
+          Dispatch manual push notifications, configure dynamic daily automated earning reminders, and track delivery history.
         </p>
       </div>
 
@@ -421,10 +434,10 @@ export default function NotificationsAdmin() {
           </form>
         </div>
 
-        {/* ================= SECTION B: DAILY 6:00 AM IST SETTINGS ================= */}
+        {/* ================= SECTION B: DYNAMIC DAILY NOTIFICATION SETTINGS ================= */}
         <div style={styles.card}>
-          <h3 style={styles.cardTitle}>⏰ Daily 6:00 AM IST Earning Notification</h3>
-          <p style={styles.cardDesc}>Automatically schedules and dispatches daily reward notifications at 6:00 AM IST.</p>
+          <h3 style={styles.cardTitle}>⏰ Daily Automated Earning Notification</h3>
+          <p style={styles.cardDesc}>Set custom daily dispatch timing in IST. The backend dispatches notifications automatically at your exact chosen time.</p>
 
           {dailyStatusMsg.text && (
             <div style={dailyStatusMsg.isError ? styles.errorBox : styles.successBox}>
@@ -437,7 +450,7 @@ export default function NotificationsAdmin() {
             <div style={styles.toggleRow}>
               <div>
                 <strong style={{ fontSize: 15, color: "#1E293B" }}>Enable Daily Auto Notification</strong>
-                <div style={{ fontSize: 12, color: "#64748B" }}>Timezone: Asia/Kolkata (IST) at 06:00 AM</div>
+                <div style={{ fontSize: 12, color: "#64748B" }}>Timezone: Asia/Kolkata (IST)</div>
               </div>
               <label style={styles.switch}>
                 <input
@@ -449,9 +462,42 @@ export default function NotificationsAdmin() {
               </label>
             </div>
 
-            {/* Fixed Time Indicator */}
+            {/* Dynamic Time Selectors */}
+            <div style={styles.rowTwoCols}>
+              <div style={styles.fieldGroup}>
+                <label style={styles.label}>Daily Dispatch Hour (IST)</label>
+                <select
+                  value={dailyHour}
+                  onChange={(e) => setDailyHour(parseInt(e.target.value, 10))}
+                  style={styles.select}
+                >
+                  {Array.from({ length: 24 }).map((_, h) => (
+                    <option key={h} value={h}>
+                      {h < 10 ? `0${h}` : h}:00 ({h >= 12 ? `${h === 12 ? 12 : h - 12} PM` : `${h === 0 ? 12 : h} AM`})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={styles.fieldGroup}>
+                <label style={styles.label}>Daily Dispatch Minute</label>
+                <select
+                  value={dailyMinute}
+                  onChange={(e) => setDailyMinute(parseInt(e.target.value, 10))}
+                  style={styles.select}
+                >
+                  {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
+                    <option key={m} value={m}>
+                      :{m < 10 ? `0${m}` : m}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Dynamic Time Indicator Badge */}
             <div style={styles.infoBadge}>
-              🕒 Scheduled Time: <strong>06:00 AM IST</strong> (Spring Boot Scheduler `@Scheduled(cron = "0 0 6 * * *", zone = "Asia/Kolkata")`)
+              🕒 Scheduled Daily Time: <strong>{formatTime12H(dailyHour, dailyMinute)}</strong> (Asia/Kolkata timezone)
             </div>
 
             {/* Daily Title */}
