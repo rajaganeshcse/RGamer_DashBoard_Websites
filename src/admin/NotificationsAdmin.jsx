@@ -141,14 +141,21 @@ export default function NotificationsAdmin() {
       setStatusMsg({ text: "Please enter a notification message", isError: true });
       return;
     }
+    if (audience === "SPECIFIC_USER" && !targetUserId) {
+      setStatusMsg({ text: "Please select a target user", isError: true });
+      return;
+    }
 
     setSending(true);
     setStatusMsg({ text: "Sending notification...", isError: false });
 
+    // Clean blob: URLs from imageUrl to prevent FCM payload errors
+    const safeImageUrl = (imageUrl && imageUrl.startsWith("http") && !imageUrl.startsWith("blob:")) ? imageUrl : "";
+
     const payload = {
       title,
       message,
-      imageUrl,
+      imageUrl: safeImageUrl,
       notificationType,
       screen,
       audience,
@@ -180,7 +187,7 @@ export default function NotificationsAdmin() {
           notificationId: notifId,
           title,
           message,
-          imageUrl: imageUrl || "",
+          imageUrl: safeImageUrl,
           notificationType,
           screen,
           audience,
@@ -206,7 +213,7 @@ export default function NotificationsAdmin() {
           notificationId: notifId,
           title,
           message,
-          imageUrl: imageUrl || "",
+          imageUrl: safeImageUrl,
           notificationType,
           screen,
           audience,
