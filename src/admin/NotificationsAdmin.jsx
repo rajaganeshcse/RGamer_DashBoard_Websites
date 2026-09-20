@@ -173,13 +173,20 @@ export default function NotificationsAdmin() {
 
       if (res.ok) {
         const result = await res.json();
-        setStatusMsg({
-          text: `✅ Notification sent! Recipients: ${result.totalRecipients}, Successful: ${result.successfulCount}`,
-          isError: false,
-        });
-        setTitle("");
-        setMessage("");
-        setImageUrl("");
+        if (result.totalRecipients === 0) {
+          setStatusMsg({
+            text: `⚠️ Notification processed, but 0 active FCM device tokens were found in Firestore. Make sure users have logged in on the mobile app!`,
+            isError: true,
+          });
+        } else {
+          setStatusMsg({
+            text: `✅ Notification dispatched! Target devices: ${result.totalRecipients}, Successfully delivered: ${result.successfulCount}`,
+            isError: false,
+          });
+          setTitle("");
+          setMessage("");
+          setImageUrl("");
+        }
       } else {
         // Fallback Firestore direct document record
         const notifId = "notif_" + Date.now();
