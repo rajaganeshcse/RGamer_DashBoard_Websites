@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { db, auth } from "../firebase"; // ✅ CORRECT IMPORT
+import { db, auth } from "./Firebase";
 
 function Firebase() {
   const [users, setUsers] = useState([]);

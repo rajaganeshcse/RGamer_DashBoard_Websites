@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../firebase";
+import { db } from "../Firebase";
 import { collection, onSnapshot, doc, getDoc, setDoc, addDoc, serverTimestamp } from "firebase/firestore";
 
 export default function NotificationsAdmin() {
