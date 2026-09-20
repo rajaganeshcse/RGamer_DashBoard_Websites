@@ -184,15 +184,15 @@ export default function NotificationsAdmin() {
           notificationType,
           screen,
           audience,
+          targetUserId: audience === "SPECIFIC_USER" ? targetUserId : "",
           totalRecipients: audience === "ALL_USERS" ? users.length : 1,
-          successfulCount: audience === "ALL_USERS" ? users.length : 1,
+          successfulCount: 0,
           failedCount: 0,
-          status: "SENT",
-          sentAt: new Date().toISOString(),
+          status: "PENDING",
           createdAt: new Date().toISOString(),
           createdBy: "admin",
         });
-        setStatusMsg({ text: "✅ Notification logged to Firestore!", isError: false });
+        setStatusMsg({ text: "✅ Notification queued in Firestore! Backend will dispatch FCM push shortly.", isError: false });
         setTitle("");
         setMessage("");
         setImageUrl("");
@@ -210,15 +210,15 @@ export default function NotificationsAdmin() {
           notificationType,
           screen,
           audience,
+          targetUserId: audience === "SPECIFIC_USER" ? targetUserId : "",
           totalRecipients: audience === "ALL_USERS" ? users.length : 1,
-          successfulCount: audience === "ALL_USERS" ? users.length : 1,
+          successfulCount: 0,
           failedCount: 0,
-          status: "SENT",
-          sentAt: new Date().toISOString(),
+          status: "PENDING",
           createdAt: new Date().toISOString(),
           createdBy: "admin",
         });
-        setStatusMsg({ text: "✅ Notification dispatched to Firestore!", isError: false });
+        setStatusMsg({ text: "✅ Notification queued in Firestore! Backend will dispatch FCM push shortly.", isError: false });
         setTitle("");
         setMessage("");
         setImageUrl("");
