@@ -17,6 +17,9 @@ const Header = () => {
       </div>
 
       <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+        <button className="login-btn" onClick={() => navigate("/admin/notifications")} style={{ background: "linear-gradient(135deg, #1E1B4B, #3B82F6)" }}>
+          🔔 Notifications
+        </button>
         <button className="login-btn" onClick={() => navigate("/admin/LuckyDrawAdmin")}>
           🎯 Lucky Draw Admin
         </button>
