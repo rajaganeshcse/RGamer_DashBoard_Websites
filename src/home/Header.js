@@ -7,24 +7,31 @@ const Header = () => {
 
   return (
     <header className="header">
-      <div className="logo" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
-        🎮 Ganesh Gaming Portal
+      <div className="logo" onClick={() => navigate("/admin/dashboard")} style={{ cursor: "pointer" }}>
+        <span className="logo-icon">🎮</span>
+        <span className="logo-text">RGamer Admin Portal</span>
       </div>
 
-      <div className="search-box">
-        <input type="text" placeholder="Search users, draws..." />
-        <button>Search</button>
-      </div>
+      <div className="header-actions">
+        <button
+          className="header-btn nav-notifications"
+          onClick={() => navigate("/admin/notifications")}
+        >
+          <span>🔔</span> Notifications & IST
+        </button>
 
-      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-        <button className="login-btn" onClick={() => navigate("/admin/notifications")} style={{ background: "linear-gradient(135deg, #1E1B4B, #3B82F6)" }}>
-          🔔 Notifications
+        <button
+          className="header-btn nav-draw"
+          onClick={() => navigate("/admin/LuckyDrawAdmin")}
+        >
+          <span>🎯</span> Lucky Draw Admin
         </button>
-        <button className="login-btn" onClick={() => navigate("/admin/LuckyDrawAdmin")}>
-          🎯 Lucky Draw Admin
-        </button>
-        <button className="login-btn" onClick={() => navigate("/admin")} style={{ background: "linear-gradient(135deg, #6A1BFF, #2563eb)" }}>
-          🔒 Admin Login
+
+        <button
+          className="header-btn nav-login"
+          onClick={() => navigate("/admin")}
+        >
+          <span>🔒</span> Admin Portal Login
         </button>
       </div>
     </header>
@@ -32,4 +39,3 @@ const Header = () => {
 };
 
 export default Header;
-

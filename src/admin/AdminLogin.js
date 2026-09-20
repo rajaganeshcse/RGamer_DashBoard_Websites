@@ -26,96 +26,111 @@ export default function AdminLogin() {
   };
 
   return (
-    <div style={styles.container}>
-      <form onSubmit={handleLogin} style={styles.card}>
-        <h2 style={styles.title}>Admin Login</h2>
-        <p style={styles.subtitle}>Access Admin Dashboard</p>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "20px",
+        background: "radial-gradient(ellipse at center, #1E1B4B 0%, #090D16 70%)"
+      }}
+      className="animate-fade-in"
+    >
+      <form
+        onSubmit={handleLogin}
+        className="glass-card"
+        style={{
+          padding: "44px 38px",
+          width: "100%",
+          maxWidth: "400px",
+          textAlign: "center",
+          borderColor: "rgba(99, 102, 241, 0.3)"
+        }}
+      >
+        <div
+          style={{
+            fontSize: "42px",
+            width: "72px",
+            height: "72px",
+            borderRadius: "20px",
+            background: "rgba(99, 102, 241, 0.15)",
+            border: "1px solid rgba(99, 102, 241, 0.3)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 20px auto"
+          }}
+        >
+          🔐
+        </div>
 
-        {error && <div style={styles.errorBanner}>{error}</div>}
+        <h2 style={{ margin: 0, fontSize: "24px", fontWeight: "800", color: "#F8FAFC" }}>
+          Admin Authentication
+        </h2>
+        <p style={{ margin: "6px 0 24px 0", fontSize: "14px", color: "#94A3B8" }}>
+          Enter credentials to access RGamer Portal
+        </p>
 
-        <input
-          type="email"
-          placeholder="Admin Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={styles.input}
-        />
+        {error && (
+          <div
+            style={{
+              background: "rgba(239, 68, 68, 0.15)",
+              color: "#F87171",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              padding: "12px",
+              borderRadius: "10px",
+              marginBottom: "20px",
+              fontSize: "13px",
+              fontWeight: "600",
+              textAlign: "left"
+            }}
+          >
+            ⚠️ {error}
+          </div>
+        )}
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={styles.input}
-        />
+        <div style={{ textAlign: "left", marginBottom: "16px" }}>
+          <label style={{ fontSize: "12px", fontWeight: "700", color: "#94A3B8", display: "block", marginBottom: "6px" }}>
+            ADMIN EMAIL
+          </label>
+          <input
+            type="email"
+            placeholder="admin@rewardsplanet.app"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="form-input"
+          />
+        </div>
 
-        <button type="submit" disabled={loading} style={styles.button}>
-          {loading ? "Authenticating..." : "Login"}
+        <div style={{ textAlign: "left", marginBottom: "24px" }}>
+          <label style={{ fontSize: "12px", fontWeight: "700", color: "#94A3B8", display: "block", marginBottom: "6px" }}>
+            PASSWORD
+          </label>
+          <input
+            type="password"
+            placeholder="••••••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="form-input"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="btn-glow"
+          style={{ width: "100%", justifyContent: "center", padding: "12px" }}
+        >
+          {loading ? "Verifying Credentials..." : "Authenticate & Open Dashboard →"}
         </button>
+
+        <div style={{ marginTop: "24px", fontSize: "12px", color: "#64748B" }}>
+          Encrypted Connection • Secure Portal Access
+        </div>
       </form>
     </div>
   );
 }
-
-/* ================= STYLES ================= */
-
-const styles = {
-  container: {
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "linear-gradient(135deg, #1e1e2f, #2b2b45)",
-    fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif"
-  },
-  card: {
-    background: "#fff",
-    padding: "40px 35px",
-    width: "320px",
-    borderRadius: "12px",
-    boxShadow: "0 15px 35px rgba(0,0,0,0.25)",
-    textAlign: "center"
-  },
-  title: {
-    margin: 0,
-    fontSize: "24px",
-    fontWeight: 600,
-    color: "#333"
-  },
-  subtitle: {
-    margin: "10px 0 20px",
-    fontSize: "14px",
-    color: "#777"
-  },
-  errorBanner: {
-    background: "#fee2e2",
-    color: "#991b1b",
-    padding: "10px",
-    borderRadius: "6px",
-    marginBottom: "15px",
-    fontSize: "13px"
-  },
-  input: {
-    width: "100%",
-    padding: "12px 14px",
-    marginBottom: "15px",
-    borderRadius: "8px",
-    border: "1px solid #ccc",
-    fontSize: "14px",
-    boxSizing: "border-box"
-  },
-  button: {
-    width: "100%",
-    padding: "12px",
-    background: "#5b5bff",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    fontSize: "16px",
-    fontWeight: 500,
-    cursor: "pointer",
-    transition: "all 0.3s ease"
-  }
-};
