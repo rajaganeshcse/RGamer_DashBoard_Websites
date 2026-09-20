@@ -141,6 +141,10 @@ export default function NotificationsAdmin() {
       setStatusMsg({ text: "Please enter a notification message", isError: true });
       return;
     }
+    if (title.includes(":APA91b") || message.includes(":APA91b") || (title.length > 90 && !title.includes(" "))) {
+      setStatusMsg({ text: "❌ Invalid content: Title or message contains an FCM token string!", isError: true });
+      return;
+    }
     if (audience === "SPECIFIC_USER" && !targetUserId) {
       setStatusMsg({ text: "Please select a target user", isError: true });
       return;
