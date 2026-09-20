@@ -13,6 +13,7 @@ import CreateLuckyDraw from "./admin/CreateLuckyDraw";
 import LuckyDrawUsers from "./admin/LuckyDrawUsers";
 import WinnerHistory from "./admin/WinnerHistory";
 import DeleteRequests from "./admin/DeleteRequests";
+import NotificationsAdmin from "./admin/NotificationsAdmin";
 import ProtectedRoute from "./admin/ProtectedRoute";
 
 // 🔥 AUTO LUCKY DRAW WATCHER
@@ -39,6 +40,7 @@ const AppRoutes = () => {
           {/* 🔒 PROTECTED ADMIN DASHBOARD ROUTES */}
           <Route element={<ProtectedRoute />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/notifications" element={<NotificationsAdmin />} />
             <Route path="/admin/createtour" element={<CreateTournament />} />
             <Route path="/admin/LuckyDrawAdmin" element={<LuckyDrawAdmin />} />
             <Route path="/admin/createluckydraw" element={<CreateLuckyDraw />} />

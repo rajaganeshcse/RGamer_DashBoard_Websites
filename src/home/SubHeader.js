@@ -14,6 +14,9 @@ const SubHeader = () => {
         <li className={isActive("/user") || isActive("/") ? "active" : ""} onClick={() => navigate("/user")}>
           👤 Users
         </li>
+        <li className={isActive("/admin/notifications") ? "active" : ""} onClick={() => navigate("/admin/notifications")}>
+          🔔 Notifications
+        </li>
         <li className={isActive("/redeem") ? "active" : ""} onClick={() => navigate("/redeem")}>
           💳 Redeem Requests
         </li>

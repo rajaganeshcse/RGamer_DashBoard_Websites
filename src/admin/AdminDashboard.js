@@ -19,6 +19,13 @@ export default function AdminDashboard() {
       {/* ── QUICK NAV CARDS ── */}
       <div style={styles.navGrid}>
         <NavCard
+          icon="🔔"
+          label="Notifications"
+          desc="Send FCM & 6 AM daily IST alerts"
+          color="#3B82F6"
+          onClick={() => navigate("/admin/notifications")}
+        />
+        <NavCard
           icon="🏆"
           label="Tournaments"
           desc="Create & manage tournaments"
