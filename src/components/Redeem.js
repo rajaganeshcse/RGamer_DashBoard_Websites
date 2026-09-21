@@ -7,18 +7,28 @@ import {
   doc,
   updateDoc,
   setDoc,
-  getDoc
+  getDoc,
+  addDoc,
+  serverTimestamp
 } from "firebase/firestore";
 import { db } from "../Firebase";
 
 export default function Redeem() {
-  const [activeTab, setActiveTab] = useState("REQUESTS"); // "REQUESTS" or "CONFIG"
+  const [activeTab, setActiveTab] = useState("REQUESTS"); // "REQUESTS", "INVENTORY", or "CONFIG"
   const [requests, setRequests] = useState([]);
+  const [withdrawalCodes, setWithdrawalCodes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [voucherInput, setVoucherInput] = useState({});
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState(null);
+
+  // Bulk Code Add Form State
+  const [bulkMethod, setBulkMethod] = useState("GOOGLE_PLAY");
+  const [bulkAmount, setBulkAmount] = useState("100");
+  const [bulkCodesInput, setBulkCodesInput] = useState("");
+  const [isSubmittingBulk, setIsSubmittingBulk] = useState(false);
+  const [inventoryFilterMethod, setInventoryFilterMethod] = useState("ALL");
 
   // Reward Config State
   const [config, setConfig] = useState({
@@ -55,15 +65,26 @@ export default function Redeem() {
   const [savingConfig, setSavingConfig] = useState(false);
   const [newTier, setNewTier] = useState({ type: "upi", coins: "", amount: "" });
 
+  const normalizeMethodName = (m) => {
+    if (!m) return "";
+    const upper = m.toUpperCase().trim();
+    if (upper === "GOOGLE" || upper === "GOOGLE_PLAY" || upper === "GOOGLEPLAY") return "GOOGLE_PLAY";
+    if (upper === "AMAZON" || upper === "AMAZON_PAY") return "AMAZON";
+    if (upper === "PHONEPE" || upper === "PHONE_PE") return "PHONEPE";
+    if (upper === "UPI") return "UPI";
+    if (upper === "BANK") return "BANK";
+    return upper;
+  };
+
   useEffect(() => {
     // 1. Fetch Redemption Requests
-    const q = query(
+    const qRequests = query(
       collection(db, "redeem_requests"),
       orderBy("created_at", "desc")
     );
 
-    const unsub = onSnapshot(
-      q,
+    const unsubRequests = onSnapshot(
+      qRequests,
       (snapshot) => {
         const list = snapshot.docs.map((doc) => ({
           id: doc.id,
@@ -73,12 +94,28 @@ export default function Redeem() {
         setLoading(false);
       },
       (error) => {
-        console.error("Firestore error:", error);
+        console.error("Firestore error fetching requests:", error);
         setLoading(false);
       }
     );
 
-    // 2. Fetch Reward Settings & Options
+    // 2. Fetch Withdrawal Codes (Inventory)
+    const qCodes = collection(db, "withdrawal_codes");
+    const unsubCodes = onSnapshot(
+      qCodes,
+      (snapshot) => {
+        const list = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setWithdrawalCodes(list);
+      },
+      (error) => {
+        console.error("Firestore error fetching withdrawal codes:", error);
+      }
+    );
+
+    // 3. Fetch Reward Settings & Options
     const fetchConfig = async () => {
       try {
         const configDoc = await getDoc(doc(db, "settings", "reward_config"));
@@ -92,12 +129,15 @@ export default function Redeem() {
 
     fetchConfig();
 
-    return () => unsub();
+    return () => {
+      unsubRequests();
+      unsubCodes();
+    };
   }, []);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 3500);
   };
 
   /* ================= SAVE REWARD CONFIG ================= */
@@ -220,7 +260,127 @@ export default function Redeem() {
     }
   };
 
-  // Filtered list
+  /* ================= BULK ADD CODES (INVENTORY) ================= */
+  const handleBulkAddCodes = async (e) => {
+    e.preventDefault();
+    const amountNum = Number(bulkAmount);
+    if (!amountNum || amountNum <= 0) {
+      alert("Please specify a valid amount.");
+      return;
+    }
+
+    const lines = bulkCodesInput
+      .split("\n")
+      .map((c) => c.trim())
+      .filter((c) => c.length > 0);
+
+    const uniqueCodes = Array.from(new Set(lines));
+
+    if (uniqueCodes.length === 0) {
+      alert("Please enter at least one non-empty code.");
+      return;
+    }
+
+    setIsSubmittingBulk(true);
+
+    try {
+      let addedCount = 0;
+      let allocatedCount = 0;
+
+      // 1. Send to Backend REST API if running
+      try {
+        const response = await fetch("http://localhost:8080/api/admin/withdrawal-codes/bulk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            method: bulkMethod,
+            amount: amountNum,
+            codes: uniqueCodes
+          })
+        });
+
+        if (response.ok) {
+          const resData = await response.json();
+          if (resData.status) {
+            showToast(`🎉 Backend: ${resData.message}`);
+            setBulkCodesInput("");
+            setIsSubmittingBulk(false);
+            return;
+          }
+        }
+      } catch (netErr) {
+        console.log("Backend API not reachable directly, falling back to direct Firestore insertion & auto-allocation.");
+      }
+
+      // 2. Direct Firestore insertion + FIFO Auto-Allocation Fallback
+      // Find matching pending requests for FIFO allocation
+      const pendingForMethod = requests
+        .filter((r) => {
+          const rMethod = normalizeMethodName(r.type);
+          const rStatus = (r.status || "pending").toUpperCase();
+          return rMethod === bulkMethod && Number(r.amount) === amountNum && (rStatus === "PENDING" || rStatus === "PENDING_CODE");
+        })
+        .sort((a, b) => (a.created_at || 0) - (b.created_at || 0));
+
+      let pendingIndex = 0;
+
+      for (const codeStr of uniqueCodes) {
+        // Check duplicate locally
+        const exists = withdrawalCodes.some(
+          (c) => normalizeMethodName(c.method) === bulkMethod && Number(c.amount) === amountNum && c.code === codeStr
+        );
+        if (exists) continue;
+
+        let codeStatus = "AVAILABLE";
+        let allocatedTo = null;
+        let withdrawalRequestId = null;
+        let allocatedAt = null;
+
+        // Auto allocate to pending request if available
+        if (pendingIndex < pendingForMethod.length) {
+          const reqToFulfill = pendingForMethod[pendingIndex];
+          codeStatus = "ALLOCATED";
+          allocatedTo = reqToFulfill.uid || reqToFulfill.username || reqToFulfill.email || "User";
+          withdrawalRequestId = reqToFulfill.id;
+          allocatedAt = Date.now();
+
+          // Update redeem_request document
+          await updateDoc(doc(db, "redeem_requests", reqToFulfill.id), {
+            status: "success",
+            voucher_code: codeStr,
+            voucher_added_at: Date.now()
+          });
+
+          allocatedCount++;
+          pendingIndex++;
+        }
+
+        // Add code document to withdrawal_codes
+        await addDoc(collection(db, "withdrawal_codes"), {
+          method: bulkMethod,
+          amount: amountNum,
+          code: codeStr,
+          status: codeStatus,
+          createdAt: serverTimestamp(),
+          allocatedAt: allocatedAt,
+          allocatedTo: allocatedTo,
+          withdrawalRequestId: withdrawalRequestId
+        });
+
+        addedCount++;
+      }
+
+      showToast(`✅ Added ${addedCount} code(s). ${allocatedCount} auto-allocated to pending requests!`);
+      setBulkCodesInput("");
+    } catch (err) {
+      console.error("Failed to add bulk codes:", err);
+      showToast("❌ Failed to add codes to inventory", "error");
+    } finally {
+      setIsSubmittingBulk(false);
+    }
+  };
+
+  // Filtered Redemption Requests
   const filteredRequests = requests.filter((req) => {
     const matchStatus =
       filterStatus === "ALL" ||
@@ -238,17 +398,48 @@ export default function Redeem() {
     return matchStatus && matchSearch;
   });
 
-  const pendingCount = requests.filter((r) => (r.status || "pending") === "pending").length;
-  const successCount = requests.filter((r) => r.status === "success").length;
+  const pendingCount = requests.filter((r) => (r.status || "pending").toLowerCase() === "pending").length;
+  const successCount = requests.filter((r) => (r.status || "").toLowerCase() === "success").length;
   const totalAmountPaid = requests
-    .filter((r) => r.status === "success")
+    .filter((r) => (r.status || "").toLowerCase() === "success")
     .reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
+
+  // Code Inventory Metrics
+  const totalAvailableCodes = withdrawalCodes.filter((c) => c.status === "AVAILABLE").length;
+  const totalAllocatedCodes = withdrawalCodes.filter((c) => c.status === "ALLOCATED").length;
+  const pendingCodeRequestsCount = requests.filter((r) => {
+    const m = normalizeMethodName(r.type);
+    const st = (r.status || "pending").toLowerCase();
+    return (m === "GOOGLE_PLAY" || m === "AMAZON" || m === "PHONEPE") && st === "pending";
+  }).length;
+
+  // Group Withdrawal Codes by Method & Amount
+  const codeInventoryGroups = {};
+  withdrawalCodes.forEach((c) => {
+    const m = normalizeMethodName(c.method);
+    const amt = Number(c.amount) || 0;
+    const key = `${m}_${amt}`;
+
+    if (!codeInventoryGroups[key]) {
+      codeInventoryGroups[key] = {
+        method: m,
+        amount: amt,
+        available: 0,
+        allocated: 0,
+        codes: []
+      };
+    }
+
+    if (c.status === "AVAILABLE") codeInventoryGroups[key].available++;
+    if (c.status === "ALLOCATED") codeInventoryGroups[key].allocated++;
+    codeInventoryGroups[key].codes.push(c);
+  });
 
   if (loading) {
     return (
       <div style={{ textAlign: "center", padding: "60px 20px" }} className="animate-fade-in">
         <div className="spinner"></div>
-        <p style={{ color: "#94A3B8" }}>Loading Redemption Dashboard...</p>
+        <p style={{ color: "#94A3B8" }}>Loading Redemption & Inventory Dashboard...</p>
       </div>
     );
   }
@@ -275,7 +466,7 @@ export default function Redeem() {
         </div>
       )}
 
-      {/* TOP TAB CONTROLLER & METRICS */}
+      {/* TOP TAB CONTROLLER & HEADER */}
       <div className="glass-card" style={{ padding: "20px 24px", marginBottom: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
           <div>
@@ -283,11 +474,11 @@ export default function Redeem() {
               🏆 Reward &amp; Payout Management
             </h2>
             <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "#94A3B8" }}>
-              Enable/disable payout methods, set coin conversion rates &amp; fulfill user redemption requests.
+              Fulfill user redemption requests, manage Google Play / Gift Code inventory &amp; configure rates.
             </p>
           </div>
 
-          <div style={{ display: "flex", gap: "10px" }}>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
             <button
               onClick={() => setActiveTab("REQUESTS")}
               style={{
@@ -304,6 +495,24 @@ export default function Redeem() {
             >
               💸 User Requests ({requests.length})
             </button>
+
+            <button
+              onClick={() => setActiveTab("INVENTORY")}
+              style={{
+                background: activeTab === "INVENTORY" ? "#6366F1" : "rgba(15, 23, 42, 0.6)",
+                color: "#FFFFFF",
+                border: "1px solid rgba(255,255,255,0.1)",
+                padding: "10px 20px",
+                borderRadius: "10px",
+                fontSize: "13px",
+                fontWeight: "700",
+                cursor: "pointer",
+                transition: "all 0.2s ease"
+              }}
+            >
+              🎟️ Code Inventory ({totalAvailableCodes} Available)
+            </button>
+
             <button
               onClick={() => setActiveTab("CONFIG")}
               style={{
@@ -381,7 +590,7 @@ export default function Redeem() {
               <input
                 type="text"
                 className="form-input"
-                placeholder="Search user, email, UPI..."
+                placeholder="Search user, email, UPI, code..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 style={{ width: "260px" }}
@@ -509,7 +718,233 @@ export default function Redeem() {
       )}
 
       {/* ========================================================
-          TAB 2: REWARD CONFIG & OPTIONS SETTINGS
+          TAB 2: CODE INVENTORY MANAGER (GOOGLE PLAY, AMAZON, PHONEPE)
+          ======================================================== */}
+      {activeTab === "INVENTORY" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          
+          {/* STATS OVERVIEW FOR CODE INVENTORY */}
+          <div className="stats-grid">
+            <div className="stat-card glass-card">
+              <div className="stat-icon" style={{ background: "rgba(16, 185, 129, 0.15)", color: "#10B981" }}>🎟️</div>
+              <div>
+                <div className="stat-value" style={{ color: "#10B981" }}>{totalAvailableCodes}</div>
+                <div className="stat-label">Available Codes in Stock</div>
+              </div>
+            </div>
+
+            <div className="stat-card glass-card">
+              <div className="stat-icon" style={{ background: "rgba(99, 102, 241, 0.15)", color: "#6366F1" }}>🔒</div>
+              <div>
+                <div className="stat-value" style={{ color: "#818CF8" }}>{totalAllocatedCodes}</div>
+                <div className="stat-label">Codes Allocated to Users</div>
+              </div>
+            </div>
+
+            <div className="stat-card glass-card">
+              <div className="stat-icon" style={{ background: "rgba(245, 158, 11, 0.15)", color: "#F59E0B" }}>⌛</div>
+              <div>
+                <div className="stat-value" style={{ color: "#F59E0B" }}>{pendingCodeRequestsCount}</div>
+                <div className="stat-label">Pending Requests Awaiting Codes</div>
+              </div>
+            </div>
+          </div>
+
+          {/* BULK ADD CODE FORM */}
+          <div className="glass-card" style={{ padding: "24px" }}>
+            <div style={{ marginBottom: "16px" }}>
+              <h3 style={{ margin: "0 0 4px 0", color: "#F8FAFC", fontSize: "18px", fontWeight: "700" }}>
+                📥 Bulk Code Inventory Upload
+              </h3>
+              <p style={{ margin: 0, fontSize: "13px", color: "#94A3B8" }}>
+                Add Google Play, Amazon, or PhonePe codes. Newly uploaded codes automatically resolve pending requests in FIFO order!
+              </p>
+            </div>
+
+            <form onSubmit={handleBulkAddCodes} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: "200px" }}>
+                  <label style={{ display: "block", fontSize: "12px", color: "#94A3B8", fontWeight: "600", marginBottom: "4px" }}>
+                    Redemption Method:
+                  </label>
+                  <select
+                    className="form-input"
+                    value={bulkMethod}
+                    onChange={(e) => setBulkMethod(e.target.value)}
+                    style={{ width: "100%", fontWeight: "600" }}
+                  >
+                    <option value="GOOGLE_PLAY">🎮 Google Play Gift Code (GOOGLE_PLAY)</option>
+                    <option value="AMAZON">🛒 Amazon Gift Card (AMAZON)</option>
+                    <option value="PHONEPE">📱 PhonePe Gift Code (PHONEPE)</option>
+                  </select>
+                </div>
+
+                <div style={{ flex: 1, minWidth: "160px" }}>
+                  <label style={{ display: "block", fontSize: "12px", color: "#94A3B8", fontWeight: "600", marginBottom: "4px" }}>
+                    Denomination Amount (₹):
+                  </label>
+                  <select
+                    className="form-input"
+                    value={bulkAmount}
+                    onChange={(e) => setBulkAmount(e.target.value)}
+                    style={{ width: "100%", fontWeight: "600" }}
+                  >
+                    <option value="10">₹10</option>
+                    <option value="25">₹25</option>
+                    <option value="35">₹35</option>
+                    <option value="50">₹50</option>
+                    <option value="100">₹100</option>
+                    <option value="200">₹200</option>
+                    <option value="500">₹500</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "12px", color: "#94A3B8", fontWeight: "600", marginBottom: "4px" }}>
+                  Paste Codes (One code per line):
+                </label>
+                <textarea
+                  className="form-input"
+                  rows={5}
+                  placeholder={`GP100-001\nGP100-002\nGP100-003\nGP100-004`}
+                  value={bulkCodesInput}
+                  onChange={(e) => setBulkCodesInput(e.target.value)}
+                  style={{ fontFamily: "monospace", fontSize: "13px" }}
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={isSubmittingBulk || !bulkCodesInput.trim()}
+                  style={{ padding: "12px 28px", fontSize: "14px", fontWeight: "700" }}
+                >
+                  {isSubmittingBulk ? "Processing & Auto-Allocating..." : "🚀 Upload & Auto-Allocate Codes"}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* INVENTORY GROUPS BREAKDOWN */}
+          <div className="glass-card" style={{ padding: "24px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
+              <h3 style={{ margin: 0, color: "#F8FAFC", fontSize: "18px", fontWeight: "700" }}>
+                📦 Code Inventory Status by Denomination
+              </h3>
+
+              <div style={{ display: "flex", gap: "8px" }}>
+                {["ALL", "GOOGLE_PLAY", "AMAZON", "PHONEPE"].map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setInventoryFilterMethod(m)}
+                    style={{
+                      background: inventoryFilterMethod === m ? "#6366F1" : "rgba(15, 23, 42, 0.6)",
+                      color: "#FFFFFF",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      padding: "6px 12px",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      cursor: "pointer"
+                    }}
+                  >
+                    {m.replace("_", " ")}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {Object.keys(codeInventoryGroups).length === 0 ? (
+              <div style={{ padding: "40px", textAlign: "center", color: "#94A3B8" }}>
+                No codes uploaded yet. Use the bulk uploader above to add codes for Google Play, Amazon, or PhonePe!
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px" }}>
+                {Object.values(codeInventoryGroups)
+                  .filter((group) => inventoryFilterMethod === "ALL" || group.method === inventoryFilterMethod)
+                  .map((group) => {
+                    return (
+                      <div
+                        key={`${group.method}_${group.amount}`}
+                        style={{
+                          background: "rgba(15, 23, 42, 0.8)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          borderRadius: "12px",
+                          padding: "16px"
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                          <div>
+                            <span className="badge badge-info" style={{ textTransform: "uppercase", fontSize: "10px" }}>
+                              {group.method}
+                            </span>
+                            <div style={{ fontSize: "20px", fontWeight: "800", color: "#10B981", marginTop: "4px" }}>
+                              ₹{group.amount}
+                            </div>
+                          </div>
+
+                          <div style={{ textAlign: "right" }}>
+                            <div style={{ fontSize: "13px", fontWeight: "700", color: "#34D399" }}>
+                              {group.available} Available
+                            </div>
+                            <div style={{ fontSize: "12px", color: "#818CF8", marginTop: "2px" }}>
+                              {group.allocated} Allocated
+                            </div>
+                          </div>
+                        </div>
+
+                        <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.06)", margin: "10px 0" }} />
+
+                        <div style={{ maxHeight: "160px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px" }}>
+                          {group.codes.slice(0, 10).map((c) => (
+                            <div
+                              key={c.id}
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                background: "rgba(255,255,255,0.03)",
+                                padding: "6px 10px",
+                                borderRadius: "6px",
+                                fontSize: "12px",
+                                fontFamily: "monospace"
+                              }}
+                            >
+                              <span style={{ color: "#F8FAFC", fontWeight: "600" }}>{c.code}</span>
+                              <span
+                                style={{
+                                  fontSize: "10px",
+                                  padding: "2px 8px",
+                                  borderRadius: "4px",
+                                  fontWeight: "700",
+                                  background: c.status === "AVAILABLE" ? "rgba(16, 185, 129, 0.2)" : "rgba(139, 92, 246, 0.2)",
+                                  color: c.status === "AVAILABLE" ? "#34D399" : "#C084FC"
+                                }}
+                              >
+                                {c.status}
+                              </span>
+                            </div>
+                          ))}
+                          {group.codes.length > 10 && (
+                            <div style={{ fontSize: "11px", color: "#64748B", textAlign: "center", marginTop: "4px" }}>
+                              + {group.codes.length - 10} more codes
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+
+        </div>
+      )}
+
+      {/* ========================================================
+          TAB 3: REWARD CONFIG & OPTIONS SETTINGS
           ======================================================== */}
       {activeTab === "CONFIG" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
