@@ -1,7 +1,20 @@
 import React, { useState, useEffect } from "react";
 import "./ShareEarnManager.css";
+import { db } from "../Firebase";
+import {
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+  doc,
+  setDoc,
+  updateDoc,
+  addDoc,
+  serverTimestamp,
+  getDocs
+} from "firebase/firestore";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "https://app-backend-lutn.onrender.com";
 
 const ShareEarnManager = () => {
   const [activeTab, setActiveTab] = useState("offers"); // offers, add, clicks, conversions, reports, audit
@@ -36,98 +49,150 @@ const ShareEarnManager = () => {
     endDate: ""
   });
 
+  // Realtime Firestore listeners for Offers, Clicks, Conversions, Audit Logs
   useEffect(() => {
-    fetchOffers();
-    fetchReports();
+    setLoading(true);
+
+    // Offers listener
+    const qOffers = query(collection(db, "offers"));
+    const unsubOffers = onSnapshot(qOffers, (snapshot) => {
+      const list = snapshot.docs.map((docSnap) => ({
+        offerId: docSnap.id,
+        ...docSnap.data()
+      }));
+      list.sort((a, b) -> (b.priority || 0) - (a.priority || 0));
+      setOffers(list);
+      setLoading(false);
+    }, (err) => {
+      console.error("Firestore offers listener error, falling back to REST:", err);
+      fetchOffersREST();
+    });
+
+    // Clicks listener
+    const qClicks = query(collection(db, "tracking_clicks"));
+    const unsubClicks = onSnapshot(qClicks, (snapshot) => {
+      const list = snapshot.docs.map((docSnap) => ({
+        clickId: docSnap.id,
+        ...docSnap.data()
+      }));
+      list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setClicks(list);
+    });
+
+    // Conversions listener
+    const qConversions = query(collection(db, "conversions"));
+    const unsubConversions = onSnapshot(qConversions, (snapshot) => {
+      const list = snapshot.docs.map((docSnap) => ({
+        conversionId: docSnap.id,
+        ...docSnap.data()
+      }));
+      list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setConversions(list);
+    });
+
+    // Audit logs listener
+    const qAudit = query(collection(db, "share_earn_audit_logs"));
+    const unsubAudit = onSnapshot(qAudit, (snapshot) => {
+      const list = snapshot.docs.map((docSnap) => ({
+        auditId: docSnap.id,
+        ...docSnap.data()
+      }));
+      list.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      setAuditLogs(list);
+    });
+
+    return () => {
+      unsubOffers();
+      unsubClicks();
+      unsubConversions();
+      unsubAudit();
+    };
   }, []);
 
+  // Compute reports from realtime data
   useEffect(() => {
-    if (activeTab === "offers") fetchOffers();
-    if (activeTab === "clicks") fetchClicks();
-    if (activeTab === "conversions") fetchConversions(statusFilter);
-    if (activeTab === "reports") fetchReports();
-    if (activeTab === "audit") fetchAuditLogs();
-  }, [activeTab, statusFilter]);
+    const totalOffers = offers.length;
+    const totalClicks = clicks.length;
+    const totalConversions = conversions.length;
 
-  const fetchOffers = async () => {
-    setLoading(true);
+    let pendingConversions = 0;
+    let approvedConversions = 0;
+    let rejectedConversions = 0;
+    let reversedConversions = 0;
+    longTotalRewardedCoins(conversions);
+
+    for (let conv of conversions) {
+      const st = (conv.status || "").toUpperCase();
+      if (st === "APPROVED") approvedConversions++;
+      else if (st === "PENDING") pendingConversions++;
+      else if (st === "REJECTED") rejectedConversions++;
+      else if (st === "REVERSED") reversedConversions++;
+    }
+
+    let totalRewardedCoins = 0;
+    for (let conv of conversions) {
+      if ((conv.status || "").toUpperCase() === "APPROVED") {
+        totalRewardedCoins += Number(conv.rewardCoins || 0);
+      }
+    }
+
+    const conversionRate = totalClicks > 0 ? ((approvedConversions / totalClicks) * 100).toFixed(2) : 0;
+
+    setReports({
+      totalOffers,
+      totalClicks,
+      totalConversions,
+      approvedConversions,
+      pendingConversions,
+      rejectedConversions,
+      reversedConversions,
+      totalRewardedCoins,
+      conversionRate
+    });
+  }, [offers, clicks, conversions]);
+
+  function longTotalRewardedCoins(convs) {}
+
+  const fetchOffersREST = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/admin/offers`);
       const data = await res.json();
       if (data.success) setOffers(data.data || []);
     } catch (err) {
-      console.error("Error fetching offers:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchClicks = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/clicks?limit=200`);
-      const data = await res.json();
-      if (data.success) setClicks(data.data || []);
-    } catch (err) {
-      console.error("Error fetching clicks:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchConversions = async (filter) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/conversions?status=${filter}`);
-      const data = await res.json();
-      if (data.success) setConversions(data.data || []);
-    } catch (err) {
-      console.error("Error fetching conversions:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchReports = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/reports`);
-      const data = await res.json();
-      if (data.success) setReports(data.data);
-    } catch (err) {
-      console.error("Error fetching reports:", err);
-    }
-  };
-
-  const fetchAuditLogs = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/audit-logs`);
-      const data = await res.json();
-      if (data.success) setAuditLogs(data.data || []);
-    } catch (err) {
-      console.error("Error fetching audit logs:", err);
-    } finally {
-      setLoading(false);
+      console.error("REST fetch offers failed:", err);
     }
   };
 
   const handleToggleStatus = async (offerId, currentStatus) => {
     const nextStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/offers/${offerId}/status`, {
+      // 1. Direct Firestore update
+      await updateDoc(doc(db, "offers", offerId), {
+        status: nextStatus,
+        updatedAt: Date.now()
+      });
+
+      // Audit Log
+      await addDoc(collection(db, "share_earn_audit_logs"), {
+        actorId: "ADMIN",
+        actorRole: "ADMIN",
+        action: "UPDATE_OFFER_STATUS",
+        entityType: "OFFER",
+        entityId: offerId,
+        oldValue: currentStatus,
+        newValue: nextStatus,
+        timestamp: Date.now()
+      });
+
+      // 2. Also notify Backend API
+      fetch(`${API_BASE_URL}/api/v1/admin/offers/${offerId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nextStatus })
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchOffers();
-        fetchReports();
-      } else {
-        alert(data.error?.message || "Failed to toggle status");
-      }
+      }).catch(() => {});
+
     } catch (err) {
-      alert("Error connecting to server");
+      alert("Failed to toggle offer status: " + err.message);
     }
   };
 
@@ -138,41 +203,81 @@ const ShareEarnManager = () => {
       return;
     }
 
+    const rewardCoinsNum = Number(formData.rewardCoins);
+    const priorityNum = Number(formData.priority);
+
+    const howItWorksList = typeof formData.howItWorks === "string" 
+      ? formData.howItWorks.split("\n").map(s => s.trim()).filter(Boolean)
+      : formData.howItWorks;
+
+    const termsList = typeof formData.termsAndConditions === "string" 
+      ? formData.termsAndConditions.split("\n").map(s => s.trim()).filter(Boolean)
+      : formData.termsAndConditions;
+
+    const offerId = editingOffer 
+      ? editingOffer.offerId 
+      : "OFFER_" + Math.random().toString(36).substring(2, 10).toUpperCase();
+
     const payload = {
-      ...formData,
-      rewardCoins: Number(formData.rewardCoins),
-      priority: Number(formData.priority),
-      howItWorks: typeof formData.howItWorks === "string" ? formData.howItWorks.split("\n").filter(Boolean) : formData.howItWorks,
-      termsAndConditions: typeof formData.termsAndConditions === "string" ? formData.termsAndConditions.split("\n").filter(Boolean) : formData.termsAndConditions,
+      offerId,
+      title: formData.title.trim(),
+      category: formData.category,
+      logoUrl: formData.logoUrl.trim(),
+      bannerUrl: formData.bannerUrl.trim(),
+      shortDescription: formData.shortDescription.trim(),
+      description: formData.description.trim(),
+      destinationUrl: formData.destinationUrl.trim(),
+      conversionEvent: formData.conversionEvent.trim() || "ACCOUNT_COMPLETED",
+      rewardCoins: rewardCoinsNum,
+      howItWorks: howItWorksList,
+      termsAndConditions: termsList,
+      priority: priorityNum,
+      status: formData.status || "ACTIVE",
       startDate: formData.startDate ? new Date(formData.startDate).getTime() : null,
-      endDate: formData.endDate ? new Date(formData.endDate).getTime() : null
+      endDate: formData.endDate ? new Date(formData.endDate).getTime() : null,
+      updatedAt: Date.now()
     };
 
+    if (!editingOffer) {
+      payload.createdAt = Date.now();
+    }
+
     try {
+      // 1. Direct Firestore Save (Guarantees Instant Realtime Sync)
+      await setDoc(doc(db, "offers", offerId), payload, { merge: true });
+
+      // Audit Log Entry
+      await addDoc(collection(db, "share_earn_audit_logs"), {
+        actorId: "ADMIN",
+        actorRole: "ADMIN",
+        action: editingOffer ? "UPDATE_OFFER" : "CREATE_OFFER",
+        entityType: "OFFER",
+        entityId: offerId,
+        oldValue: editingOffer ? editingOffer.title : null,
+        newValue: `${payload.title} (${payload.rewardCoins} coins)`,
+        timestamp: Date.now()
+      });
+
+      // 2. Also Sync via Spring Boot Backend REST API
       const url = editingOffer 
         ? `${API_BASE_URL}/api/v1/admin/offers/${editingOffer.offerId}`
         : `${API_BASE_URL}/api/v1/admin/offers`;
-      
       const method = editingOffer ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(editingOffer ? "Offer Updated Successfully!" : "Offer Created Successfully!");
-        setEditingOffer(null);
-        resetForm();
-        setActiveTab("offers");
-        fetchOffers();
-        fetchReports();
-      } else {
-        alert(data.error?.message || "Failed to save offer");
-      }
+      }).catch((err) => console.log("Backend REST sync warning:", err));
+
+      alert(editingOffer ? "Offer Updated Successfully!" : "Offer Created Successfully!");
+      setEditingOffer(null);
+      resetForm();
+      setActiveTab("offers");
+
     } catch (err) {
-      alert("Error saving offer");
+      console.error("Error saving offer:", err);
+      alert("Failed to save offer: " + err.message);
     }
   };
 
@@ -224,6 +329,7 @@ const ShareEarnManager = () => {
     }
 
     try {
+      // Call Backend REST API for server-side coin transaction processing
       const res = await fetch(`${API_BASE_URL}/api/v1/admin/conversions/${conversionId}/action`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -235,8 +341,6 @@ const ShareEarnManager = () => {
         setShowRejectModal(false);
         setRejectReason("");
         setSelectedConversion(null);
-        fetchConversions(statusFilter);
-        fetchReports();
       } else {
         alert(data.error?.message || `Failed to ${action} conversion`);
       }
@@ -244,6 +348,11 @@ const ShareEarnManager = () => {
       alert("Server connection failed");
     }
   };
+
+  const filteredConversions = conversions.filter((c) => {
+    if (statusFilter === "ALL") return true;
+    return (c.status || "").toUpperCase() === statusFilter;
+  });
 
   return (
     <div className="share-earn-admin-container">
@@ -308,16 +417,16 @@ const ShareEarnManager = () => {
           {editingOffer ? "Edit Offer" : "Create Offer"}
         </button>
         <button className={activeTab === "clicks" ? "tab active" : "tab"} onClick={() => setActiveTab("clicks")}>
-          Tracking Clicks
+          Tracking Clicks ({clicks.length})
         </button>
         <button className={activeTab === "conversions" ? "tab active" : "tab"} onClick={() => setActiveTab("conversions")}>
-          Conversions Manager
+          Conversions Manager ({conversions.length})
         </button>
         <button className={activeTab === "reports" ? "tab active" : "tab"} onClick={() => setActiveTab("reports")}>
           Reports & Performance
         </button>
         <button className={activeTab === "audit" ? "tab active" : "tab"} onClick={() => setActiveTab("audit")}>
-          Audit Trail
+          Audit Trail ({auditLogs.length})
         </button>
       </div>
 
@@ -356,11 +465,11 @@ const ShareEarnManager = () => {
                             <div className="text-sub">{offer.shortDescription}</div>
                           </td>
                           <td><span className="chip-cat">{offer.category}</span></td>
-                          <td><strong className="coin-val">+{offer.rewardCoins?.toLocaleString()} Coins</strong></td>
+                          <td><strong className="coin-val">+{Number(offer.rewardCoins || 0).toLocaleString()} Coins</strong></td>
                           <td><code>{offer.conversionEvent}</code></td>
                           <td>
-                            <span className={`status-pill ${offer.status === "ACTIVE" ? "active" : "inactive"}`}>
-                              {offer.status}
+                            <span className={`status-pill ${(offer.status || "ACTIVE") === "ACTIVE" ? "active" : "inactive"}`}>
+                              {offer.status || "ACTIVE"}
                             </span>
                           </td>
                           <td>
@@ -530,17 +639,17 @@ const ShareEarnManager = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {conversions.length === 0 ? (
+                      {filteredConversions.length === 0 ? (
                         <tr><td colSpan="9" style={{ textAlign: "center", padding: "20px" }}>No conversions found matching "{statusFilter}".</td></tr>
                       ) : (
-                        conversions.map((conv) => (
+                        filteredConversions.map((conv) => (
                           <tr key={conv.conversionId}>
                             <td><code>{conv.conversionId}</code></td>
                             <td><code>{conv.clickId}</code></td>
                             <td>{conv.userId}</td>
                             <td>{conv.offerId}</td>
                             <td>{conv.event}</td>
-                            <td><strong className="coin-val">+{conv.rewardCoins?.toLocaleString()} Coins</strong></td>
+                            <td><strong className="coin-val">+{Number(conv.rewardCoins || 0).toLocaleString()} Coins</strong></td>
                             <td><span className={`status-badge ${conv.status}`}>{conv.status}</span></td>
                             <td>{conv.createdAt ? new Date(conv.createdAt).toLocaleString() : "-"}</td>
                             <td>
