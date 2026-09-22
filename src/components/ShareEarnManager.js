@@ -245,6 +245,11 @@ const ShareEarnManager = () => {
       ? editingOffer.offerId 
       : "OFFER_" + Math.random().toString(36).substring(2, 10).toUpperCase();
 
+    let cleanDest = formData.destinationUrl.trim();
+    if (!cleanDest.startsWith("http://") && !cleanDest.startsWith("https://")) {
+      cleanDest = "https://" + cleanDest;
+    }
+
     const payload = {
       offerId,
       title: formData.title.trim(),
@@ -253,7 +258,7 @@ const ShareEarnManager = () => {
       bannerUrl: formData.bannerUrl.trim(),
       shortDescription: formData.shortDescription.trim(),
       description: formData.description.trim(),
-      destinationUrl: formData.destinationUrl.trim(),
+      destinationUrl: cleanDest,
       conversionEvent: formData.conversionEvent.trim() || "ACCOUNT_COMPLETED",
       rewardCoins: rewardCoinsNum,
       howItWorks: howItWorksList,
@@ -515,7 +520,7 @@ const ShareEarnManager = () => {
                         .filter(o => !searchOffer || (o.title || "").toLowerCase().includes(searchOffer.toLowerCase()))
                         .map((offer) => {
                           const stats = offerAnalytics[offer.offerId] || {};
-                          const trackingPattern = `https://app-backend-lutn.onrender.com/r/{click_id}`;
+                          const directTrackingUrl = `https://app-backend-lutn.onrender.com/r/${offer.offerId}`;
                           return (
                             <tr key={offer.offerId}>
                               <td>
@@ -532,15 +537,31 @@ const ShareEarnManager = () => {
                               </td>
                               <td><strong className="coin-val">+{Number(offer.rewardCoins || 0).toLocaleString()} Coins</strong></td>
                               <td>
-                                <div style={{display:'flex',gap:4,alignItems:'center',flexWrap:'wrap'}}>
-                                  <code style={{fontSize:10,color:'#94a3b8',background:'#0f172a',padding:'2px 4px',borderRadius:3}}>/r/...</code>
+                                <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
+                                  <a
+                                    href={directTrackingUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{padding:'3px 8px',fontSize:11,background:'#4f46e5',color:'#ffffff',borderRadius:5,textDecoration:'none',fontWeight:600,display:'inline-flex',alignItems:'center',gap:4}}
+                                    title="Open and test live redirect link in a new tab"
+                                  >
+                                    🚀 Test /r ↗
+                                  </a>
                                   <button
-                                    style={{padding:'2px 7px',fontSize:11,background:'#1e293b',color:'#94a3b8',border:'1px solid #334155',borderRadius:4,cursor:'pointer'}}
-                                    title="Copy tracking URL format"
-                                    onClick={() => { navigator.clipboard.writeText(trackingPattern).then(() => alert('Tracking URL pattern copied:\n' + trackingPattern + '\n\nUsers generate their own click links via the app.')); }}
-                                  >📋</button>
+                                    style={{padding:'3px 7px',fontSize:11,background:'#1e293b',color:'#38bdf8',border:'1px solid #334155',borderRadius:5,cursor:'pointer',fontWeight:600}}
+                                    title="Copy direct tracking link"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(directTrackingUrl).then(() => alert(`Direct Tracking Link copied:\n${directTrackingUrl}\n\nCan be shared anywhere or tested in any browser. It automatically records a click and redirects to the configured destination URL!`));
+                                    }}
+                                  >
+                                    📋 Copy
+                                  </button>
                                 </div>
-                                {offer.destinationUrl && <div className="text-sub" style={{marginTop:2,fontSize:10,maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={offer.destinationUrl}>{offer.destinationUrl}</div>}
+                                {offer.destinationUrl && (
+                                  <div className="text-sub" style={{marginTop:3,fontSize:10,maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={offer.destinationUrl}>
+                                    🎯 {offer.destinationUrl}
+                                  </div>
+                                )}
                               </td>
                               <td style={{textAlign:'center'}}><strong style={{color:'#38bdf8'}}>{stats.clicks || 0}</strong></td>
                               <td style={{textAlign:'center'}}><span style={{color:'#f59e0b'}}>{stats.pending || 0}</span></td>
