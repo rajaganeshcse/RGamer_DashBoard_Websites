@@ -29,6 +29,8 @@ const ShareEarnManager = () => {
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [editingOffer, setEditingOffer] = useState(null);
+  const [offerAnalytics, setOfferAnalytics] = useState({});
+  const [searchOffer, setSearchOffer] = useState("");
 
   // Form State
   const [formData, setFormData] = useState({
@@ -152,6 +154,30 @@ const ShareEarnManager = () => {
       totalRewardedCoins,
       conversionRate
     });
+  }, [offers, clicks, conversions]);
+
+  // Per-offer analytics from clicks and conversions
+  useEffect(() => {
+    const analytics = {};
+    for (const offer of offers) {
+      analytics[offer.offerId] = { clicks: 0, registrations: 0, claims: 0, pending: 0, approved: 0, rejected: 0 };
+    }
+    for (const clk of clicks) {
+      const oid = clk.offerId;
+      if (!analytics[oid]) analytics[oid] = { clicks: 0, registrations: 0, claims: 0, pending: 0, approved: 0, rejected: 0 };
+      analytics[oid].clicks++;
+      if (clk.registeredAt) analytics[oid].registrations++;
+    }
+    for (const conv of conversions) {
+      const oid = conv.offerId;
+      if (!analytics[oid]) analytics[oid] = { clicks: 0, registrations: 0, claims: 0, pending: 0, approved: 0, rejected: 0 };
+      analytics[oid].claims++;
+      const st = (conv.status || "").toUpperCase();
+      if (st === "PENDING") analytics[oid].pending++;
+      else if (st === "APPROVED") analytics[oid].approved++;
+      else if (st === "REJECTED" || st === "REVERSED") analytics[oid].rejected++;
+    }
+    setOfferAnalytics(analytics);
   }, [offers, clicks, conversions]);
 
   const fetchOffersREST = async () => {
@@ -436,7 +462,10 @@ const ShareEarnManager = () => {
           Conversions Manager ({conversions.length})
         </button>
         <button className={activeTab === "reports" ? "tab active" : "tab"} onClick={() => setActiveTab("reports")}>
-          Reports & Performance
+          Reports &amp; Performance
+        </button>
+        <button className={activeTab === "analytics" ? "tab active" : "tab"} onClick={() => setActiveTab("analytics")}>
+          Per-Offer Analytics
         </button>
         <button className={activeTab === "audit" ? "tab active" : "tab"} onClick={() => setActiveTab("audit")}>
           Audit Trail ({auditLogs.length})
@@ -451,51 +480,89 @@ const ShareEarnManager = () => {
           <>
             {/* 1. OFFERS MANAGEMENT TABLE */}
             {activeTab === "offers" && (
-              <div className="table-responsive">
+              <div>
+                <div style={{marginBottom:12,display:'flex',gap:8,alignItems:'center'}}>
+                  <input
+                    type="text"
+                    placeholder="Search offers..."
+                    value={searchOffer}
+                    onChange={e => setSearchOffer(e.target.value)}
+                    style={{padding:'6px 12px',borderRadius:6,border:'1px solid #334155',background:'#1e293b',color:'#e2e8f0',fontSize:13,width:240}}
+                  />
+                  <span style={{color:'#64748b',fontSize:13}}>{offers.length} total</span>
+                </div>
+                <div className="table-responsive">
                 <table className="admin-table">
                   <thead>
                     <tr>
                       <th>Logo</th>
                       <th>Offer Name</th>
-                      <th>Category</th>
+                      <th>Category / Type</th>
                       <th>Reward Coins</th>
-                      <th>Conversion Event</th>
+                      <th>Tracking Link</th>
+                      <th>Clicks</th>
+                      <th>Pending</th>
+                      <th>Approved</th>
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {offers.length === 0 ? (
-                      <tr><td colSpan="7" style={{ textAlign: "center", padding: "20px" }}>No offers created yet. Click "+ Add New Offer" to create one.</td></tr>
+                      <tr><td colSpan="10" style={{ textAlign: "center", padding: "20px" }}>No offers created yet. Click "+ Add New Offer" to create one.</td></tr>
                     ) : (
-                      offers.map((offer) => (
-                        <tr key={offer.offerId}>
-                          <td>
-                            <img src={offer.logoUrl || "https://placehold.co/40x40?text=LOGO"} alt="Logo" className="offer-logo-thumbnail" />
-                          </td>
-                          <td>
-                            <strong>{offer.title}</strong>
-                            <div className="text-sub">{offer.shortDescription}</div>
-                          </td>
-                          <td><span className="chip-cat">{offer.category}</span></td>
-                          <td><strong className="coin-val">+{Number(offer.rewardCoins || 0).toLocaleString()} Coins</strong></td>
-                          <td><code>{offer.conversionEvent}</code></td>
-                          <td>
-                            <span className={`status-pill ${(offer.status || "ACTIVE") === "ACTIVE" ? "active" : "inactive"}`}>
-                              {offer.status || "ACTIVE"}
-                            </span>
-                          </td>
-                          <td>
-                            <button className="btn-action edit" onClick={() => handleEditClick(offer)}>Edit</button>
-                            <button className={`btn-action toggle ${offer.status === "ACTIVE" ? "deactivate" : "activate"}`} onClick={() => handleToggleStatus(offer.offerId, offer.status)}>
-                              {offer.status === "ACTIVE" ? "Deactivate" : "Activate"}
-                            </button>
-                          </td>
-                        </tr>
-                      ))
+                      offers
+                        .filter(o => !searchOffer || (o.title || "").toLowerCase().includes(searchOffer.toLowerCase()))
+                        .map((offer) => {
+                          const stats = offerAnalytics[offer.offerId] || {};
+                          const trackingPattern = `https://app-backend-lutn.onrender.com/r/{click_id}`;
+                          return (
+                            <tr key={offer.offerId}>
+                              <td>
+                                <img src={offer.logoUrl || "https://placehold.co/40x40?text=LOGO"} alt="Logo" className="offer-logo-thumbnail" />
+                              </td>
+                              <td>
+                                <strong>{offer.title}</strong>
+                                <div className="text-sub">{offer.shortDescription}</div>
+                                {offer.referralCode && <div style={{marginTop:4}}><span style={{background:'#1e293b',color:'#a5b4fc',padding:'2px 8px',borderRadius:4,fontSize:11,fontFamily:'monospace'}}>Code: {offer.referralCode}</span></div>}
+                              </td>
+                              <td>
+                                <span className="chip-cat">{offer.category}</span>
+                                <div style={{fontSize:11,color:'#6366f1',marginTop:3}}>{offer.offerType || 'AFFILIATE'}</div>
+                              </td>
+                              <td><strong className="coin-val">+{Number(offer.rewardCoins || 0).toLocaleString()} Coins</strong></td>
+                              <td>
+                                <div style={{display:'flex',gap:4,alignItems:'center',flexWrap:'wrap'}}>
+                                  <code style={{fontSize:10,color:'#94a3b8',background:'#0f172a',padding:'2px 4px',borderRadius:3}}>/r/...</code>
+                                  <button
+                                    style={{padding:'2px 7px',fontSize:11,background:'#1e293b',color:'#94a3b8',border:'1px solid #334155',borderRadius:4,cursor:'pointer'}}
+                                    title="Copy tracking URL format"
+                                    onClick={() => { navigator.clipboard.writeText(trackingPattern).then(() => alert('Tracking URL pattern copied:\n' + trackingPattern + '\n\nUsers generate their own click links via the app.')); }}
+                                  >📋</button>
+                                </div>
+                                {offer.destinationUrl && <div className="text-sub" style={{marginTop:2,fontSize:10,maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={offer.destinationUrl}>{offer.destinationUrl}</div>}
+                              </td>
+                              <td style={{textAlign:'center'}}><strong style={{color:'#38bdf8'}}>{stats.clicks || 0}</strong></td>
+                              <td style={{textAlign:'center'}}><span style={{color:'#f59e0b'}}>{stats.pending || 0}</span></td>
+                              <td style={{textAlign:'center'}}><strong style={{color: (stats.approved || 0) > 0 ? '#34d399' : '#94a3b8'}}>{stats.approved || 0}</strong></td>
+                              <td>
+                                <span className={`status-pill ${(offer.status || "ACTIVE") === "ACTIVE" ? "active" : "inactive"}`}>
+                                  {offer.status || "ACTIVE"}
+                                </span>
+                              </td>
+                              <td>
+                                <button className="btn-action edit" onClick={() => handleEditClick(offer)}>Edit</button>
+                                <button className={`btn-action toggle ${offer.status === "ACTIVE" ? "deactivate" : "activate"}`} onClick={() => handleToggleStatus(offer.offerId, offer.status)}>
+                                  {offer.status === "ACTIVE" ? "Deactivate" : "Activate"}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
                     )}
                   </tbody>
                 </table>
+              </div>
               </div>
             )}
 
@@ -657,6 +724,8 @@ const ShareEarnManager = () => {
                       <th>IP &amp; Device</th>
                       <th>Clicked At</th>
                       <th>Redirected At</th>
+                      <th>Install</th>
+                      <th>Register</th>
                       <th>Status</th>
                       <th>Conversion ID</th>
                     </tr>
@@ -687,6 +756,8 @@ const ShareEarnManager = () => {
                           </td>
                           <td>{clk.createdAt ? new Date(clk.createdAt).toLocaleString() : "-"}</td>
                           <td>{clk.redirectedAt ? new Date(clk.redirectedAt).toLocaleString() : "-"}</td>
+                          <td style={{textAlign:'center'}}>{clk.installedAt ? <span title={new Date(clk.installedAt).toLocaleString()} style={{color:'#34d399'}}>✅</span> : <span style={{color:'#475569'}}>-</span>}</td>
+                          <td style={{textAlign:'center'}}>{clk.registeredAt ? <span title={clk.registeredUid} style={{color:'#a5b4fc'}}>✅</span> : <span style={{color:'#475569'}}>-</span>}</td>
                           <td><span className={`status-badge ${clk.status}`}>{clk.status}</span></td>
                           <td>{clk.conversionId || "-"}</td>
                         </tr>
@@ -793,7 +864,62 @@ const ShareEarnManager = () => {
               </div>
             )}
 
-            {/* 6. AUDIT TRAIL */}
+            {/* 6. PER-OFFER ANALYTICS */}
+            {activeTab === "analytics" && (
+              <div className="table-responsive">
+                <h3 style={{color:'#e2e8f0',marginBottom:16}}>📈 Per-Campaign Attribution Analytics</h3>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Offer</th>
+                      <th>Category</th>
+                      <th>Reward</th>
+                      <th>Total Clicks</th>
+                      <th>Registrations</th>
+                      <th>Claims</th>
+                      <th>Pending</th>
+                      <th>Approved</th>
+                      <th>Rejected</th>
+                      <th>Conv. Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {offers.length === 0 ? (
+                      <tr><td colSpan="10" style={{ textAlign:"center", padding:"20px" }}>No offers to analyze.</td></tr>
+                    ) : (
+                      offers.map(offer => {
+                        const s = offerAnalytics[offer.offerId] || {};
+                        const convRate = (s.clicks || 0) > 0 ? (((s.approved || 0) / s.clicks) * 100).toFixed(1) : '0.0';
+                        return (
+                          <tr key={offer.offerId}>
+                            <td>
+                              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                                <img src={offer.logoUrl||'https://placehold.co/28x28?text=?'} alt="" style={{width:28,height:28,borderRadius:6,objectFit:'cover'}} />
+                                <div>
+                                  <strong>{offer.title}</strong>
+                                  <div style={{fontSize:11,color:'#6366f1'}}>{offer.offerType||'AFFILIATE'}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td><span className="chip-cat">{offer.category}</span></td>
+                            <td><strong className="coin-val">+{Number(offer.rewardCoins||0).toLocaleString()}</strong></td>
+                            <td style={{textAlign:'center'}}><strong style={{color:'#38bdf8'}}>{s.clicks||0}</strong></td>
+                            <td style={{textAlign:'center'}}><span style={{color:'#a78bfa'}}>{s.registrations||0}</span></td>
+                            <td style={{textAlign:'center'}}><span style={{color:'#fbbf24'}}>{s.claims||0}</span></td>
+                            <td style={{textAlign:'center'}}><span style={{color:'#f59e0b'}}>{s.pending||0}</span></td>
+                            <td style={{textAlign:'center'}}><strong style={{color:'#34d399'}}>{s.approved||0}</strong></td>
+                            <td style={{textAlign:'center'}}><span style={{color:'#f87171'}}>{s.rejected||0}</span></td>
+                            <td style={{textAlign:'center'}}><span style={{color:parseFloat(convRate)>10?'#34d399':parseFloat(convRate)>3?'#fbbf24':'#f87171'}}>{convRate}%</span></td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* 7. AUDIT TRAIL */}
             {activeTab === "audit" && (
               <div className="table-responsive">
                 <table className="admin-table">
