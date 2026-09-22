@@ -339,7 +339,7 @@ export default function NotificationsAdmin() {
             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
               {[
                 { label: "🎁 Daily Bonus", t: "🎁 Your Daily Reward Is Waiting!", m: "Claim your daily bonus coins, spin the wheel, and start earning today!", type: "DAILY_EARNING", scr: "DAILY_BONUS" },
-                { label: "🎮 Weekend Match", t: "🏆 Weekend Esports Tournament Live!", m: "Free Fire & BGMI match rooms are now open. Secure your slot before it's full!", type: "PROMOTION", scr: "GAMES" },
+                { label: "🚀 Share & Earn", t: "🪙 High Reward Share & Earn Offers Active!", m: "New high-payout sponsor offers added! Share with friends or complete tasks to earn big coins!", type: "PROMOTION", scr: "SHARE_EARN" },
                 { label: "🎰 Lucky Draw", t: "🎯 Mega 1000 Coins Lucky Draw Open!", m: "A high-prize lottery event is open. Join now with 1 ticket and win big coins!", type: "PROMOTION", scr: "HOME" },
                 { label: "🚀 Double Coins", t: "⚡ Double Coins Special Rush!", m: "Complete share & earn app tasks now to earn double bonus rewards!", type: "PROMOTION", scr: "TASKS" }
               ].map((tpl, idx) => (

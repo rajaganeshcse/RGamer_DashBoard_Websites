@@ -6,7 +6,6 @@ import Redeem from "./components/Redeem";
 
 // 🔒 ADMIN
 import AdminDashboard from "./admin/AdminDashboard";
-import CreateTournament from "./admin/CreateTournament";
 import LuckyDrawAdmin from "./admin/LuckyDrawAdmin";
 import CreateLuckyDraw from "./admin/CreateLuckyDraw";
 import LuckyDrawUsers from "./admin/LuckyDrawUsers";
@@ -41,7 +40,6 @@ const AppRoutes = () => {
           <Route element={<ProtectedRoute />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/notifications" element={<NotificationsAdmin />} />
-            <Route path="/admin/createtour" element={<CreateTournament />} />
             <Route path="/admin/LuckyDrawAdmin" element={<LuckyDrawAdmin />} />
             <Route path="/admin/createluckydraw" element={<CreateLuckyDraw />} />
             <Route path="/admin/lucky-draw/:drawId" element={<LuckyDrawUsers />} />

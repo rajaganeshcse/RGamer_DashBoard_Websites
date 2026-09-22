@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../Firebase";
-import CreateTournament from "./CreateTournament";
-import TournamentList from "./TournamentList";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -21,9 +19,7 @@ export default function AdminDashboard() {
     totalDrawSlotsFilled: 0,
     activeOffers: 0,
     pendingConversions: 0,
-    pendingDeletions: 0,
-    scheduledMatches: 0,
-    ongoingMatches: 0
+    pendingDeletions: 0
   });
 
   const [recentUsers, setRecentUsers] = useState([]);
@@ -154,26 +150,6 @@ export default function AdminDashboard() {
       (err) => console.error("Deletions metrics error:", err)
     );
 
-    // 6. Tournaments
-    const unsubTournaments = onSnapshot(
-      collection(db, "tournaments"),
-      (snap) => {
-        let scheduled = 0;
-        let ongoing = 0;
-        snap.docs.forEach((d) => {
-          const status = (d.data().status || "").toLowerCase();
-          if (status === "scheduled") scheduled++;
-          if (status === "ongoing") ongoing++;
-        });
-        setMetrics((prev) => ({
-          ...prev,
-          scheduledMatches: scheduled,
-          ongoingMatches: ongoing
-        }));
-      },
-      (err) => console.error("Tournaments metrics error:", err)
-    );
-
     return () => {
       unsubUsers();
       unsubRedeems();
@@ -181,7 +157,6 @@ export default function AdminDashboard() {
       unsubOffers();
       unsubConversions();
       unsubDeletions();
-      unsubTournaments();
     };
   }, []);
 
@@ -458,47 +433,6 @@ export default function AdminDashboard() {
               ))}
             </div>
           )}
-        </div>
-
-      </div>
-
-      {/* ── TOURNAMENTS SECTION ── */}
-      <h3 style={{ fontSize: "14px", fontWeight: "700", color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "16px" }}>
-        🏆 Esports Matches & Tournaments
-      </h3>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
-        
-        {/* CREATE TOURNAMENT */}
-        <div className="glass-card" style={{ padding: "28px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
-            <span style={{ fontSize: "28px" }}>⚔️</span>
-            <div>
-              <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "700", color: "#F8FAFC" }}>
-                Create New Match
-              </h2>
-              <p style={{ margin: "2px 0 0 0", fontSize: "13px", color: "#94A3B8" }}>
-                Set up Free Fire / BGMI matches, prize distribution, entry tickets, and room credentials.
-              </p>
-            </div>
-          </div>
-          <CreateTournament />
-        </div>
-
-        {/* TOURNAMENT LIST */}
-        <div className="glass-card" style={{ padding: "28px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
-            <span style={{ fontSize: "28px" }}>📋</span>
-            <div>
-              <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "700", color: "#F8FAFC" }}>
-                Live & Scheduled Tournament Roster
-              </h2>
-              <p style={{ margin: "2px 0 0 0", fontSize: "13px", color: "#94A3B8" }}>
-                Update match status, input room ID & password, and finalize player winners.
-              </p>
-            </div>
-          </div>
-          <TournamentList />
         </div>
 
       </div>
