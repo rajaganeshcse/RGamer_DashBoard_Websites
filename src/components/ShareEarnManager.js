@@ -230,6 +230,12 @@ const ShareEarnManager = () => {
       return;
     }
 
+    const trimmedDest = formData.destinationUrl.trim();
+    if (trimmedDest.includes("vercel.app/admin") || trimmedDest.includes("/admin/share-earn") || trimmedDest.includes("appdashboard")) {
+      alert("Invalid Destination URL!\n\nYou entered the Admin Dashboard URL. Destination URL must be the actual target app or website (e.g. Google Pay on Play Store or Demat registration link) where the user will be redirected.");
+      return;
+    }
+
     const rewardCoinsNum = Number(formData.rewardCoins);
     const priorityNum = Number(formData.priority);
 
@@ -640,8 +646,23 @@ const ShareEarnManager = () => {
                   </div>
 
                   <div className="form-group full">
-                    <label>Destination / Invite URL (Admin's Own Link or Partner Link) *</label>
-                    <input type="url" value={formData.destinationUrl} onChange={(e) => setFormData({ ...formData, destinationUrl: e.target.value })} placeholder="https://g.co/payinvite/xyz123 or https://upstox.com/open-demat..." required />
+                    <label>🎯 Target Destination URL (Where users will be redirected when clicking the tracking link) *</label>
+                    <div style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:4,marginBottom:6}}>
+                      <span style={{fontSize:11,color:'#94a3b8',alignSelf:'center'}}>Quick Presets:</span>
+                      <button type="button" onClick={() => setFormData({...formData, destinationUrl: 'https://play.google.com/store/apps/details?id=com.google.android.apps.nbu.paisa.user', title: formData.title || 'Google Pay'})} style={{fontSize:11,padding:'2px 8px',borderRadius:4,background:'#1e293b',border:'1px solid #334155',color:'#a5b4fc',cursor:'pointer'}}>⚡ Google Pay</button>
+                      <button type="button" onClick={() => setFormData({...formData, destinationUrl: 'https://play.google.com/store/apps/details?id=com.phonepe.app', title: formData.title || 'PhonePe'})} style={{fontSize:11,padding:'2px 8px',borderRadius:4,background:'#1e293b',border:'1px solid #334155',color:'#a5b4fc',cursor:'pointer'}}>⚡ PhonePe</button>
+                      <button type="button" onClick={() => setFormData({...formData, destinationUrl: 'https://upstox.com/open-demat-account/', title: formData.title || 'Upstox Demat'})} style={{fontSize:11,padding:'2px 8px',borderRadius:4,background:'#1e293b',border:'1px solid #334155',color:'#a5b4fc',cursor:'pointer'}}>⚡ Upstox</button>
+                      <button type="button" onClick={() => setFormData({...formData, destinationUrl: 'https://play.google.com/store/apps/details?id=net.one97.paytm', title: formData.title || 'Paytm'})} style={{fontSize:11,padding:'2px 8px',borderRadius:4,background:'#1e293b',border:'1px solid #334155',color:'#a5b4fc',cursor:'pointer'}}>⚡ Paytm</button>
+                    </div>
+                    <input type="url" value={formData.destinationUrl} onChange={(e) => setFormData({ ...formData, destinationUrl: e.target.value })} placeholder="https://play.google.com/store/apps/details?id=... or https://upstox.com/..." required />
+                    {(formData.destinationUrl.includes("vercel.app") || formData.destinationUrl.includes("/admin") || formData.destinationUrl.includes("appdashboard")) && (
+                      <div style={{color:'#f87171',fontSize:12,marginTop:4,padding:'6px 10px',background:'rgba(239,68,68,0.1)',borderRadius:6,border:'1px solid #ef4444'}}>
+                        ⚠️ Warning: You entered the Admin Dashboard URL! The Destination URL must be the <strong>actual target app or website</strong> (e.g. Google Pay on Play Store or Demat website) that the user visits.
+                      </div>
+                    )}
+                    <small style={{ color: "#64748b", display: "block", marginTop: "4px" }}>
+                      Do not enter the admin website here. Enter the Play Store link, Google Pay invite link, Demat sign-up link, etc.
+                    </small>
                   </div>
 
                   {/* Personal Referral Task Options */}
