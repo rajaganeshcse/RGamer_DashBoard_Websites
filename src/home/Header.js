@@ -29,9 +29,9 @@ const Header = () => {
 
         <button
           className="header-btn nav-login"
-          onClick={() => navigate("/admin")}
+          onClick={() => navigate("/admin/dashboard")}
         >
-          <span>🔒</span> Admin Portal Login
+          <span>📊</span> Admin Dashboard
         </button>
       </div>
     </header>

@@ -1,11 +1,10 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Home from "./home/Home";
 import Users from "./components/Users";
 import Redeem from "./components/Redeem";
 
 // 🔒 ADMIN
-import AdminLogin from "./admin/AdminLogin";
 import AdminDashboard from "./admin/AdminDashboard";
 import CreateTournament from "./admin/CreateTournament";
 import LuckyDrawAdmin from "./admin/LuckyDrawAdmin";
@@ -35,8 +34,8 @@ const AppRoutes = () => {
           <Route path="user" element={<Users />} />
           <Route path="redeem" element={<Redeem />} />
 
-          {/* PUBLIC ADMIN LOGIN */}
-          <Route path="/admin" element={<AdminLogin />} />
+          {/* ADMIN DASHBOARD REDIRECT */}
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
 
           {/* 🔒 PROTECTED ADMIN DASHBOARD ROUTES */}
           <Route element={<ProtectedRoute />}>
