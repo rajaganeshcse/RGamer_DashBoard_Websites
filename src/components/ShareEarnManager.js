@@ -46,7 +46,11 @@ const ShareEarnManager = () => {
     priority: 1,
     status: "ACTIVE",
     startDate: "",
-    endDate: ""
+    endDate: "",
+    offerType: "AFFILIATE",
+    referralCode: "",
+    proofRequired: false,
+    proofLabel: "Enter your registered mobile number or UPI reference ID"
   });
 
   // Realtime Firestore listeners for Offers, Clicks, Conversions, Audit Logs
@@ -60,7 +64,7 @@ const ShareEarnManager = () => {
         offerId: docSnap.id,
         ...docSnap.data()
       }));
-      list.sort((a, b) -> (b.priority || 0) - (a.priority || 0));
+      list.sort((a, b) => (b.priority || 0) - (a.priority || 0));
       setOffers(list);
       setLoading(false);
     }, (err) => {
@@ -119,7 +123,6 @@ const ShareEarnManager = () => {
     let approvedConversions = 0;
     let rejectedConversions = 0;
     let reversedConversions = 0;
-    longTotalRewardedCoins(conversions);
 
     for (let conv of conversions) {
       const st = (conv.status || "").toUpperCase();
@@ -150,8 +153,6 @@ const ShareEarnManager = () => {
       conversionRate
     });
   }, [offers, clicks, conversions]);
-
-  function longTotalRewardedCoins(convs) {}
 
   const fetchOffersREST = async () => {
     try {
@@ -235,6 +236,10 @@ const ShareEarnManager = () => {
       status: formData.status || "ACTIVE",
       startDate: formData.startDate ? new Date(formData.startDate).getTime() : null,
       endDate: formData.endDate ? new Date(formData.endDate).getTime() : null,
+      offerType: formData.offerType || "AFFILIATE",
+      referralCode: formData.referralCode ? formData.referralCode.trim() : "",
+      proofRequired: !!formData.proofRequired,
+      proofLabel: formData.proofLabel ? formData.proofLabel.trim() : "Enter your registered mobile number or UPI reference ID",
       updatedAt: Date.now()
     };
 
@@ -298,7 +303,11 @@ const ShareEarnManager = () => {
       priority: offer.priority || 1,
       status: offer.status || "ACTIVE",
       startDate: offer.startDate ? new Date(offer.startDate).toISOString().slice(0, 16) : "",
-      endDate: offer.endDate ? new Date(offer.endDate).toISOString().slice(0, 16) : ""
+      endDate: offer.endDate ? new Date(offer.endDate).toISOString().slice(0, 16) : "",
+      offerType: offer.offerType || "AFFILIATE",
+      referralCode: offer.referralCode || "",
+      proofRequired: !!offer.proofRequired,
+      proofLabel: offer.proofLabel || "Enter your registered mobile number or UPI reference ID"
     });
     setActiveTab("add");
   };
@@ -319,7 +328,11 @@ const ShareEarnManager = () => {
       priority: 1,
       status: "ACTIVE",
       startDate: "",
-      endDate: ""
+      endDate: "",
+      offerType: "AFFILIATE",
+      referralCode: "",
+      proofRequired: false,
+      proofLabel: "Enter your registered mobile number or UPI reference ID"
     });
   };
 
@@ -493,8 +506,26 @@ const ShareEarnManager = () => {
                 
                 <div className="form-grid">
                   <div className="form-group">
+                    <label>Offer / Campaign Type *</label>
+                    <select
+                      value={formData.offerType}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData({
+                          ...formData,
+                          offerType: val,
+                          proofRequired: val === "REFERRAL_TASK" ? true : formData.proofRequired
+                        });
+                      }}
+                    >
+                      <option value="AFFILIATE">Affiliate Postback / Webhook (Upstox, AngelOne, Demat)</option>
+                      <option value="REFERRAL_TASK">Personal Referral Task (Admin's GPay, PhonePe, Navi, Amazon)</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
                     <label>Offer Name *</label>
-                    <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="e.g. Upstox" required />
+                    <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="e.g. Google Pay" required />
                   </div>
 
                   <div className="form-group">
@@ -521,9 +552,46 @@ const ShareEarnManager = () => {
                   </div>
 
                   <div className="form-group full">
-                    <label>Destination URL (Trusted Partner Target) *</label>
-                    <input type="url" value={formData.destinationUrl} onChange={(e) => setFormData({ ...formData, destinationUrl: e.target.value })} placeholder="https://upstox.com/open-demat..." required />
+                    <label>Destination / Invite URL (Admin's Own Link or Partner Link) *</label>
+                    <input type="url" value={formData.destinationUrl} onChange={(e) => setFormData({ ...formData, destinationUrl: e.target.value })} placeholder="https://g.co/payinvite/xyz123 or https://upstox.com/open-demat..." required />
                   </div>
+
+                  {/* Personal Referral Task Options */}
+                  <div className="form-group">
+                    <label>Admin Referral / Invite Code (Optional)</label>
+                    <input
+                      type="text"
+                      value={formData.referralCode}
+                      onChange={(e) => setFormData({ ...formData, referralCode: e.target.value })}
+                      placeholder="e.g. gpay999 or NAVI123"
+                    />
+                    <small style={{ color: "#64748b", display: "block", marginTop: "4px" }}>
+                      Users can tap to copy this code directly inside the Android app
+                    </small>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Require User Proof Submission?</label>
+                    <select
+                      value={formData.proofRequired ? "YES" : "NO"}
+                      onChange={(e) => setFormData({ ...formData, proofRequired: e.target.value === "YES" })}
+                    >
+                      <option value="YES">Yes - User must submit proof (UPI Ref / Phone) for Admin Approval</option>
+                      <option value="NO">No - Automatic postback conversion</option>
+                    </select>
+                  </div>
+
+                  {formData.proofRequired && (
+                    <div className="form-group full">
+                      <label>Proof Instruction / Prompt for User</label>
+                      <input
+                        type="text"
+                        value={formData.proofLabel}
+                        onChange={(e) => setFormData({ ...formData, proofLabel: e.target.value })}
+                        placeholder="e.g. Enter your Google Pay registered phone number or UPI reference ID"
+                      />
+                    </div>
+                  )}
 
                   <div className="form-group">
                     <label>Logo Image URL</label>
@@ -537,7 +605,7 @@ const ShareEarnManager = () => {
 
                   <div className="form-group full">
                     <label>Short Description</label>
-                    <input type="text" value={formData.shortDescription} onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })} placeholder="e.g. Open a Demat account and complete KYC" />
+                    <input type="text" value={formData.shortDescription} onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })} placeholder="e.g. Send 1st payment on GPay and get 3000 Coins" />
                   </div>
 
                   <div className="form-group full">
@@ -585,6 +653,8 @@ const ShareEarnManager = () => {
                       <th>Click ID</th>
                       <th>User ID</th>
                       <th>Offer ID</th>
+                      <th>User Type</th>
+                      <th>IP &amp; Device</th>
                       <th>Clicked At</th>
                       <th>Redirected At</th>
                       <th>Status</th>
@@ -593,13 +663,28 @@ const ShareEarnManager = () => {
                   </thead>
                   <tbody>
                     {clicks.length === 0 ? (
-                      <tr><td colSpan="7" style={{ textAlign: "center", padding: "20px" }}>No click logs recorded yet.</td></tr>
+                      <tr><td colSpan="9" style={{ textAlign: "center", padding: "20px" }}>No click logs recorded yet.</td></tr>
                     ) : (
                       clicks.map((clk) => (
                         <tr key={clk.clickId}>
                           <td><code>{clk.clickId}</code></td>
                           <td>{clk.userId}</td>
                           <td>{clk.offerId}</td>
+                          <td>
+                            {clk.isNewUser !== false ? (
+                              <span className="badge-new-user">🟢 NEW USER</span>
+                            ) : (
+                              <span className="badge-repeat-user">🟠 REPEAT ({clk.clickCount || 2}+)</span>
+                            )}
+                          </td>
+                          <td>
+                            <div style={{ fontWeight: 600 }}>{clk.ipAddress || "N/A"}</div>
+                            {clk.deviceInfo && (
+                              <div className="text-sub" style={{ fontSize: "11px", maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={clk.deviceInfo}>
+                                {clk.deviceInfo}
+                              </div>
+                            )}
+                          </td>
                           <td>{clk.createdAt ? new Date(clk.createdAt).toLocaleString() : "-"}</td>
                           <td>{clk.redirectedAt ? new Date(clk.redirectedAt).toLocaleString() : "-"}</td>
                           <td><span className={`status-badge ${clk.status}`}>{clk.status}</span></td>
@@ -631,7 +716,7 @@ const ShareEarnManager = () => {
                         <th>Click ID</th>
                         <th>User ID</th>
                         <th>Offer ID</th>
-                        <th>Event</th>
+                        <th>Submitted Proof / Code</th>
                         <th>Reward Coins</th>
                         <th>Status</th>
                         <th>Created Date</th>
@@ -648,16 +733,27 @@ const ShareEarnManager = () => {
                             <td><code>{conv.clickId}</code></td>
                             <td>{conv.userId}</td>
                             <td>{conv.offerId}</td>
-                            <td>{conv.event}</td>
+                            <td>
+                              {conv.proofText || conv.externalReference ? (
+                                <div className="proof-box">
+                                  <div className="proof-text">{conv.proofText || conv.externalReference}</div>
+                                  {conv.referralCodeUsed && (
+                                    <div className="text-sub">Ref Code: <strong>{conv.referralCodeUsed}</strong></div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-sub">-</span>
+                              )}
+                            </td>
                             <td><strong className="coin-val">+{Number(conv.rewardCoins || 0).toLocaleString()} Coins</strong></td>
                             <td><span className={`status-badge ${conv.status}`}>{conv.status}</span></td>
                             <td>{conv.createdAt ? new Date(conv.createdAt).toLocaleString() : "-"}</td>
                             <td>
                               {conv.status === "PENDING" && (
-                                <>
+                                <div style={{ display: "flex", gap: "6px" }}>
                                   <button className="btn-approve" onClick={() => handleConversionAction(conv.conversionId, "APPROVE")}>Approve</button>
                                   <button className="btn-reject" onClick={() => { setSelectedConversion(conv); setShowRejectModal(true); }}>Reject</button>
-                                </>
+                                </div>
                               )}
                               {conv.status === "APPROVED" && (
                                 <button className="btn-reverse" onClick={() => handleConversionAction(conv.conversionId, "REVERSE")}>Reverse</button>
