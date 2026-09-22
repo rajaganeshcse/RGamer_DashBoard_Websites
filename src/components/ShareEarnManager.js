@@ -121,6 +121,13 @@ const ShareEarnManager = () => {
     const totalClicks = clicks.length;
     const totalConversions = conversions.length;
 
+    let totalInstalls = 0;
+    let totalRegistrations = 0;
+    for (let clk of clicks) {
+      if (clk.installedAt) totalInstalls++;
+      if (clk.registeredAt) totalRegistrations++;
+    }
+
     let pendingConversions = 0;
     let approvedConversions = 0;
     let rejectedConversions = 0;
@@ -142,17 +149,23 @@ const ShareEarnManager = () => {
     }
 
     const conversionRate = totalClicks > 0 ? ((approvedConversions / totalClicks) * 100).toFixed(2) : 0;
+    const installRate = totalClicks > 0 ? ((totalInstalls / totalClicks) * 100).toFixed(2) : 0;
+    const registrationRate = totalInstalls > 0 ? ((totalRegistrations / totalInstalls) * 100).toFixed(2) : 0;
 
     setReports({
       totalOffers,
       totalClicks,
+      totalInstalls,
+      totalRegistrations,
       totalConversions,
       approvedConversions,
       pendingConversions,
       rejectedConversions,
       reversedConversions,
       totalRewardedCoins,
-      conversionRate
+      conversionRate,
+      installRate,
+      registrationRate
     });
   }, [offers, clicks, conversions]);
 
@@ -160,17 +173,18 @@ const ShareEarnManager = () => {
   useEffect(() => {
     const analytics = {};
     for (const offer of offers) {
-      analytics[offer.offerId] = { clicks: 0, registrations: 0, claims: 0, pending: 0, approved: 0, rejected: 0 };
+      analytics[offer.offerId] = { clicks: 0, installs: 0, registrations: 0, claims: 0, pending: 0, approved: 0, rejected: 0 };
     }
     for (const clk of clicks) {
       const oid = clk.offerId;
-      if (!analytics[oid]) analytics[oid] = { clicks: 0, registrations: 0, claims: 0, pending: 0, approved: 0, rejected: 0 };
+      if (!analytics[oid]) analytics[oid] = { clicks: 0, installs: 0, registrations: 0, claims: 0, pending: 0, approved: 0, rejected: 0 };
       analytics[oid].clicks++;
+      if (clk.installedAt) analytics[oid].installs = (analytics[oid].installs || 0) + 1;
       if (clk.registeredAt) analytics[oid].registrations++;
     }
     for (const conv of conversions) {
       const oid = conv.offerId;
-      if (!analytics[oid]) analytics[oid] = { clicks: 0, registrations: 0, claims: 0, pending: 0, approved: 0, rejected: 0 };
+      if (!analytics[oid]) analytics[oid] = { clicks: 0, installs: 0, registrations: 0, claims: 0, pending: 0, approved: 0, rejected: 0 };
       analytics[oid].claims++;
       const st = (conv.status || "").toUpperCase();
       if (st === "PENDING") analytics[oid].pending++;
@@ -435,6 +449,20 @@ const ShareEarnManager = () => {
             </div>
           </div>
           <div className="metric-card">
+            <span className="metric-icon">📥</span>
+            <div>
+              <div className="metric-val" style={{color:'#34d399'}}>{reports.totalInstalls || 0}</div>
+              <div className="metric-lbl">App Installs ({reports.installRate || 0}%)</div>
+            </div>
+          </div>
+          <div className="metric-card">
+            <span className="metric-icon">👤</span>
+            <div>
+              <div className="metric-val" style={{color:'#a5b4fc'}}>{reports.totalRegistrations || 0}</div>
+              <div className="metric-lbl">Registrations ({reports.registrationRate || 0}%)</div>
+            </div>
+          </div>
+          <div className="metric-card">
             <span className="metric-icon">✅</span>
             <div>
               <div className="metric-val">{reports.approvedConversions || 0}</div>
@@ -512,6 +540,8 @@ const ShareEarnManager = () => {
                       <th>Reward Coins</th>
                       <th>Tracking Link</th>
                       <th>Clicks</th>
+                      <th>Installs</th>
+                      <th>Registers</th>
                       <th>Pending</th>
                       <th>Approved</th>
                       <th>Status</th>
@@ -520,7 +550,7 @@ const ShareEarnManager = () => {
                   </thead>
                   <tbody>
                     {offers.length === 0 ? (
-                      <tr><td colSpan="10" style={{ textAlign: "center", padding: "20px" }}>No offers created yet. Click "+ Add New Offer" to create one.</td></tr>
+                      <tr><td colSpan="12" style={{ textAlign: "center", padding: "20px" }}>No offers created yet. Click "+ Add New Offer" to create one.</td></tr>
                     ) : (
                       offers
                         .filter(o => !searchOffer || (o.title || "").toLowerCase().includes(searchOffer.toLowerCase()))
@@ -570,6 +600,8 @@ const ShareEarnManager = () => {
                                 )}
                               </td>
                               <td style={{textAlign:'center'}}><strong style={{color:'#38bdf8'}}>{stats.clicks || 0}</strong></td>
+                              <td style={{textAlign:'center'}}><strong style={{color: (stats.installs || 0) > 0 ? '#34d399' : '#64748b'}}>{stats.installs || 0}</strong></td>
+                              <td style={{textAlign:'center'}}><strong style={{color: (stats.registrations || 0) > 0 ? '#a5b4fc' : '#64748b'}}>{stats.registrations || 0}</strong></td>
                               <td style={{textAlign:'center'}}><span style={{color:'#f59e0b'}}>{stats.pending || 0}</span></td>
                               <td style={{textAlign:'center'}}><strong style={{color: (stats.approved || 0) > 0 ? '#34d399' : '#94a3b8'}}>{stats.approved || 0}</strong></td>
                               <td>
@@ -888,7 +920,17 @@ const ShareEarnManager = () => {
                 <h3>📊 Performance Metrics & Report</h3>
                 <div className="reports-grid">
                   <div className="report-box">
-                    <h4>Conversion Rate</h4>
+                    <h4>Install Rate</h4>
+                    <div className="big-stat" style={{color:'#34d399'}}>{reports.installRate || 0}%</div>
+                    <p>Ratio of app installs to tracking clicks</p>
+                  </div>
+                  <div className="report-box">
+                    <h4>Registration Rate</h4>
+                    <div className="big-stat" style={{color:'#a5b4fc'}}>{reports.registrationRate || 0}%</div>
+                    <p>Ratio of user registrations to app installs</p>
+                  </div>
+                  <div className="report-box">
+                    <h4>Final Conversion Rate</h4>
                     <div className="big-stat">{reports.conversionRate}%</div>
                     <p>Ratio of total approved conversions to tracking clicks</p>
                   </div>
@@ -917,6 +959,7 @@ const ShareEarnManager = () => {
                       <th>Category</th>
                       <th>Reward</th>
                       <th>Total Clicks</th>
+                      <th>Installs</th>
                       <th>Registrations</th>
                       <th>Claims</th>
                       <th>Pending</th>
@@ -927,7 +970,7 @@ const ShareEarnManager = () => {
                   </thead>
                   <tbody>
                     {offers.length === 0 ? (
-                      <tr><td colSpan="10" style={{ textAlign:"center", padding:"20px" }}>No offers to analyze.</td></tr>
+                      <tr><td colSpan="11" style={{ textAlign:"center", padding:"20px" }}>No offers to analyze.</td></tr>
                     ) : (
                       offers.map(offer => {
                         const s = offerAnalytics[offer.offerId] || {};
@@ -946,7 +989,8 @@ const ShareEarnManager = () => {
                             <td><span className="chip-cat">{offer.category}</span></td>
                             <td><strong className="coin-val">+{Number(offer.rewardCoins||0).toLocaleString()}</strong></td>
                             <td style={{textAlign:'center'}}><strong style={{color:'#38bdf8'}}>{s.clicks||0}</strong></td>
-                            <td style={{textAlign:'center'}}><span style={{color:'#a78bfa'}}>{s.registrations||0}</span></td>
+                            <td style={{textAlign:'center'}}><strong style={{color: (s.installs || 0) > 0 ? '#34d399' : '#64748b'}}>{s.installs||0}</strong></td>
+                            <td style={{textAlign:'center'}}><span style={{color: (s.registrations || 0) > 0 ? '#a78bfa' : '#64748b'}}>{s.registrations||0}</span></td>
                             <td style={{textAlign:'center'}}><span style={{color:'#fbbf24'}}>{s.claims||0}</span></td>
                             <td style={{textAlign:'center'}}><span style={{color:'#f59e0b'}}>{s.pending||0}</span></td>
                             <td style={{textAlign:'center'}}><strong style={{color:'#34d399'}}>{s.approved||0}</strong></td>
