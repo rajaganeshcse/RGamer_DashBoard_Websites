@@ -1,149 +1,73 @@
 import React from "react";
 
-/* ================= STYLES ================= */
-
-const styles = {
-  card: {
-    border: "1px solid #e0e0e0",
-    borderRadius: "12px",
-    padding: "16px",
-    marginBottom: "14px",
-    background: "#ffffff",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease"
-  },
-
-  headerRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "6px"
-  },
-
-  idText: {
-    fontSize: "12px",
-    color: "#888"
-  },
-
-  status: (status) => ({
-    fontWeight: "bold",
-    fontSize: "13px",
-    color: status === "COMPLETED" ? "#2e7d32" : "#ff9800"
-  }),
-
-  reward: {
-    fontSize: "16px",
-    fontWeight: "bold",
-    marginTop: "6px"
-  },
-
-  slots: {
-    fontSize: "13px",
-    color: "#555",
-    marginTop: "4px"
-  },
-
-  progressWrap: {
-    height: "7px",
-    width: "100%",
-    background: "#e0e0e0",
-    borderRadius: "6px",
-    overflow: "hidden",
-    marginTop: "8px"
-  },
-
-  progressBar: (percent) => ({
-    height: "100%",
-    width: `${percent}%`,
-    background:
-      percent === 100 ? "#4caf50" : "#6A1BFF",
-    transition: "width 0.4s ease"
-  }),
-
-  waiting: {
-    marginTop: "10px",
-    fontSize: "13px",
-    color: "#ff9800"
-  },
-
-  completed: {
-    marginTop: "10px",
-    fontSize: "13px",
-    color: "#2e7d32"
-  },
-
-  winner: {
-    marginTop: "4px",
-    fontSize: "13px",
-    color: "#000"
-  }
-};
-
-/* ================= COMPONENT ================= */
-
 const LuckyDrawRow = ({ draw }) => {
-
   const percent =
     draw.totalSlots > 0
       ? Math.floor((draw.filledSlots / draw.totalSlots) * 100)
       : 0;
 
+  const isCompleted = draw.status === "COMPLETED";
+
   return (
     <div
-      style={styles.card}
-      onMouseEnter={e =>
-        (e.currentTarget.style.boxShadow =
-          "0 8px 18px rgba(0,0,0,0.08)")
-      }
-      onMouseLeave={e =>
-        (e.currentTarget.style.boxShadow =
-          "0 4px 10px rgba(0,0,0,0.05)")
-      }
+      className="glass-card"
+      style={{
+        padding: "18px",
+        marginBottom: "14px",
+        borderTop: isCompleted ? "3px solid #10B981" : "3px solid #8B5CF6",
+        background: "rgba(18, 24, 39, 0.85)"
+      }}
     >
-
       {/* HEADER */}
-      <div style={styles.headerRow}>
-        <span style={styles.idText}>
-          #{draw.id.slice(0, 6)}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+        <span style={{ fontSize: "12px", color: "#94A3B8", fontFamily: "monospace" }}>
+          #{draw.id.slice(0, 8)}
         </span>
-        <span style={styles.status(draw.status)}>
+        <span className={`badge ${isCompleted ? "badge-success" : "badge-info"}`}>
           {draw.status}
         </span>
       </div>
 
       {/* REWARD */}
-      <div style={styles.reward}>
-        🎁 Win {draw.rewardCoins} Coins
+      <div style={{ fontSize: "17px", fontWeight: "700", color: "#F8FAFC", display: "flex", alignItems: "center", gap: "6px" }}>
+        <span>🎁</span> Win {Number(draw.rewardCoins || 0).toLocaleString()} Coins
       </div>
 
       {/* SLOTS */}
-      <div style={styles.slots}>
-        Slots: {draw.filledSlots} / {draw.totalSlots} ({percent}%)
+      <div style={{ fontSize: "13px", color: "#94A3B8", marginTop: "6px", display: "flex", justifyContent: "space-between" }}>
+        <span>Enrolled: <strong>{draw.filledSlots}</strong> / {draw.totalSlots}</span>
+        <span style={{ color: "#38BDF8", fontWeight: "700" }}>{percent}%</span>
       </div>
 
-      {/* PROGRESS */}
-      <div style={styles.progressWrap}>
-        <div style={styles.progressBar(percent)} />
+      {/* PROGRESS BAR */}
+      <div style={{ height: "6px", width: "100%", background: "rgba(255, 255, 255, 0.08)", borderRadius: "6px", overflow: "hidden", marginTop: "8px" }}>
+        <div
+          style={{
+            height: "100%",
+            width: `${percent}%`,
+            background: isCompleted ? "linear-gradient(90deg, #10B981, #34D399)" : "linear-gradient(90deg, #6366F1, #8B5CF6)",
+            transition: "width 0.4s ease"
+          }}
+        />
       </div>
 
-      {/* STATUS MESSAGE */}
+      {/* STATUS FOOTER */}
       {draw.status === "OPEN" && (
-        <div style={styles.waiting}>
-          ⏳ Waiting for users to join…
+        <div style={{ marginTop: "12px", fontSize: "12px", color: "#FBBF24", display: "flex", alignItems: "center", gap: "6px" }}>
+          <span>⏳</span> Open for participant entries…
         </div>
       )}
 
-      {draw.status === "COMPLETED" && (
-        <div style={styles.completed}>
-          ✅ Draw Completed
-          <div style={styles.winner}>
-            🏆 Winner UID: <b>{draw.winnerUid || "—"}</b>
+      {isCompleted && (
+        <div style={{ marginTop: "12px", fontSize: "12px", color: "#34D399" }}>
+          <div>✅ Event Finalized &amp; Reward Credited</div>
+          <div style={{ color: "#F8FAFC", marginTop: "4px", fontSize: "11px", fontFamily: "monospace" }}>
+            🏆 Winner: {draw.winnerUid || "—"}
           </div>
         </div>
       )}
-
     </div>
   );
 };
 
-export default LuckyDrawRow
+export default LuckyDrawRow;

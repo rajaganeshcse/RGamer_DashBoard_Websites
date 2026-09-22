@@ -203,7 +203,7 @@ export default function Redeem() {
   };
 
   /* ================= UPDATE REQUEST STATUS ================= */
-  const updateStatus = async (id, status, type) => {
+  const updateStatus = async (id, status, type, rejectReason = "") => {
     const voucher = voucherInput[id]?.trim();
 
     if (
@@ -231,6 +231,11 @@ export default function Redeem() {
         data.voucher_added_at = Date.now();
       }
 
+      if (status === "failed" || status === "rejected") {
+        data.reject_reason = rejectReason || "Rejected by administrator";
+        data.rejected_at = Date.now();
+      }
+
       await updateDoc(doc(db, "redeem_requests", id), data);
       showToast(`Request marked as ${status.toUpperCase()}`);
 
@@ -238,6 +243,42 @@ export default function Redeem() {
       showToast("Failed to update status", "error");
       console.error(err);
     }
+  };
+
+  const copyAddress = (address) => {
+    if (!address) return;
+    navigator.clipboard.writeText(address);
+    showToast("📋 Payment Address copied to clipboard!");
+  };
+
+  const handleExportRedeemsCSV = () => {
+    if (filteredRequests.length === 0) {
+      alert("No redemption requests to export!");
+      return;
+    }
+    const headers = ["RequestID", "User", "Email", "Method", "AmountINR", "CoinsDeducted", "PaymentAddress", "Status", "Date"];
+    const rows = filteredRequests.map((r) => [
+      `"${r.id}"`,
+      `"${(r.username || "").replace(/"/g, '""')}"`,
+      `"${(r.email || "").replace(/"/g, '""')}"`,
+      `"${(r.type || "REDEEM").toUpperCase()}"`,
+      r.amount || 0,
+      r.coins || 0,
+      `"${(r.withdraw_details || r.payment_address || "").replace(/"/g, '""')}"`,
+      `"${(r.status || "pending").toUpperCase()}"`,
+      `"${new Date(r.created_at || Date.now()).toLocaleDateString("en-IN")}"`
+    ]);
+
+    const csvContent = [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `redeem_payouts_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(`📊 Exported ${filteredRequests.length} payout records to CSV`);
   };
 
   /* ================= SAVE VOUCHER ONLY ================= */
@@ -587,14 +628,23 @@ export default function Redeem() {
                 ))}
               </div>
 
-              <input
-                type="text"
-                className="form-input"
-                placeholder="Search user, email, UPI, code..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{ width: "260px" }}
-              />
+              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                <button
+                  className="btn-csv"
+                  onClick={handleExportRedeemsCSV}
+                  title="Export all filtered payouts to CSV"
+                >
+                  <span>📥</span> Export CSV
+                </button>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Search user, email, UPI, code..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{ width: "240px" }}
+                />
+              </div>
             </div>
           </div>
 
@@ -618,7 +668,7 @@ export default function Redeem() {
                       padding: "20px",
                       display: "flex",
                       flexDirection: "column",
-                      borderColor: currentStatus === "success" ? "rgba(16, 185, 129, 0.3)" : "rgba(255, 255, 255, 0.08)"
+                      borderColor: currentStatus === "success" ? "rgba(16, 185, 129, 0.3)" : currentStatus === "failed" ? "rgba(239, 68, 68, 0.3)" : "rgba(255, 255, 255, 0.08)"
                     }}
                   >
                     <div>
@@ -646,13 +696,23 @@ export default function Redeem() {
                       <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.06)", margin: "12px 0" }} />
 
                       {(req.type === "upi" || req.type === "bank") && (
-                        <div style={{ background: "rgba(15, 23, 42, 0.8)", padding: "10px 14px", borderRadius: "8px", marginBottom: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
-                          <div style={{ fontSize: "11px", color: "#64748B", textTransform: "uppercase", fontWeight: "700" }}>
-                            Payment Target (UPI / Bank)
+                        <div style={{ background: "rgba(15, 23, 42, 0.8)", padding: "10px 14px", borderRadius: "8px", marginBottom: "12px", border: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <div style={{ fontSize: "11px", color: "#64748B", textTransform: "uppercase", fontWeight: "700" }}>
+                              Payment Target ({req.type.toUpperCase()})
+                            </div>
+                            <div style={{ fontSize: "13px", fontWeight: "600", color: "#38BDF8", marginTop: "2px", wordBreak: "break-all" }}>
+                              {req.withdraw_details || req.payment_address || "N/A"}
+                            </div>
                           </div>
-                          <div style={{ fontSize: "13px", fontWeight: "600", color: "#38BDF8", marginTop: "2px", wordBreak: "break-all" }}>
-                            {req.withdraw_details || "N/A"}
-                          </div>
+                          <button
+                            className="copy-btn"
+                            style={{ padding: "4px 8px", fontSize: "11px", marginLeft: "8px" }}
+                            onClick={() => copyAddress(req.withdraw_details || req.payment_address)}
+                            title="Copy payment target"
+                          >
+                            📋 Copy
+                          </button>
                         </div>
                       )}
 
@@ -685,28 +745,45 @@ export default function Redeem() {
                           </div>
                         </div>
                       )}
+
+                      {req.reject_reason && (
+                        <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", padding: "8px 12px", fontSize: "12px", color: "#F87171", marginBottom: "8px" }}>
+                          ⚠️ Rejection Reason: {req.reject_reason}
+                        </div>
+                      )}
                     </div>
 
                     <div style={{ marginTop: "16px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span className={currentStatus === "success" ? "badge badge-success" : "badge badge-pending"}>
-                        {currentStatus === "success" ? "✅ APPROVED" : "⏳ PENDING"}
+                      <span className={currentStatus === "success" ? "badge badge-success" : currentStatus === "failed" ? "badge badge-danger" : "badge badge-pending"}>
+                        {currentStatus === "success" ? "✅ APPROVED" : currentStatus === "failed" ? "❌ REJECTED" : "⏳ PENDING"}
                       </span>
 
                       <select
                         className="form-input"
                         value={currentStatus}
-                        onChange={(e) => updateStatus(req.id, e.target.value, req.type)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "failed") {
+                            const reason = window.prompt("Enter rejection reason (saved to player record):", "Invalid payment address / verification failed");
+                            if (reason !== null) {
+                              updateStatus(req.id, "failed", req.type, reason);
+                            }
+                          } else {
+                            updateStatus(req.id, val, req.type);
+                          }
+                        }}
                         style={{
                           width: "auto",
                           padding: "6px 12px",
                           fontSize: "12px",
                           fontWeight: "700",
-                          background: currentStatus === "success" ? "rgba(16, 185, 129, 0.2)" : "rgba(245, 158, 11, 0.2)",
-                          color: currentStatus === "success" ? "#34D399" : "#FBBF24"
+                          background: currentStatus === "success" ? "rgba(16, 185, 129, 0.2)" : currentStatus === "failed" ? "rgba(239, 68, 68, 0.2)" : "rgba(245, 158, 11, 0.2)",
+                          color: currentStatus === "success" ? "#34D399" : currentStatus === "failed" ? "#F87171" : "#FBBF24"
                         }}
                       >
-                        <option value="pending">Set PENDING</option>
-                        <option value="success">Approve &amp; Fulfill</option>
+                        <option value="pending">Set ⏳ PENDING</option>
+                        <option value="success">Approve &amp; Fulfill ✅</option>
+                        <option value="failed">Reject Request ❌</option>
                       </select>
                     </div>
                   </div>

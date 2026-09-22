@@ -167,13 +167,24 @@ export default function NotificationsAdmin() {
       createdBy: "admin",
     };
 
+    const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "https://app-backend-lutn.onrender.com";
+
     try {
       // Send via Spring Boot backend endpoint
-      const res = await fetch("http://localhost:8080/api/admin/notifications/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      let res;
+      try {
+        res = await fetch(`${API_BASE_URL}/api/admin/notifications/send`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } catch (networkErr) {
+        res = await fetch("http://localhost:8080/api/admin/notifications/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
 
       if (res.ok) {
         const result = await res.json();
@@ -320,6 +331,44 @@ export default function NotificationsAdmin() {
             </div>
           )}
 
+          {/* QUICK PRESET TEMPLATES */}
+          <div style={{ marginBottom: "18px" }}>
+            <div style={{ fontSize: "11px", fontWeight: "700", color: "#94A3B8", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>
+              ⚡ 1-Click Campaign Templates:
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+              {[
+                { label: "🎁 Daily Bonus", t: "🎁 Your Daily Reward Is Waiting!", m: "Claim your daily bonus coins, spin the wheel, and start earning today!", type: "DAILY_EARNING", scr: "DAILY_BONUS" },
+                { label: "🎮 Weekend Match", t: "🏆 Weekend Esports Tournament Live!", m: "Free Fire & BGMI match rooms are now open. Secure your slot before it's full!", type: "PROMOTION", scr: "GAMES" },
+                { label: "🎰 Lucky Draw", t: "🎯 Mega 1000 Coins Lucky Draw Open!", m: "A high-prize lottery event is open. Join now with 1 ticket and win big coins!", type: "PROMOTION", scr: "HOME" },
+                { label: "🚀 Double Coins", t: "⚡ Double Coins Special Rush!", m: "Complete share & earn app tasks now to earn double bonus rewards!", type: "PROMOTION", scr: "TASKS" }
+              ].map((tpl, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setTitle(tpl.t);
+                    setMessage(tpl.m);
+                    setNotificationType(tpl.type);
+                    setScreen(tpl.scr);
+                  }}
+                  style={{
+                    background: "rgba(99, 102, 241, 0.15)",
+                    border: "1px solid rgba(99, 102, 241, 0.3)",
+                    color: "#818CF8",
+                    padding: "6px 12px",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    cursor: "pointer"
+                  }}
+                >
+                  {tpl.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <form onSubmit={handleSendNotification} style={styles.form}>
             {/* Title */}
             <div style={styles.fieldGroup}>
@@ -445,6 +494,37 @@ export default function NotificationsAdmin() {
                 </select>
               </div>
             )}
+
+            {/* LIVE ANDROID NOTIFICATION PREVIEW */}
+            <div style={{ marginTop: "16px", marginBottom: "20px" }}>
+              <div style={{ fontSize: "11px", fontWeight: "700", color: "#94A3B8", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>
+                📱 Real-Time Android Push Preview:
+              </div>
+              <div style={{
+                background: "#0F172A",
+                borderRadius: "14px",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                padding: "14px 16px",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.4)"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                  <span style={{ fontSize: "16px" }}>🎮</span>
+                  <span style={{ fontSize: "12px", fontWeight: "700", color: "#CBD5E1" }}>RGamer</span>
+                  <span style={{ fontSize: "11px", color: "#64748B" }}>• now</span>
+                </div>
+                <div style={{ fontWeight: "700", color: "#F8FAFC", fontSize: "14px", marginBottom: "2px" }}>
+                  {title || "Notification Title"}
+                </div>
+                <div style={{ fontSize: "13px", color: "#94A3B8", lineHeight: "1.4" }}>
+                  {message || "Notification body message preview..."}
+                </div>
+                {imageUrl && (
+                  <div style={{ marginTop: "10px", borderRadius: "10px", overflow: "hidden", maxHeight: "160px" }}>
+                    <img src={imageUrl} alt="preview banner" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  </div>
+                )}
+              </div>
+            </div>
 
             <button type="submit" disabled={sending} style={styles.submitBtn}>
               {sending ? "Sending Notification..." : "🚀 SEND NOW"}

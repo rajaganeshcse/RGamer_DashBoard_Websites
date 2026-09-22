@@ -1,234 +1,208 @@
-import { useEffect, useState } from "react";
-import {
-  collection,
-  onSnapshot,
-  doc,
-  getDoc
-} from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import { collection, onSnapshot, doc, getDoc } from "firebase/firestore";
 import { useParams, useNavigate } from "react-router-dom";
 import { db } from "../Firebase";
 
-/* ================= STYLES ================= */
-
-const styles = {
-  page: {
-    padding: "24px",
-    background: "#f4f6fb",
-    minHeight: "100vh"
-  },
-
-  header: {
-    display: "flex",
-    alignItems: "center",
-    marginBottom: "20px"
-  },
-
-  back: {
-    marginRight: "12px",
-    cursor: "pointer",
-    color: "#6A1BFF",
-    fontWeight: "bold"
-  },
-
-  title: {
-    fontSize: "20px",
-    fontWeight: "bold"
-  },
-
-  table: {
-    background: "#fff",
-    borderRadius: "12px",
-    overflow: "hidden",
-    boxShadow: "0 6px 14px rgba(0,0,0,0.08)"
-  },
-
-  headRow: {
-    display: "grid",
-    gridTemplateColumns: "2fr 2fr 2fr 1fr",
-    padding: "12px",
-    background: "#f1f3f8",
-    fontWeight: "bold",
-    fontSize: "13px",
-    color: "#444"
-  },
-
-  row: (odd) => ({
-    display: "grid",
-    gridTemplateColumns: "2fr 2fr 2fr 1fr",
-    padding: "12px",
-    background: odd ? "#fafafa" : "#ffffff",
-    alignItems: "center",
-    transition: "background 0.2s ease"
-  }),
-
-  userBox: {
-    display: "flex",
-    flexDirection: "column"
-  },
-
-  name: {
-    fontWeight: "bold",
-    fontSize: "14px"
-  },
-
-  uid: {
-    fontSize: "11px",
-    color: "#777"
-  },
-
-  email: {
-    fontSize: "13px",
-    color: "#555"
-  },
-
-  joined: {
-    fontSize: "13px",
-    color: "#555"
-  },
-
-  winner: {
-    background: "#4caf50",
-    color: "#fff",
-    padding: "4px 10px",
-    borderRadius: "20px",
-    fontSize: "12px",
-    fontWeight: "bold",
-    textAlign: "center"
-  },
-
-  normal: {
-    fontSize: "12px",
-    color: "#888",
-    textAlign: "center"
-  },
-
-  empty: {
-    marginTop: "20px",
-    color: "#777"
-  }
-};
-
-/* ================= COMPONENT ================= */
-
 const LuckyDrawUsers = () => {
-
   const { drawId } = useParams();
   const navigate = useNavigate();
 
+  const [draw, setDraw] = useState(null);
   const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState("");
   const [winnerUid, setWinnerUid] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  /* ===== LOAD WINNER UID ===== */
-
+  // 1. Load Draw Details
   useEffect(() => {
-    getDoc(doc(db, "lucky_draws", drawId))
-      .then(snap => {
-        if (snap.exists()) {
-          setWinnerUid(snap.data().winnerUid || null);
-        }
-      });
+    getDoc(doc(db, "lucky_draws", drawId)).then((snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setDraw({ id: snap.id, ...data });
+        setWinnerUid(data.winnerUid || null);
+      }
+    });
   }, [drawId]);
 
-  /* ===== LOAD PARTICIPANTS ===== */
-
+  // 2. Load Participants (Parallel fetch)
   useEffect(() => {
-
-    const ref = collection(
-      db,
-      "lucky_draw_entries",
-      drawId,
-      "users"
-    );
+    const ref = collection(db, "lucky_draw_entries", drawId, "users");
 
     const unsub = onSnapshot(ref, async (snap) => {
+      try {
+        const promises = snap.docs.map(async (d) => {
+          const uid = d.id;
+          const entry = d.data();
+          let name = "Anonymous Player";
+          let email = "—";
+          let profilePic = null;
 
-      const list = [];
+          try {
+            const userSnap = await getDoc(doc(db, "users", uid));
+            if (userSnap.exists()) {
+              const uData = userSnap.data();
+              name = uData.name || uData.username || "Anonymous Player";
+              email = uData.email || "—";
+              profilePic = uData.profile_pic || uData.profile_image || null;
+            }
+          } catch (e) {
+            console.error("User fetch error:", e);
+          }
 
-      for (const d of snap.docs) {
-        const uid = d.id;
-        const entry = d.data();
-
-        const userSnap = await getDoc(doc(db, "users", uid));
-        const user = userSnap.exists()
-          ? userSnap.data()
-          : {};
-
-        list.push({
-          uid,
-          joinedAt: entry.joinedAt,
-          name: user.username || user.name || "Unknown",
-          email: user.email || "—"
+          return {
+            uid,
+            joinedAt: entry.joinedAt,
+            name,
+            email,
+            profilePic
+          };
         });
-      }
 
-      setUsers(list);
-      setLoading(false);
+        const list = await Promise.all(promises);
+        setUsers(list);
+      } catch (err) {
+        console.error("Participants load error:", err);
+      } finally {
+        setLoading(false);
+      }
     });
 
     return () => unsub();
-
   }, [drawId]);
 
-  return (
-    <div style={styles.page}>
+  const filteredUsers = users.filter((u) => {
+    const q = search.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      u.name.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      u.uid.toLowerCase().includes(q)
+    );
+  });
 
-      {/* HEADER */}
-      <div style={styles.header}>
-        <span style={styles.back} onClick={() => navigate(-1)}>
-          ← Back
-        </span>
-        <div style={styles.title}>
-          👥 Joined Users ({users.length})
+  return (
+    <div style={{ padding: "28px", maxWidth: "1200px", margin: "0 auto" }} className="animate-fade-in">
+      
+      {/* HEADER BANNER */}
+      <div
+        className="glass-card"
+        style={{
+          padding: "24px 28px",
+          marginBottom: "24px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "16px"
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <button
+            className="btn-secondary"
+            onClick={() => navigate("/admin/LuckyDrawAdmin")}
+            style={{ padding: "8px 14px", fontSize: "13px" }}
+          >
+            ← Back to Draws
+          </button>
+          <div>
+            <h2 style={{ margin: 0, fontSize: "22px", fontWeight: "800", color: "#F8FAFC" }}>
+              👥 Lucky Draw Participants
+            </h2>
+            <div style={{ fontSize: "13px", color: "#94A3B8", marginTop: "4px" }}>
+              Event #{drawId?.slice(0, 10)} {draw && `• Win ${draw.rewardCoins} Coins (${draw.filledSlots}/${draw.totalSlots} Slots)`}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <span className="badge badge-info">{users.length} Participants Enrolled</span>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Search participant..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: "220px" }}
+          />
         </div>
       </div>
 
-      {loading && <p>Loading users…</p>}
-
-      {!loading && users.length === 0 && (
-        <p style={styles.empty}>No users joined yet</p>
-      )}
-
-      {!loading && users.length > 0 && (
-        <div style={styles.table}>
-
-          {/* TABLE HEAD */}
-          <div style={styles.headRow}>
-            <div>User</div>
-            <div>Email</div>
-            <div>Joined At</div>
-            <div>Status</div>
+      {/* PARTICIPANTS TABLE */}
+      <div className="table-card glass-card">
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "60px 20px" }}>
+            <div className="spinner"></div>
+            <p style={{ color: "#94A3B8" }}>Loading enrolled participants...</p>
           </div>
+        ) : filteredUsers.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "50px 20px", color: "#64748B" }}>
+            No participants joined this lucky draw yet.
+          </div>
+        ) : (
+          <div className="table-responsive">
+            <table className="user-table">
+              <thead>
+                <tr>
+                  <th>Player</th>
+                  <th>Email</th>
+                  <th>Firestore UID</th>
+                  <th>Joined Date</th>
+                  <th>Event Outcome</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((u) => {
+                  const isWinner = winnerUid === u.uid;
+                  return (
+                    <tr
+                      key={u.uid}
+                      className="table-row"
+                      style={{
+                        background: isWinner ? "rgba(16, 185, 129, 0.08)" : undefined
+                      }}
+                    >
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <img
+                            src={u.profilePic || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.uid}`}
+                            alt="avatar"
+                            className="user-avatar"
+                            style={{ width: "36px", height: "36px" }}
+                          />
+                          <span style={{ fontWeight: "700", color: "#F8FAFC" }}>{u.name}</span>
+                        </div>
+                      </td>
+                      <td className="email-cell">{u.email}</td>
+                      <td>
+                        <code style={{ fontSize: "11px", color: "#94A3B8", background: "rgba(255,255,255,0.05)", padding: "3px 6px", borderRadius: "4px" }}>
+                          {u.uid}
+                        </code>
+                      </td>
+                      <td className="date-cell">
+                        {u.joinedAt?.seconds
+                          ? new Date(u.joinedAt.seconds * 1000).toLocaleString("en-IN")
+                          : "—"}
+                      </td>
+                      <td>
+                        {isWinner ? (
+                          <span className="badge badge-success">
+                            🏆 WINNER ({draw?.rewardCoins} COINS)
+                          </span>
+                        ) : (
+                          <span className="badge badge-info">
+                            🎟️ Participant
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
-          {/* ROWS */}
-          {users.map((u, i) => (
-            <div key={u.uid} style={styles.row(i % 2 === 1)}>
-
-              <div style={styles.userBox}>
-                <span style={styles.name}>{u.name}</span>
-                <span style={styles.uid}>{u.uid}</span>
-              </div>
-
-              <div style={styles.email}>{u.email}</div>
-
-              <div style={styles.joined}>
-                {u.joinedAt?.seconds
-                  ? new Date(
-                      u.joinedAt.seconds * 1000
-                    ).toLocaleString()
-                  : "—"}
-              </div>
-
-              {winnerUid === u.uid ? (
-                <div style={styles.winner}>🏆 WINNER</div>
-              ) : (
-                <div style={styles.normal}>Participant</div>
-              )}
-
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 };
