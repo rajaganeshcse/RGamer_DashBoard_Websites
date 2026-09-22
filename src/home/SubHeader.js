@@ -36,6 +36,12 @@ const SubHeader = () => {
           💳 Redeem Payouts
         </li>
         <li
+          className={isActive("/admin/share-earn") ? "active" : ""}
+          onClick={() => navigate("/admin/share-earn")}
+        >
+          🚀 Share & Earn
+        </li>
+        <li
           className={isActive("/admin/LuckyDrawAdmin") ? "active" : ""}
           onClick={() => navigate("/admin/LuckyDrawAdmin")}
         >

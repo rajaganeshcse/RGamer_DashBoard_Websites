@@ -14,6 +14,7 @@ import LuckyDrawUsers from "./admin/LuckyDrawUsers";
 import WinnerHistory from "./admin/WinnerHistory";
 import DeleteRequests from "./admin/DeleteRequests";
 import NotificationsAdmin from "./admin/NotificationsAdmin";
+import ShareEarnManager from "./components/ShareEarnManager";
 import ProtectedRoute from "./admin/ProtectedRoute";
 
 // 🔥 AUTO LUCKY DRAW WATCHER
@@ -47,6 +48,7 @@ const AppRoutes = () => {
             <Route path="/admin/lucky-draw/:drawId" element={<LuckyDrawUsers />} />
             <Route path="/admin/winner-history" element={<WinnerHistory />} />
             <Route path="/admin/delete-requests" element={<DeleteRequests />} />
+            <Route path="/admin/share-earn" element={<ShareEarnManager />} />
           </Route>
 
         </Route>
