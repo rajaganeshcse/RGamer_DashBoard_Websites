@@ -15,6 +15,10 @@ import NotificationsAdmin from "./admin/NotificationsAdmin";
 import ShareEarnManager from "./components/ShareEarnManager";
 import ProtectedRoute from "./admin/ProtectedRoute";
 
+// 🌐 PUBLIC LEGAL & PLAY CONSOLE ROUTES
+import PrivacyPolicy from "./components/PrivacyPolicy";
+import AccountDeletion from "./components/AccountDeletion";
+
 // 🔥 AUTO LUCKY DRAW WATCHER
 import { useAutoLuckyDrawWatcher } from "./admin/useAutoLuckyDrawWatcher";
 
@@ -26,6 +30,12 @@ const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
+
+        {/* 🌐 PUBLIC LEGAL & DATA SAFETY ROUTES (GOOGLE PLAY CONSOLE COMPLIANT) */}
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/delete-account" element={<AccountDeletion />} />
+        <Route path="/account-deletion" element={<AccountDeletion />} />
 
         {/* USER PANEL */}
         <Route path="/" element={<Home />}>

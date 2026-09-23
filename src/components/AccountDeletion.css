@@ -1,0 +1,153 @@
+.deletion-card-danger {
+  background: #FFF1F2;
+  border: 1px solid #FECDD3;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.deletion-card-danger h3 {
+  color: #9F1239;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.deletion-card-danger p {
+  color: #881337;
+  font-size: 13.5px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1E293B;
+  margin-bottom: 8px;
+}
+
+.form-label span.req {
+  color: #EF4444;
+}
+
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #CBD5E1;
+  border-radius: 10px;
+  font-size: 14.5px;
+  color: #0F172A;
+  background: #FFFFFF;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: #4F46E5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+.form-checkbox-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  padding: 14px;
+  border-radius: 10px;
+  margin-bottom: 24px;
+  cursor: pointer;
+}
+
+.form-checkbox-container input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: #E11D48;
+  cursor: pointer;
+}
+
+.form-checkbox-label {
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.btn-delete-submit {
+  width: 100%;
+  background: #E11D48;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-delete-submit:hover:not(:disabled) {
+  background: #BE123C;
+}
+
+.btn-delete-submit:disabled {
+  background: #FDA4AF;
+  cursor: not-allowed;
+}
+
+.deletion-success-box {
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  color: #065F46;
+}
+
+.deletion-success-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.deletion-success-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: #064E3B;
+}
+
+.deletion-success-text {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #047857;
+  max-width: 500px;
+  margin: 0 auto 20px auto;
+}
+
+.ticket-pill {
+  display: inline-block;
+  background: #D1FAE5;
+  border: 1px solid #6EE7B7;
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  color: #065F46;
+}
