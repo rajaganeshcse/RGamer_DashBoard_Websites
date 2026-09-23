@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { Link } from "react-router-dom";
 import "./PrivacyPolicy.css";
 
@@ -11,7 +11,7 @@ export default function PrivacyPolicy() {
           <Link to="/" className="legal-brand">
             <span className="legal-brand-icon">🎮</span>
             <div>
-              <span className="legal-brand-title">RGamer</span>
+              <span className="legal-brand-title">DailyKash</span>
               <span className="legal-brand-tag">Privacy &amp; Trust Center</span>
             </div>
           </Link>
@@ -31,7 +31,7 @@ export default function PrivacyPolicy() {
         {/* HERO BANNER */}
         <section className="legal-hero">
           <div className="legal-hero-badge">Official Legal Document</div>
-          <h1 className="legal-hero-title">Privacy Policy for RGamer</h1>
+          <h1 className="legal-hero-title">Privacy Policy for DailyKash</h1>
           <p className="legal-hero-sub">
             Last updated: September 23, 2026 • Compliant with Google Play Developer Policies &amp; Global Data Protection Laws
           </p>
@@ -56,10 +56,10 @@ export default function PrivacyPolicy() {
         <article className="legal-card">
           <h2>1. Introduction &amp; Scope</h2>
           <p>
-            Welcome to <strong>RGamer</strong> (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;). We provide a mobile rewards and gaming platform that allows registered users to participate in casual activities, spins, scratch cards, offer tasks, and redeem rewards.
+            Welcome to <strong>DailyKash</strong> (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;). We provide a mobile rewards and gaming platform that allows registered users to participate in casual activities, spins, scratch cards, offer tasks, and redeem rewards.
           </p>
           <p>
-            This Privacy Policy explains how we collect, use, disclose, and safeguard your personal information when you use our mobile application (<strong>RGamer</strong>) and associated online services. By installing, registering, or using RGamer, you signify your assent to this Privacy Policy.
+            This Privacy Policy explains how we collect, use, disclose, and safeguard your personal information when you use our mobile application (<strong>DailyKash</strong>) and associated online services. By installing, registering, or using DailyKash, you signify your assent to this Privacy Policy.
           </p>
         </article>
 
@@ -128,7 +128,7 @@ export default function PrivacyPolicy() {
         <article className="legal-card">
           <h2>5. Data Security &amp; Retention</h2>
           <p>
-            We implement robust organizational and technical security measures. All communications between the RGamer app, web portal, and backend databases are encrypted in transit using industry-standard Secure Sockets Layer (SSL) and Transport Layer Security (TLS 1.2+).
+            We implement robust organizational and technical security measures. All communications between the DailyKash app, web portal, and backend databases are encrypted in transit using industry-standard Secure Sockets Layer (SSL) and Transport Layer Security (TLS 1.2+).
           </p>
           <p>
             We retain your data for as long as your account remains active. If you request account deletion, your profile, coin balances, and authentication credentials will be permanently erased.
@@ -139,14 +139,14 @@ export default function PrivacyPolicy() {
         <article className="legal-card">
           <h2>6. Account Deletion &amp; Data Erasure (Google Play Requirement)</h2>
           <p>
-            In strict accordance with Google Play&rsquo;s <strong>Account Deletion and Data Safety Requirements</strong>, every RGamer user has the unequivocal right to delete their account and associated data at any time.
+            In strict accordance with Google Play&rsquo;s <strong>Account Deletion and Data Safety Requirements</strong>, every DailyKash user has the unequivocal right to delete their account and associated data at any time.
           </p>
           <p>
             You can initiate account deletion through either of the following channels:
           </p>
           <ul>
             <li>
-              <strong>In-App Deletion:</strong> Navigate to <em>Drawer Menu &rarr; Profile &rarr; Delete Account</em> inside the RGamer mobile app.
+              <strong>In-App Deletion:</strong> Navigate to <em>Drawer Menu &rarr; Profile &rarr; Delete Account</em> inside the DailyKash mobile app.
             </li>
             <li>
               <strong>Web-Based Deletion Portal:</strong> If you uninstalled the application or cannot access your device, you can submit an instant deletion request via our public web portal.
@@ -164,7 +164,7 @@ export default function PrivacyPolicy() {
         <article className="legal-card">
           <h2>7. Children&rsquo;s Privacy Protection</h2>
           <p>
-            RGamer is not directed towards children under the age of 13. We do not knowingly collect personal identifiable information from children under 13 years of age. If we discover that a user under 13 has provided personal details, we promptly purge such information from our servers.
+            DailyKash is not directed towards children under the age of 13. We do not knowingly collect personal identifiable information from children under 13 years of age. If we discover that a user under 13 has provided personal details, we promptly purge such information from our servers.
           </p>
         </article>
 
@@ -175,9 +175,9 @@ export default function PrivacyPolicy() {
             If you have questions, feedback, or data privacy requests regarding this Privacy Policy, please contact our Data Protection Team:
           </p>
           <ul>
-            <li><strong>Application:</strong> RGamer (Rewards Planet)</li>
-            <li><strong>Official Support Email:</strong> <a href="mailto:support@rgamer.app" style={{ color: "#4F46E5", fontWeight: "600" }}>support@rgamer.app</a></li>
-            <li><strong>Telegram Community:</strong> @RGamerCommunity</li>
+            <li><strong>Application:</strong> DailyKash</li>
+            <li><strong>Official Support Email:</strong> <a href="mailto:support@dailykash.app" style={{ color: "#4F46E5", fontWeight: "600" }}>support@dailykash.app</a></li>
+            <li><strong>Telegram Community:</strong> @DailyKashCommunity</li>
             <li><strong>Response Window:</strong> Within 24-48 business hours</li>
           </ul>
         </article>
@@ -188,12 +188,13 @@ export default function PrivacyPolicy() {
         <div className="legal-footer-links">
           <Link to="/privacy-policy" className="legal-nav-link">Privacy Policy</Link>
           <Link to="/delete-account" className="legal-nav-link">Delete Account</Link>
-          <a href="mailto:support@rgamer.app" className="legal-nav-link">Support Desk</a>
+          <a href="mailto:support@dailykash.app" className="legal-nav-link">Support Desk</a>
         </div>
         <p className="legal-footer-copy">
-          &copy; {new Date().getFullYear()} RGamer. All rights reserved. Google Play is a trademark of Google LLC.
+          &copy; {new Date().getFullYear()} DailyKash. All rights reserved. Google Play is a trademark of Google LLC.
         </p>
       </footer>
     </div>
   );
 }
+

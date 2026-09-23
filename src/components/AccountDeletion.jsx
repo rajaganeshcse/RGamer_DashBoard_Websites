@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../Firebase";
@@ -45,7 +45,7 @@ export default function AccountDeletion() {
       setSubmittedTicket(docRef.id);
     } catch (err) {
       console.error("Deletion request failed:", err);
-      setErrorMsg("Could not submit request. Please email us directly at support@rgamer.app.");
+      setErrorMsg("Could not submit request. Please email us directly at support@dailykash.app.");
     } finally {
       setLoading(false);
     }
@@ -59,7 +59,7 @@ export default function AccountDeletion() {
           <Link to="/" className="legal-brand">
             <span className="legal-brand-icon">🎮</span>
             <div>
-              <span className="legal-brand-title">RGamer</span>
+              <span className="legal-brand-title">DailyKash</span>
               <span className="legal-brand-tag">Account &amp; Data Erasure</span>
             </div>
           </Link>
@@ -80,9 +80,9 @@ export default function AccountDeletion() {
           <div className="legal-hero-badge" style={{ background: "rgba(255, 255, 255, 0.2)", color: "#FFE4E6" }}>
             Google Play Data Safety Compliance
           </div>
-          <h1 className="legal-hero-title">Request RGamer Account &amp; Data Deletion</h1>
+          <h1 className="legal-hero-title">Request DailyKash Account &amp; Data Deletion</h1>
           <p className="legal-hero-sub" style={{ color: "#FECDD3" }}>
-            Submit an official request to permanently delete your RGamer account, profile information, and associated app data.
+            Submit an official request to permanently delete your DailyKash account, profile information, and associated app data.
           </p>
 
           <div className="legal-highlights-grid">
@@ -105,7 +105,7 @@ export default function AccountDeletion() {
         <article className="legal-card">
           <h2>Data Deletion Disclosures (Google Play Requirement)</h2>
           <p>
-            When you request account deletion for the <strong>RGamer (Rewards Planet)</strong> mobile application, here is how your data is handled:
+            When you request account deletion for the <strong>DailyKash</strong> mobile application, here is how your data is handled:
           </p>
 
           <div className="legal-callout-box" style={{ borderLeftColor: "#E11D48" }}>
@@ -131,7 +131,7 @@ export default function AccountDeletion() {
         <article className="legal-card">
           <h2>Submit Account Deletion Request</h2>
           <p>
-            You can request deletion directly in the RGamer mobile app (<em>Profile &rarr; Delete Account</em>) or by submitting the web form below:
+            You can request deletion directly in the DailyKash mobile app (<em>Profile &rarr; Delete Account</em>) or by submitting the web form below:
           </p>
 
           {submittedTicket ? (
@@ -153,7 +153,7 @@ export default function AccountDeletion() {
               <div className="deletion-card-danger">
                 <h3>⚠️ Warning: Permanent Action</h3>
                 <p>
-                  Deleting your RGamer account will permanently forfeit any accumulated coins, tickets, and referral bonuses. This action is irreversible once processed.
+                  Deleting your DailyKash account will permanently forfeit any accumulated coins, tickets, and referral bonuses. This action is irreversible once processed.
                 </p>
               </div>
 
@@ -179,7 +179,7 @@ export default function AccountDeletion() {
 
               <div className="form-group">
                 <label className="form-label">
-                  RGamer User ID or Phone Number <span style={{ color: "#94A3B8", fontWeight: "normal" }}>(Optional)</span>
+                  DailyKash User ID or Phone Number <span style={{ color: "#94A3B8", fontWeight: "normal" }}>(Optional)</span>
                 </label>
                 <input
                   type="text"
@@ -215,7 +215,7 @@ export default function AccountDeletion() {
                   onChange={(e) => setConfirmed(e.target.checked)}
                 />
                 <span className="form-checkbox-label">
-                  I understand and confirm that submitting this request will permanently delete my RGamer account and forfeit any remaining coins or rewards.
+                  I understand and confirm that submitting this request will permanently delete my DailyKash account and forfeit any remaining coins or rewards.
                 </span>
               </label>
 
@@ -232,8 +232,8 @@ export default function AccountDeletion() {
           <div style={{ marginTop: "24px", paddingTop: "18px", borderTop: "1px solid #E2E8F0" }}>
             <p style={{ fontSize: "13px", color: "#64748B", margin: 0 }}>
               Need assistance or want to cancel? Email us directly from your registered email at{" "}
-              <a href="mailto:support@rgamer.app?subject=Account%20Deletion%20Assistance" style={{ color: "#4F46E5", fontWeight: "600" }}>
-                support@rgamer.app
+              <a href="mailto:support@dailykash.app?subject=Account%20Deletion%20Assistance" style={{ color: "#4F46E5", fontWeight: "600" }}>
+                support@dailykash.app
               </a>.
             </p>
           </div>
@@ -245,12 +245,13 @@ export default function AccountDeletion() {
         <div className="legal-footer-links">
           <Link to="/privacy-policy" className="legal-nav-link">Privacy Policy</Link>
           <Link to="/delete-account" className="legal-nav-link">Delete Account</Link>
-          <a href="mailto:support@rgamer.app" className="legal-nav-link">Support Desk</a>
+          <a href="mailto:support@dailykash.app" className="legal-nav-link">Support Desk</a>
         </div>
         <p className="legal-footer-copy">
-          &copy; {new Date().getFullYear()} RGamer. All rights reserved.
+          &copy; {new Date().getFullYear()} DailyKash. All rights reserved.
         </p>
       </footer>
     </div>
   );
 }
+
