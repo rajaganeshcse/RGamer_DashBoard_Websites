@@ -705,8 +705,8 @@ export default function NotificationsAdmin() {
                 {history.map((item) => (
                   <tr key={item.id} style={styles.tr}>
                     <td style={styles.td}>
-                      <strong>{item.title}</strong>
-                      <div style={{ fontSize: 12, color: "#64748B" }}>{item.message}</div>
+                      <strong style={{ color: "#F8FAFC" }}>{item.title}</strong>
+                      <div style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>{item.message}</div>
                     </td>
                     <td style={styles.td}>
                       <span style={styles.typeTag}>{item.notificationType || "PROMOTION"}</span>
@@ -716,10 +716,10 @@ export default function NotificationsAdmin() {
                       <span style={styles.screenTag}>{item.screen || "HOME"}</span>
                     </td>
                     <td style={styles.td}>{item.totalRecipients ?? 0}</td>
-                    <td style={{ ...styles.td, color: "#059669", fontWeight: "bold" }}>
+                    <td style={{ ...styles.td, color: "#34D399", fontWeight: "bold" }}>
                       {item.successfulCount ?? 0}
                     </td>
-                    <td style={{ ...styles.td, color: item.failedCount > 0 ? "#DC2626" : "#64748B" }}>
+                    <td style={{ ...styles.td, color: item.failedCount > 0 ? "#F87171" : "#64748B" }}>
                       {item.failedCount ?? 0}
                     </td>
                     <td style={styles.td}>
@@ -728,7 +728,16 @@ export default function NotificationsAdmin() {
                       </span>
                     </td>
                     <td style={styles.td}>
-                      {item.sentAt ? new Date(item.sentAt).toLocaleString() : "-"}
+                      {(() => {
+                        try {
+                          const val = item.sentAt || item.createdAt;
+                          if (!val) return "—";
+                          const d = typeof val?.toDate === "function" ? val.toDate() : new Date(val);
+                          return isNaN(d.getTime()) ? "—" : d.toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+                        } catch {
+                          return "—";
+                        }
+                      })()}
                     </td>
                   </tr>
                 ))}
@@ -744,51 +753,53 @@ export default function NotificationsAdmin() {
 /* ================= STYLES ================= */
 const styles = {
   container: {
-    padding: "24px",
-    background: "#F8FAFC",
-    minHeight: "100vh",
-    fontFamily: "Segoe UI, -apple-system, BlinkMacSystemFont, Roboto, sans-serif",
+    padding: "28px 32px",
+    maxWidth: "1400px",
+    margin: "0 auto",
   },
   headerBanner: {
-    background: "linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%)",
-    padding: "24px 30px",
+    background: "linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(6, 182, 212, 0.1) 100%)",
+    border: "1px solid rgba(99, 102, 241, 0.3)",
     borderRadius: "16px",
-    color: "#FFFFFF",
-    marginBottom: "24px",
-    boxShadow: "0 10px 25px rgba(30, 27, 75, 0.2)",
+    padding: "24px 28px",
+    marginBottom: "28px",
   },
   headerTitle: {
     margin: 0,
     fontSize: "24px",
-    fontWeight: "700",
+    fontWeight: "800",
+    color: "#F8FAFC",
   },
   headerSubtitle: {
-    margin: "8px 0 0 0",
-    fontSize: "14px",
-    opacity: 0.85,
+    margin: "6px 0 0 0",
+    fontSize: "13px",
+    color: "#94A3B8",
   },
   gridTwoCols: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))",
     gap: "24px",
+    marginBottom: "28px",
   },
   card: {
-    background: "#FFFFFF",
-    borderRadius: "14px",
+    background: "rgba(18, 24, 39, 0.75)",
+    backdropFilter: "blur(16px)",
+    WebkitBackdropFilter: "blur(16px)",
+    borderRadius: "16px",
     padding: "24px",
-    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
-    border: "1px solid #E2E8F0",
+    boxShadow: "0 10px 30px -5px rgba(0, 0, 0, 0.5)",
+    border: "1px solid rgba(255, 255, 255, 0.08)",
   },
   cardTitle: {
     margin: 0,
-    fontSize: "18px",
+    fontSize: "17px",
     fontWeight: "700",
-    color: "#0F172A",
+    color: "#F8FAFC",
   },
   cardDesc: {
     margin: "4px 0 16px 0",
     fontSize: "13px",
-    color: "#64748B",
+    color: "#94A3B8",
   },
   form: {
     display: "flex",
@@ -806,32 +817,43 @@ const styles = {
     gap: "12px",
   },
   label: {
-    fontSize: "13px",
-    fontWeight: "600",
-    color: "#334155",
+    fontSize: "12px",
+    fontWeight: "700",
+    color: "#94A3B8",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
   },
   input: {
     padding: "10px 14px",
     borderRadius: "8px",
-    border: "1px solid #CBD5E1",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
     fontSize: "14px",
     outline: "none",
+    background: "#0F172A",
+    color: "#F8FAFC",
+    colorScheme: "dark",
   },
   textarea: {
     padding: "10px 14px",
     borderRadius: "8px",
-    border: "1px solid #CBD5E1",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
     fontSize: "14px",
     outline: "none",
     resize: "vertical",
+    background: "#0F172A",
+    color: "#F8FAFC",
+    colorScheme: "dark",
   },
   select: {
     padding: "10px 14px",
     borderRadius: "8px",
-    border: "1px solid #CBD5E1",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
     fontSize: "14px",
     outline: "none",
-    background: "#FFFFFF",
+    background: "#0F172A",
+    color: "#F8FAFC",
+    colorScheme: "dark",
+    cursor: "pointer",
   },
   imageRow: {
     display: "flex",
@@ -839,14 +861,15 @@ const styles = {
     alignItems: "center",
   },
   uploadBtn: {
-    background: "#EEF2FF",
-    color: "#4338CA",
+    background: "rgba(99, 102, 241, 0.15)",
+    color: "#818CF8",
     padding: "10px 14px",
     borderRadius: "8px",
     fontSize: "13px",
     fontWeight: "600",
     cursor: "pointer",
-    border: "1px solid #C7D2FE",
+    border: "1px solid rgba(99, 102, 241, 0.3)",
+    whiteSpace: "nowrap",
   },
   previewBox: {
     display: "flex",
@@ -859,7 +882,7 @@ const styles = {
     height: "50px",
     objectFit: "cover",
     borderRadius: "6px",
-    border: "1px solid #E2E8F0",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
   },
   removeImgBtn: {
     fontSize: "12px",
@@ -868,36 +891,37 @@ const styles = {
     fontWeight: "600",
   },
   submitBtn: {
-    background: "linear-gradient(135deg, #2563EB, #1D4ED8)",
+    background: "linear-gradient(135deg, #6366F1, #4F46E5)",
     color: "#FFFFFF",
     padding: "12px",
     borderRadius: "10px",
-    fontSize: "15px",
+    fontSize: "14px",
     fontWeight: "700",
     border: "none",
     cursor: "pointer",
     marginTop: "8px",
-    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.25)",
+    boxShadow: "0 4px 14px rgba(99, 102, 241, 0.35)",
   },
   saveBtn: {
-    background: "linear-gradient(135deg, #059669, #047857)",
+    background: "linear-gradient(135deg, #10B981, #059669)",
     color: "#FFFFFF",
     padding: "12px",
     borderRadius: "10px",
-    fontSize: "15px",
+    fontSize: "14px",
     fontWeight: "700",
     border: "none",
     cursor: "pointer",
     marginTop: "8px",
-    boxShadow: "0 4px 12px rgba(5, 150, 105, 0.25)",
+    boxShadow: "0 4px 14px rgba(16, 185, 129, 0.3)",
   },
   toggleRow: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "12px",
-    background: "#F1F5F9",
+    padding: "12px 14px",
+    background: "rgba(255, 255, 255, 0.03)",
     borderRadius: "8px",
+    border: "1px solid rgba(255, 255, 255, 0.06)",
   },
   switch: {
     position: "relative",
@@ -909,31 +933,31 @@ const styles = {
     position: "absolute",
     cursor: "pointer",
     top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: "#CBD5E1",
+    backgroundColor: "#334155",
     transition: ".3s",
     borderRadius: "24px",
   },
   infoBadge: {
-    background: "#EFF6FF",
-    border: "1px solid #BFDBFE",
-    color: "#1E40AF",
+    background: "rgba(59, 130, 246, 0.1)",
+    border: "1px solid rgba(59, 130, 246, 0.3)",
+    color: "#60A5FA",
     padding: "10px 14px",
     borderRadius: "8px",
     fontSize: "13px",
   },
   successBox: {
-    background: "#ECFDF5",
-    border: "1px solid #A7F3D0",
-    color: "#065F46",
+    background: "rgba(16, 185, 129, 0.1)",
+    border: "1px solid rgba(16, 185, 129, 0.3)",
+    color: "#34D399",
     padding: "10px 14px",
     borderRadius: "8px",
     fontSize: "13px",
     marginBottom: "12px",
   },
   errorBox: {
-    background: "#FEF2F2",
-    border: "1px solid #FCA5A5",
-    color: "#991B1B",
+    background: "rgba(239, 68, 68, 0.1)",
+    border: "1px solid rgba(239, 68, 68, 0.3)",
+    color: "#F87171",
     padding: "10px 14px",
     borderRadius: "8px",
     fontSize: "13px",
@@ -949,47 +973,54 @@ const styles = {
     fontSize: "13px",
   },
   th: {
-    background: "#F1F5F9",
-    padding: "12px 14px",
-    color: "#475569",
-    fontWeight: "600",
-    borderBottom: "1px solid #E2E8F0",
+    background: "rgba(15, 23, 42, 0.85)",
+    padding: "14px 16px",
+    color: "#94A3B8",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    fontSize: "11px",
+    letterSpacing: "0.5px",
+    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
   },
   td: {
-    padding: "12px 14px",
-    borderBottom: "1px solid #E2E8F0",
-    color: "#1E293B",
+    padding: "12px 16px",
+    borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+    color: "#E2E8F0",
   },
   tr: {
     transition: "background 0.15s ease",
   },
   typeTag: {
-    background: "#EEF2FF",
-    color: "#4338CA",
+    background: "rgba(99, 102, 241, 0.15)",
+    color: "#A5B4FC",
+    border: "1px solid rgba(99, 102, 241, 0.3)",
     padding: "3px 8px",
     borderRadius: "6px",
     fontSize: "11px",
     fontWeight: "700",
   },
   screenTag: {
-    background: "#F0FDF4",
-    color: "#15803D",
+    background: "rgba(16, 185, 129, 0.15)",
+    color: "#6EE7B7",
+    border: "1px solid rgba(16, 185, 129, 0.3)",
     padding: "3px 8px",
     borderRadius: "6px",
     fontSize: "11px",
     fontWeight: "700",
   },
   statusSent: {
-    background: "#ECFDF5",
-    color: "#047857",
+    background: "rgba(16, 185, 129, 0.15)",
+    color: "#34D399",
+    border: "1px solid rgba(16, 185, 129, 0.3)",
     padding: "3px 8px",
     borderRadius: "6px",
     fontSize: "11px",
     fontWeight: "700",
   },
   statusPending: {
-    background: "#FEF3C7",
-    color: "#B45309",
+    background: "rgba(245, 158, 11, 0.15)",
+    color: "#FBBF24",
+    border: "1px solid rgba(245, 158, 11, 0.3)",
     padding: "3px 8px",
     borderRadius: "6px",
     fontSize: "11px",

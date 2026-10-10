@@ -1,29 +1,8 @@
-body {
-  font-family: Arial, sans-serif;
-  background: #f5f6fa;
-}
-
+/* Global Application Layout */
 .app {
-  padding: 20px;
-}
-
-.users {
-  margin-top: 20px;
-}
-
-.card {
+  min-height: 100vh;
   display: flex;
-  gap: 15px;
-  background: white;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  border: 1px solid #ddd;
-}
-
-.avatar {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  object-fit: cover;
+  flex-direction: column;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
 }
