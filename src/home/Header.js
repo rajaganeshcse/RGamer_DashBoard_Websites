@@ -31,7 +31,7 @@ const Header = () => {
         <span className="logo-icon">🎮</span>
         <div>
           <span className="logo-text">DailyKash</span>
-          <span style={{ display: "block", fontSize: "11px", color: "#94A3B8", fontWeight: "600" }}>
+          <span style={{ display: "block", fontSize: "11px", color: "#E2E8F0", fontWeight: "700" }}>
             Admin Console
           </span>
         </div>

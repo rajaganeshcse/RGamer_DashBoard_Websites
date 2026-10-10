@@ -7,8 +7,12 @@ const KPICard = ({ icon, label, value, sub, accent, badge, badgeClass, onClick }
   <div
     className="glass-card"
     style={{
-      padding: "22px 24px",
-      borderTop: `3px solid ${accent}`,
+      padding: "24px",
+      background: `linear-gradient(145deg, ${accent}18 0%, rgba(18, 24, 39, 0.92) 100%)`,
+      borderTop: `4px solid ${accent}`,
+      borderLeft: `1px solid ${accent}35`,
+      borderRight: `1px solid ${accent}35`,
+      borderBottom: `1px solid ${accent}35`,
       cursor: onClick ? "pointer" : "default",
       position: "relative",
       overflow: "hidden",
@@ -17,52 +21,56 @@ const KPICard = ({ icon, label, value, sub, accent, badge, badgeClass, onClick }
     onClick={onClick}
     onMouseEnter={(e) => {
       if (onClick) {
-        e.currentTarget.style.transform = "translateY(-4px)";
-        e.currentTarget.style.boxShadow = `0 16px 36px -6px rgba(0, 0, 0, 0.6), 0 0 20px ${accent}25`;
-        e.currentTarget.style.borderColor = `${accent}60`;
+        e.currentTarget.style.transform = "translateY(-5px)";
+        e.currentTarget.style.boxShadow = `0 18px 40px -6px rgba(0, 0, 0, 0.7), 0 0 25px ${accent}40`;
+        e.currentTarget.style.borderColor = accent;
       }
     }}
     onMouseLeave={(e) => {
       if (onClick) {
         e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.boxShadow = "var(--shadow-card)";
-        e.currentTarget.style.borderColor = "var(--border-color)";
+        e.currentTarget.style.borderColor = `${accent}35`;
+        e.currentTarget.style.borderTopColor = accent;
       }
     }}
   >
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px" }}>
       <div
         style={{
-          width: "48px",
-          height: "48px",
-          borderRadius: "12px",
-          background: `${accent}18`,
-          border: `1px solid ${accent}35`,
+          width: "50px",
+          height: "50px",
+          borderRadius: "14px",
+          background: `${accent}25`,
+          border: `1.5px solid ${accent}60`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: "24px",
+          fontSize: "26px",
+          boxShadow: `0 4px 14px ${accent}30`,
         }}
       >
         {icon}
       </div>
       {badge != null && (
-        <span className={`badge ${badgeClass || "badge-info"}`}>{badge}</span>
+        <span className={`badge ${badgeClass || "badge-info"}`} style={{ fontWeight: "800", fontSize: "11px" }}>
+          {badge}
+        </span>
       )}
     </div>
 
-    <div style={{ fontSize: "28px", fontWeight: "800", color: accent, lineHeight: 1.1, marginBottom: "4px", letterSpacing: "-0.5px" }}>
+    <div style={{ fontSize: "30px", fontWeight: "900", color: accent, lineHeight: 1.1, marginBottom: "6px", letterSpacing: "-0.5px" }}>
       {value}
     </div>
 
-    <div style={{ fontSize: "11px", color: "#94A3B8", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.6px" }}>
+    <div style={{ fontSize: "12px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.6px" }}>
       {label}
     </div>
 
     {sub && (
-      <div style={{ fontSize: "12px", color: "#64748B", marginTop: "8px", fontWeight: "500", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ fontSize: "12.5px", color: "#E2E8F0", marginTop: "10px", fontWeight: "600", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span>{sub}</span>
-        {onClick && <span style={{ color: accent, fontSize: "14px", fontWeight: "700" }}>→</span>}
+        {onClick && <span style={{ color: accent, fontSize: "16px", fontWeight: "800" }}>→</span>}
       </div>
     )}
   </div>
@@ -147,8 +155,8 @@ export default function AdminDashboard() {
         });
 
         list.sort((a, b) => {
-          const t1 = a.created_at?.toDate?.()?.getTime() ?? (a.created_at || 0);
-          const t2 = b.created_at?.toDate?.()?.getTime() ?? (b.created_at || 0);
+          const t1 = a.created_at?.toDate?.()?.getTime() ?? 0;
+          const t2 = b.created_at?.toDate?.()?.getTime() ?? 0;
           return t2 - t1;
         });
 
@@ -228,7 +236,7 @@ export default function AdminDashboard() {
     return (
       <div style={{ padding: "100px 20px", textAlign: "center" }} className="animate-fade-in">
         <div className="spinner"></div>
-        <p style={{ color: "#94A3B8", fontWeight: "600", fontSize: "15px" }}>Connecting to Realtime Command Hub...</p>
+        <p style={{ color: "#FFFFFF", fontWeight: "700", fontSize: "16px" }}>Connecting to Realtime Command Hub...</p>
       </div>
     );
   }
@@ -240,10 +248,11 @@ export default function AdminDashboard() {
       <div
         className="glass-card"
         style={{
-          padding: "24px 30px",
+          padding: "26px 32px",
           marginBottom: "28px",
-          background: "linear-gradient(135deg, rgba(99, 102, 241, 0.16) 0%, rgba(6, 182, 212, 0.08) 50%, rgba(18, 24, 39, 0.85) 100%)",
-          borderColor: "rgba(99, 102, 241, 0.25)",
+          background: "linear-gradient(135deg, rgba(99, 102, 241, 0.28) 0%, rgba(6, 182, 212, 0.18) 50%, rgba(18, 24, 39, 0.95) 100%)",
+          borderColor: "rgba(99, 102, 241, 0.5)",
+          boxShadow: "0 12px 36px -4px rgba(99, 102, 241, 0.25), 0 0 20px rgba(6, 182, 212, 0.15)",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -252,18 +261,30 @@ export default function AdminDashboard() {
         }}
       >
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
-            <span className="badge badge-info" style={{ fontSize: "11px", fontWeight: "800" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: "900",
+                background: "linear-gradient(135deg, #6366F1, #4F46E5)",
+                color: "#FFFFFF",
+                padding: "4px 10px",
+                borderRadius: "20px",
+                letterSpacing: "0.5px",
+                boxShadow: "0 2px 10px rgba(99, 102, 241, 0.4)",
+              }}
+            >
               ⚡ LIVE COMMAND CENTER
             </span>
-            <span style={{ fontSize: "12px", color: "#34D399", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
-              <span className="pulse-dot"></span> FIRESTORE SYNC ACTIVE
+            <span style={{ fontSize: "12px", color: "#00F5A0", fontWeight: "800", display: "flex", alignItems: "center", gap: "6px" }}>
+              <span className="pulse-dot" style={{ background: "#00F5A0", boxShadow: "0 0 8px #00F5A0" }}></span> FIRESTORE SYNC ACTIVE
             </span>
           </div>
-          <h1 style={{ margin: 0, fontSize: "24px", fontWeight: "800", color: "#F8FAFC", letterSpacing: "-0.5px" }}>
+
+          <h1 style={{ margin: 0, fontSize: "26px", fontWeight: "900", color: "#FFFFFF", letterSpacing: "-0.5px" }}>
             DailyKash Executive Operations
           </h1>
-          <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "#94A3B8" }}>
+          <p style={{ margin: "5px 0 0 0", fontSize: "14px", color: "#F1F5F9", fontWeight: "600" }}>
             Authoritative platform status, financial exposure, payout authorizations, and user growth.
           </p>
         </div>
@@ -272,17 +293,18 @@ export default function AdminDashboard() {
         <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
           <div
             style={{
-              background: "rgba(15, 23, 42, 0.8)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              padding: "8px 16px",
-              borderRadius: "12px",
+              background: "#0F172A",
+              border: "1.5px solid rgba(99, 102, 241, 0.4)",
+              padding: "10px 18px",
+              borderRadius: "14px",
               textAlign: "right",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.4)",
             }}
           >
-            <div style={{ fontSize: "14px", fontWeight: "800", color: "#F8FAFC", fontFamily: "monospace" }}>
+            <div style={{ fontSize: "16px", fontWeight: "900", color: "#00F2FE", fontFamily: "monospace", letterSpacing: "1px" }}>
               {currentTime.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} IST
             </div>
-            <div style={{ fontSize: "11px", color: "#64748B", fontWeight: "600" }}>
+            <div style={{ fontSize: "12px", color: "#FFFFFF", fontWeight: "700", marginTop: "2px" }}>
               {currentTime.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
             </div>
           </div>
@@ -290,14 +312,14 @@ export default function AdminDashboard() {
           <button
             className="btn-glow"
             onClick={() => navigate("/redeem")}
-            style={{ padding: "10px 18px", fontSize: "13px" }}
+            style={{ padding: "12px 22px", fontSize: "14px", fontWeight: "800", boxShadow: "0 6px 20px rgba(99, 102, 241, 0.5)" }}
           >
             💳 Review Payouts ({metrics.pendingRedeemsCount})
           </button>
         </div>
       </div>
 
-      {/* ── 6 AUTHORITATIVE KPI CARDS ── */}
+      {/* ── 6 HIGH-IMPACT KPI CARDS ── */}
       <div
         style={{
           display: "grid",
@@ -322,7 +344,7 @@ export default function AdminDashboard() {
           label="Circulating Coins"
           value={fmt(metrics.totalCoins)}
           sub={`≈ ₹${(metrics.totalCoins / 100).toLocaleString("en-IN", { maximumFractionDigits: 1 })} liability · ${fmt(metrics.totalTickets)} tickets`}
-          accent="#F59E0B"
+          accent="#FFB800"
         />
 
         <KPICard
@@ -330,7 +352,7 @@ export default function AdminDashboard() {
           label="Pending Payout Pipeline"
           value={metrics.pendingRedeemsCount}
           sub={`₹${fmt(metrics.pendingRedeemsAmount)} awaiting approval`}
-          accent="#34D399"
+          accent="#00F5A0"
           badge={metrics.pendingRedeemsCount > 0 ? "Action Required" : "Cleared"}
           badgeClass={metrics.pendingRedeemsCount > 0 ? "badge-pending" : "badge-success"}
           onClick={() => navigate("/redeem")}
@@ -350,7 +372,7 @@ export default function AdminDashboard() {
           label="Share & Earn Campaigns"
           value={metrics.activeOffers}
           sub={`${metrics.pendingConversions} pending action proofs`}
-          accent="#22D3EE"
+          accent="#00F2FE"
           badge={metrics.pendingConversions > 0 ? `${metrics.pendingConversions} Pending` : "Idle"}
           badgeClass={metrics.pendingConversions > 0 ? "badge-cyan" : "badge-info"}
           onClick={() => navigate("/admin/share-earn")}
@@ -361,7 +383,7 @@ export default function AdminDashboard() {
           label="Account Deletions (Play Store)"
           value={metrics.pendingDeletions}
           sub="7-day grace period enforcement"
-          accent={metrics.pendingDeletions > 0 ? "#F87171" : "#64748B"}
+          accent={metrics.pendingDeletions > 0 ? "#FF4B72" : "#94A3B8"}
           badge={metrics.pendingDeletions > 0 ? "Review Ticket" : "Zero Queued"}
           badgeClass={metrics.pendingDeletions > 0 ? "badge-pending" : "badge-info"}
           onClick={() => navigate("/admin/delete-requests")}
@@ -372,43 +394,45 @@ export default function AdminDashboard() {
       <div
         className="glass-card"
         style={{
-          padding: "18px 24px",
+          padding: "20px 28px",
           marginBottom: "28px",
+          background: "linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.8) 100%)",
+          border: "1px solid rgba(255, 255, 255, 0.12)",
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-          gap: "20px",
+          gap: "24px",
           alignItems: "center",
         }}
       >
         {/* User Health Ratio */}
         <div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "6px" }}>
-            <span style={{ color: "#94A3B8", fontWeight: "700" }}>ACCOUNT INTEGRITY RATE</span>
-            <span style={{ color: "#34D399", fontWeight: "800" }}>{userHealthPct}% Active</span>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px", marginBottom: "8px" }}>
+            <span style={{ color: "#FFFFFF", fontWeight: "800", letterSpacing: "0.5px" }}>ACCOUNT INTEGRITY RATE</span>
+            <span style={{ color: "#00F5A0", fontWeight: "900" }}>{userHealthPct}% Active</span>
           </div>
-          <div style={{ height: "6px", width: "100%", background: "rgba(255, 255, 255, 0.06)", borderRadius: "6px", overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${userHealthPct}%`, background: "linear-gradient(90deg, #10B981, #06B6D4)" }} />
+          <div style={{ height: "8px", width: "100%", background: "rgba(255, 255, 255, 0.1)", borderRadius: "8px", overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${userHealthPct}%`, background: "linear-gradient(90deg, #00F5A0, #00F2FE)", boxShadow: "0 0 10px #00F5A0" }} />
           </div>
         </div>
 
         {/* Payout Completion Rate */}
         <div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "6px" }}>
-            <span style={{ color: "#94A3B8", fontWeight: "700" }}>PAYOUT FULFILLMENT VELOCITY</span>
-            <span style={{ color: "#818CF8", fontWeight: "800" }}>{payoutFulfillRate}% Completed</span>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px", marginBottom: "8px" }}>
+            <span style={{ color: "#FFFFFF", fontWeight: "800", letterSpacing: "0.5px" }}>PAYOUT FULFILLMENT VELOCITY</span>
+            <span style={{ color: "#818CF8", fontWeight: "900" }}>{payoutFulfillRate}% Completed</span>
           </div>
-          <div style={{ height: "6px", width: "100%", background: "rgba(255, 255, 255, 0.06)", borderRadius: "6px", overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${payoutFulfillRate}%`, background: "linear-gradient(90deg, #6366F1, #818CF8)" }} />
+          <div style={{ height: "8px", width: "100%", background: "rgba(255, 255, 255, 0.1)", borderRadius: "8px", overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${payoutFulfillRate}%`, background: "linear-gradient(90deg, #6366F1, #818CF8)", boxShadow: "0 0 10px #818CF8" }} />
           </div>
         </div>
 
         {/* Google Play Compliance Status */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", justifyContent: "flex-end" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "14px", justifyContent: "flex-end" }}>
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "12px", fontWeight: "700", color: "#F8FAFC" }}>Play Store Compliance</div>
-            <div style={{ fontSize: "11px", color: "#34D399", fontWeight: "600" }}>All Legal URLs Live</div>
+            <div style={{ fontSize: "13px", fontWeight: "800", color: "#FFFFFF" }}>Play Store Compliance</div>
+            <div style={{ fontSize: "12px", color: "#00F5A0", fontWeight: "800" }}>All Policy Endpoints Active</div>
           </div>
-          <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "rgba(16, 185, 129, 0.15)", border: "1px solid rgba(16, 185, 129, 0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>
+          <div style={{ width: "42px", height: "42px", borderRadius: "50%", background: "rgba(0, 245, 160, 0.2)", border: "1.5px solid rgba(0, 245, 160, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", boxShadow: "0 0 12px rgba(0, 245, 160, 0.3)" }}>
             🛡️
           </div>
         </div>
@@ -424,41 +448,54 @@ export default function AdminDashboard() {
         }}
       >
         {/* RECENT PAYOUT REQUESTS */}
-        <div className="glass-card" style={{ padding: "24px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+        <div
+          className="glass-card"
+          style={{
+            padding: "26px",
+            background: "linear-gradient(145deg, rgba(0, 245, 160, 0.04) 0%, rgba(18, 24, 39, 0.95) 100%)",
+            border: "1px solid rgba(0, 245, 160, 0.25)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
             <div>
-              <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#F8FAFC", display: "flex", alignItems: "center", gap: "8px" }}>
+              <h4 style={{ margin: 0, fontSize: "17px", fontWeight: "800", color: "#FFFFFF", display: "flex", alignItems: "center", gap: "8px" }}>
                 <span>💳</span> Urgent Payout Queue
               </h4>
-              <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#64748B" }}>
+              <p style={{ margin: "3px 0 0 0", fontSize: "13px", color: "#E2E8F0", fontWeight: "600" }}>
                 Pending UPI, Amazon, and Google Play redemptions
               </p>
             </div>
             <button
               onClick={() => navigate("/redeem")}
               style={{
-                background: "rgba(99, 102, 241, 0.12)",
-                border: "1px solid rgba(99, 102, 241, 0.25)",
-                color: "#818CF8",
-                fontSize: "12px",
-                fontWeight: "700",
+                background: "rgba(99, 102, 241, 0.2)",
+                border: "1.5px solid rgba(99, 102, 241, 0.5)",
+                color: "#FFFFFF",
+                fontSize: "12.5px",
+                fontWeight: "800",
                 cursor: "pointer",
-                padding: "6px 12px",
+                padding: "8px 14px",
                 borderRadius: "8px",
                 transition: "all 0.2s ease",
               }}
-              onMouseEnter={(e) => e.target.style.background = "rgba(99, 102, 241, 0.25)"}
-              onMouseLeave={(e) => e.target.style.background = "rgba(99, 102, 241, 0.12)"}
+              onMouseEnter={(e) => {
+                e.target.style.background = "#6366F1";
+                e.target.style.boxShadow = "0 4px 14px rgba(99, 102, 241, 0.4)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = "rgba(99, 102, 241, 0.2)";
+                e.target.style.boxShadow = "none";
+              }}
             >
               Fulfill Payouts →
             </button>
           </div>
 
           {recentRedeems.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "40px 0", color: "#475569" }}>
-              <div style={{ fontSize: "32px", marginBottom: "8px" }}>🎉</div>
-              <div style={{ fontSize: "13px", fontWeight: "600", color: "#94A3B8" }}>All Payout Queues Cleared!</div>
-              <div style={{ fontSize: "12px", color: "#64748B", marginTop: "2px" }}>Zero pending redemption requests.</div>
+            <div style={{ textAlign: "center", padding: "40px 0" }}>
+              <div style={{ fontSize: "36px", marginBottom: "10px" }}>🎉</div>
+              <div style={{ fontSize: "15px", fontWeight: "800", color: "#FFFFFF" }}>All Payout Queues Cleared!</div>
+              <div style={{ fontSize: "13px", color: "#E2E8F0", marginTop: "4px", fontWeight: "600" }}>Zero pending redemption requests.</div>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -472,41 +509,43 @@ export default function AdminDashboard() {
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      padding: "12px 14px",
-                      background: "rgba(255, 255, 255, 0.025)",
-                      borderRadius: "10px",
-                      border: "1px solid rgba(255, 255, 255, 0.05)",
+                      padding: "13px 16px",
+                      background: "rgba(15, 23, 42, 0.75)",
+                      borderRadius: "12px",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
                       transition: "all 0.18s ease",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.3)";
-                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
+                      e.currentTarget.style.borderColor = "#00F5A0";
+                      e.currentTarget.style.background = "rgba(15, 23, 42, 0.95)";
+                      e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 245, 160, 0.15)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.05)";
-                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.025)";
+                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                      e.currentTarget.style.background = "rgba(15, 23, 42, 0.75)";
+                      e.currentTarget.style.boxShadow = "none";
                     }}
                   >
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <span
                           style={{
-                            fontSize: "10px",
-                            fontWeight: "800",
-                            padding: "2px 6px",
-                            borderRadius: "4px",
-                            background: typeUpper === "UPI" ? "rgba(6, 182, 212, 0.15)" : "rgba(245, 158, 11, 0.15)",
-                            color: typeUpper === "UPI" ? "#22D3EE" : "#FBBF24",
-                            border: `1px solid ${typeUpper === "UPI" ? "rgba(6, 182, 212, 0.3)" : "rgba(245, 158, 11, 0.3)"}`,
+                            fontSize: "11px",
+                            fontWeight: "900",
+                            padding: "3px 8px",
+                            borderRadius: "6px",
+                            background: typeUpper === "UPI" ? "rgba(6, 182, 212, 0.25)" : "rgba(255, 184, 0, 0.25)",
+                            color: typeUpper === "UPI" ? "#00F2FE" : "#FFB800",
+                            border: `1px solid ${typeUpper === "UPI" ? "rgba(6, 182, 212, 0.6)" : "rgba(255, 184, 0, 0.6)"}`,
                           }}
                         >
                           {typeUpper}
                         </span>
-                        <strong style={{ color: "#F8FAFC", fontSize: "14px" }}>₹{r.amount}</strong>
-                        <span style={{ fontSize: "11px", color: "#64748B" }}>({r.coins || r.amount * 100} coins)</span>
+                        <strong style={{ color: "#FFFFFF", fontSize: "15px", fontWeight: "900" }}>₹{r.amount}</strong>
+                        <span style={{ fontSize: "12px", color: "#FFB800", fontWeight: "700" }}>🪙 {Number(r.coins || r.amount * 100).toLocaleString()} coins</span>
                       </div>
-                      <div style={{ fontSize: "11px", color: "#94A3B8", marginTop: "4px", fontFamily: "monospace" }}>
-                        {r.payment_address || r.withdraw_details || r.upi_id || "No address"}
+                      <div style={{ fontSize: "12px", color: "#00F2FE", marginTop: "5px", fontFamily: "monospace", fontWeight: "700" }}>
+                        {r.payment_address || r.withdraw_details || r.upi_id || "No address on file"}
                       </div>
                     </div>
 
@@ -516,6 +555,7 @@ export default function AdminDashboard() {
                           status === "pending" ? "badge-pending" :
                           status === "success" ? "badge-success" : "badge-danger"
                         }`}
+                        style={{ fontWeight: "800", fontSize: "11px" }}
                       >
                         {status === "pending" ? "⏳ AWAITING" : status === "success" ? "✅ PAID" : "❌ REJECTED"}
                       </span>
@@ -528,40 +568,53 @@ export default function AdminDashboard() {
         </div>
 
         {/* RECENT PLAYER REGISTRATIONS */}
-        <div className="glass-card" style={{ padding: "24px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+        <div
+          className="glass-card"
+          style={{
+            padding: "26px",
+            background: "linear-gradient(145deg, rgba(99, 102, 241, 0.05) 0%, rgba(18, 24, 39, 0.95) 100%)",
+            border: "1px solid rgba(99, 102, 241, 0.25)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
             <div>
-              <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#F8FAFC", display: "flex", alignItems: "center", gap: "8px" }}>
+              <h4 style={{ margin: 0, fontSize: "17px", fontWeight: "800", color: "#FFFFFF", display: "flex", alignItems: "center", gap: "8px" }}>
                 <span>👤</span> Newly Joined Players
               </h4>
-              <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#64748B" }}>
+              <p style={{ margin: "3px 0 0 0", fontSize: "13px", color: "#E2E8F0", fontWeight: "600" }}>
                 Real-time user onboarding &amp; account creation stream
               </p>
             </div>
             <button
               onClick={() => navigate("/user")}
               style={{
-                background: "rgba(99, 102, 241, 0.12)",
-                border: "1px solid rgba(99, 102, 241, 0.25)",
-                color: "#818CF8",
-                fontSize: "12px",
-                fontWeight: "700",
+                background: "rgba(99, 102, 241, 0.2)",
+                border: "1.5px solid rgba(99, 102, 241, 0.5)",
+                color: "#FFFFFF",
+                fontSize: "12.5px",
+                fontWeight: "800",
                 cursor: "pointer",
-                padding: "6px 12px",
+                padding: "8px 14px",
                 borderRadius: "8px",
                 transition: "all 0.2s ease",
               }}
-              onMouseEnter={(e) => e.target.style.background = "rgba(99, 102, 241, 0.25)"}
-              onMouseLeave={(e) => e.target.style.background = "rgba(99, 102, 241, 0.12)"}
+              onMouseEnter={(e) => {
+                e.target.style.background = "#6366F1";
+                e.target.style.boxShadow = "0 4px 14px rgba(99, 102, 241, 0.4)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = "rgba(99, 102, 241, 0.2)";
+                e.target.style.boxShadow = "none";
+              }}
             >
               Player Directory →
             </button>
           </div>
 
           {recentUsers.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "40px 0", color: "#475569" }}>
-              <div style={{ fontSize: "32px", marginBottom: "8px" }}>👤</div>
-              <div style={{ fontSize: "13px", fontWeight: "600", color: "#94A3B8" }}>No Player Records Found</div>
+            <div style={{ textAlign: "center", padding: "40px 0" }}>
+              <div style={{ fontSize: "36px", marginBottom: "10px" }}>👤</div>
+              <div style={{ fontSize: "15px", fontWeight: "800", color: "#FFFFFF" }}>No Player Records Found</div>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -572,43 +625,45 @@ export default function AdminDashboard() {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    padding: "10px 14px",
-                    background: "rgba(255, 255, 255, 0.025)",
-                    borderRadius: "10px",
-                    border: "1px solid rgba(255, 255, 255, 0.05)",
+                    padding: "12px 16px",
+                    background: "rgba(15, 23, 42, 0.75)",
+                    borderRadius: "12px",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
                     transition: "all 0.18s ease",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.3)";
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
+                    e.currentTarget.style.borderColor = "#818CF8";
+                    e.currentTarget.style.background = "rgba(15, 23, 42, 0.95)";
+                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(129, 140, 248, 0.15)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.05)";
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.025)";
+                    e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                    e.currentTarget.style.background = "rgba(15, 23, 42, 0.75)";
+                    e.currentTarget.style.boxShadow = "none";
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                     <img
                       src={u.profile_pic || u.profile_image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.id}`}
                       alt="avatar"
-                      style={{ width: "36px", height: "36px", borderRadius: "50%", background: "#1E293B", objectFit: "cover", flexShrink: 0, border: "1px solid rgba(255, 255, 255, 0.1)" }}
+                      style={{ width: "38px", height: "38px", borderRadius: "50%", background: "#1E293B", objectFit: "cover", flexShrink: 0, border: "2px solid #6366F1" }}
                       onError={(e) => { e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${u.name || "U"}`; }}
                     />
                     <div>
-                      <div style={{ fontWeight: "700", color: "#F8FAFC", fontSize: "13px" }}>
+                      <div style={{ fontWeight: "800", color: "#FFFFFF", fontSize: "13.5px" }}>
                         {u.name || "Anonymous Player"}
                       </div>
-                      <div style={{ fontSize: "11px", color: "#64748B" }}>
+                      <div style={{ fontSize: "11.5px", color: "#CBD5E1", fontWeight: "600" }}>
                         {u.email || `${u.id?.substring(0, 16)}...`}
                       </div>
                     </div>
                   </div>
 
                   <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <div style={{ fontWeight: "700", color: "#F59E0B", fontSize: "12px" }}>
+                    <div style={{ fontWeight: "900", color: "#FFB800", fontSize: "13px" }}>
                       🪙 {Number(u.coins || 0).toLocaleString()}
                     </div>
-                    <div style={{ fontSize: "11px", color: "#38BDF8", marginTop: "1px" }}>
+                    <div style={{ fontSize: "11.5px", color: "#00F2FE", marginTop: "2px", fontWeight: "800" }}>
                       🎟️ {Number(u.tickets || 0)} tickets
                     </div>
                   </div>
@@ -620,24 +675,31 @@ export default function AdminDashboard() {
       </div>
 
       {/* ── RAPID OPERATIONS LAUNCHPAD ── */}
-      <div className="glass-card" style={{ padding: "24px 28px" }}>
-        <div style={{ marginBottom: "16px" }}>
-          <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#F8FAFC" }}>
+      <div
+        className="glass-card"
+        style={{
+          padding: "26px 32px",
+          background: "linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.7) 100%)",
+          border: "1px solid rgba(255, 255, 255, 0.12)",
+        }}
+      >
+        <div style={{ marginBottom: "18px" }}>
+          <h4 style={{ margin: 0, fontSize: "17px", fontWeight: "800", color: "#FFFFFF" }}>
             ⚡ Rapid Operational Launchpad
           </h4>
-          <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#64748B" }}>
+          <p style={{ margin: "3px 0 0 0", fontSize: "13px", color: "#E2E8F0", fontWeight: "600" }}>
             Instant shortcuts to primary administrative functions
           </p>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "14px" }}>
           {[
-            { label: "Configure Lucky Draw", desc: "Slots & Coins", icon: "🎯", path: "/admin/createluckydraw", color: "#8B5CF6" },
-            { label: "Dispatch Push Alert", desc: "FCM Broadcast", icon: "🔔", path: "/admin/notifications", color: "#3B82F6" },
-            { label: "Authorize Payouts", desc: "UPI / Gift Cards", icon: "💳", path: "/redeem", color: "#10B981" },
-            { label: "Share & Earn Deals", desc: "Affiliate Offers", icon: "🔗", path: "/admin/share-earn", color: "#06B6D4" },
-            { label: "Audited Winners", desc: "Draw History", icon: "🏆", path: "/admin/winner-history", color: "#F59E0B" },
-            { label: "Data Erasure Tickets", desc: "Google Compliance", icon: "🗑️", path: "/admin/delete-requests", color: "#EF4444" },
+            { label: "Configure Lucky Draw", desc: "Slots & Coins", icon: "🎯", path: "/admin/createluckydraw", color: "#C084FC" },
+            { label: "Dispatch Push Alert", desc: "FCM Broadcast", icon: "🔔", path: "/admin/notifications", color: "#60A5FA" },
+            { label: "Authorize Payouts", desc: "UPI / Gift Cards", icon: "💳", path: "/redeem", color: "#00F5A0" },
+            { label: "Share & Earn Deals", desc: "Affiliate Offers", icon: "🔗", path: "/admin/share-earn", color: "#00F2FE" },
+            { label: "Audited Winners", desc: "Draw History", icon: "🏆", path: "/admin/winner-history", color: "#FFB800" },
+            { label: "Data Erasure Tickets", desc: "Google Compliance", icon: "🗑️", path: "/admin/delete-requests", color: "#FF4B72" },
           ].map((action) => (
             <div
               key={action.path}
@@ -646,42 +708,46 @@ export default function AdminDashboard() {
                 display: "flex",
                 alignItems: "center",
                 gap: "12px",
-                padding: "14px 16px",
-                background: `${action.color}0D`,
-                border: `1px solid ${action.color}25`,
-                borderRadius: "12px",
+                padding: "16px 18px",
+                background: `linear-gradient(135deg, ${action.color}15 0%, rgba(15, 23, 42, 0.9) 100%)`,
+                border: `1.5px solid ${action.color}40`,
+                borderRadius: "14px",
                 cursor: "pointer",
-                transition: "all 0.2s ease",
+                transition: "all 0.22s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = `${action.color}1E`;
-                e.currentTarget.style.borderColor = `${action.color}50`;
-                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.background = `linear-gradient(135deg, ${action.color}30 0%, rgba(15, 23, 42, 0.95) 100%)`;
+                e.currentTarget.style.borderColor = action.color;
+                e.currentTarget.style.transform = "translateY(-3px)";
+                e.currentTarget.style.boxShadow = `0 10px 25px -4px ${action.color}35`;
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = `${action.color}0D`;
-                e.currentTarget.style.borderColor = `${action.color}25`;
+                e.currentTarget.style.background = `linear-gradient(135deg, ${action.color}15 0%, rgba(15, 23, 42, 0.9) 100%)`;
+                e.currentTarget.style.borderColor = `${action.color}40`;
                 e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "none";
               }}
             >
               <div
                 style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "10px",
-                  background: `${action.color}20`,
+                  width: "44px",
+                  height: "44px",
+                  borderRadius: "12px",
+                  background: `${action.color}25`,
+                  border: `1px solid ${action.color}60`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: "20px",
+                  fontSize: "22px",
                   flexShrink: 0,
+                  boxShadow: `0 4px 12px ${action.color}25`,
                 }}
               >
                 {action.icon}
               </div>
               <div>
-                <div style={{ color: "#F8FAFC", fontWeight: "700", fontSize: "13px" }}>{action.label}</div>
-                <div style={{ color: "#64748B", fontSize: "11px", marginTop: "2px" }}>{action.desc}</div>
+                <div style={{ color: "#FFFFFF", fontWeight: "800", fontSize: "13.5px" }}>{action.label}</div>
+                <div style={{ color: "#E2E8F0", fontSize: "11.5px", marginTop: "2px", fontWeight: "600" }}>{action.desc}</div>
               </div>
             </div>
           ))}
