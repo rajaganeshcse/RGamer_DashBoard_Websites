@@ -490,7 +490,7 @@ export default function Redeem() {
     return (
       <div style={{ textAlign: "center", padding: "60px 20px" }} className="animate-fade-in">
         <div className="spinner"></div>
-        <p style={{ color: "#94A3B8" }}>Loading Redemption & Inventory Dashboard...</p>
+        <p style={{ color: "#FFFFFF", fontWeight: "700" }}>Loading Redemption & Inventory Dashboard...</p>
       </div>
     );
   }
@@ -521,10 +521,10 @@ export default function Redeem() {
       <div className="glass-card" style={{ padding: "20px 24px", marginBottom: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "700", color: "#F8FAFC" }}>
+            <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "800", color: "#FFFFFF" }}>
               🏆 Reward &amp; Payout Management
             </h2>
-            <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "#94A3B8" }}>
+            <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "#E2E8F0", fontWeight: "600" }}>
               Fulfill user redemption requests, manage Google Play / Gift Code inventory &amp; configure rates.
             </p>
           </div>
@@ -624,12 +624,12 @@ export default function Redeem() {
                     onClick={() => setFilterStatus(tab)}
                     style={{
                       background: filterStatus === tab ? "#6366F1" : "transparent",
-                      color: filterStatus === tab ? "#FFFFFF" : "#94A3B8",
+                      color: filterStatus === tab ? "#FFFFFF" : "#E2E8F0",
                       border: "none",
                       padding: "6px 14px",
                       borderRadius: "8px",
                       fontSize: "12px",
-                      fontWeight: "600",
+                      fontWeight: "700",
                       cursor: "pointer"
                     }}
                   >
@@ -660,7 +660,7 @@ export default function Redeem() {
 
           {/* REQUEST CARDS GRID */}
           {filteredRequests.length === 0 ? (
-            <div className="glass-card" style={{ padding: "40px", textAlign: "center", color: "#94A3B8" }}>
+            <div className="glass-card" style={{ padding: "40px", textAlign: "center", color: "#FFFFFF", fontWeight: "700" }}>
               No redemption requests match your filter.
             </div>
           ) : (
@@ -687,12 +687,12 @@ export default function Redeem() {
                           <span className="badge badge-info" style={{ textTransform: "uppercase" }}>
                             {req.type || "REDEEM"}
                           </span>
-                          <h3 style={{ margin: "8px 0 2px 0", fontSize: "16px", fontWeight: "700", color: "#F8FAFC" }}>
+                          <h3 style={{ margin: "8px 0 2px 0", fontSize: "16px", fontWeight: "800", color: "#FFFFFF" }}>
                             {req.username || "Anonymous User"}
                           </h3>
-                          <div style={{ fontSize: "12px", color: "#94A3B8" }}>{req.email || "No Email"}</div>
+                          <div style={{ fontSize: "12px", color: "#E2E8F0", fontWeight: "600" }}>{req.email || "No Email"}</div>
                           {req.created_at && (
-                            <div style={{ fontSize: "11px", color: "#64748B", marginTop: "3px" }}>
+                            <div style={{ fontSize: "11px", color: "#00F2FE", fontWeight: "700", marginTop: "3px" }}>
                               🕒 {(() => {
                                 try {
                                   const d = typeof req.created_at?.toDate === "function" ? req.created_at.toDate() : typeof req.created_at?.seconds === "number" ? new Date(req.created_at.seconds * 1000) : new Date(req.created_at);
@@ -718,7 +718,7 @@ export default function Redeem() {
                       {(req.type === "upi" || req.type === "bank") && (
                         <div style={{ background: "rgba(15, 23, 42, 0.8)", padding: "10px 14px", borderRadius: "8px", marginBottom: "12px", border: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div>
-                            <div style={{ fontSize: "11px", color: "#64748B", textTransform: "uppercase", fontWeight: "700" }}>
+                            <div style={{ fontSize: "11px", color: "#FFFFFF", textTransform: "uppercase", fontWeight: "800" }}>
                               Payment Target ({req.type.toUpperCase()})
                             </div>
                             <div style={{ fontSize: "13px", fontWeight: "600", color: "#38BDF8", marginTop: "2px", wordBreak: "break-all" }}>
@@ -738,7 +738,7 @@ export default function Redeem() {
 
                       {isVoucherType && (
                         <div style={{ marginBottom: "12px" }}>
-                          <label style={{ fontSize: "11px", color: "#94A3B8", fontWeight: "600", display: "block", marginBottom: "4px" }}>
+                          <label style={{ fontSize: "11px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase", display: "block", marginBottom: "4px" }}>
                             🎟️ Voucher Code:
                           </label>
                           <div style={{ display: "flex", gap: "8px" }}>
@@ -850,10 +850,10 @@ export default function Redeem() {
           {/* BULK ADD CODE FORM */}
           <div className="glass-card" style={{ padding: "24px" }}>
             <div style={{ marginBottom: "16px" }}>
-              <h3 style={{ margin: "0 0 4px 0", color: "#F8FAFC", fontSize: "18px", fontWeight: "700" }}>
+              <h3 style={{ margin: "0 0 4px 0", color: "#FFFFFF", fontSize: "18px", fontWeight: "800" }}>
                 📥 Bulk Code Inventory Upload
               </h3>
-              <p style={{ margin: 0, fontSize: "13px", color: "#94A3B8" }}>
+              <p style={{ margin: 0, fontSize: "13px", color: "#E2E8F0", fontWeight: "600" }}>
                 Add Google Play, Amazon, or PhonePe codes. Newly uploaded codes automatically resolve pending requests in FIFO order!
               </p>
             </div>
@@ -861,7 +861,7 @@ export default function Redeem() {
             <form onSubmit={handleBulkAddCodes} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: "200px" }}>
-                  <label style={{ display: "block", fontSize: "12px", color: "#94A3B8", fontWeight: "600", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "12px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase", marginBottom: "4px" }}>
                     Redemption Method:
                   </label>
                   <select
@@ -877,7 +877,7 @@ export default function Redeem() {
                 </div>
 
                 <div style={{ flex: 1, minWidth: "160px" }}>
-                  <label style={{ display: "block", fontSize: "12px", color: "#94A3B8", fontWeight: "600", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "12px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase", marginBottom: "4px" }}>
                     Denomination Amount (₹):
                   </label>
                   <select
@@ -898,7 +898,7 @@ export default function Redeem() {
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "12px", color: "#94A3B8", fontWeight: "600", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "12px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase", marginBottom: "4px" }}>
                   Paste Codes (One code per line):
                 </label>
                 <textarea
@@ -954,7 +954,7 @@ export default function Redeem() {
             </div>
 
             {Object.keys(codeInventoryGroups).length === 0 ? (
-              <div style={{ padding: "40px", textAlign: "center", color: "#94A3B8" }}>
+              <div style={{ padding: "40px", textAlign: "center", color: "#FFFFFF", fontWeight: "700" }}>
                 No codes uploaded yet. Use the bulk uploader above to add codes for Google Play, Amazon, or PhonePe!
               </div>
             ) : (
@@ -1009,7 +1009,7 @@ export default function Redeem() {
                                 fontFamily: "monospace"
                               }}
                             >
-                              <span style={{ color: "#F8FAFC", fontWeight: "600" }}>{c.code}</span>
+                              <span style={{ color: "#FFFFFF", fontWeight: "700" }}>{c.code}</span>
                               <span
                                 style={{
                                   fontSize: "10px",
@@ -1025,7 +1025,7 @@ export default function Redeem() {
                             </div>
                           ))}
                           {group.codes.length > 10 && (
-                            <div style={{ fontSize: "11px", color: "#64748B", textAlign: "center", marginTop: "4px" }}>
+                            <div style={{ fontSize: "11px", color: "#E2E8F0", textAlign: "center", marginTop: "4px", fontWeight: "600" }}>
                               + {group.codes.length - 10} more codes
                             </div>
                           )}
@@ -1102,10 +1102,10 @@ export default function Redeem() {
             {/* CONVERSION RATE INPUT */}
             <div style={{ background: "rgba(15, 23, 42, 0.8)", padding: "16px 20px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
               <div>
-                <label style={{ color: "#F8FAFC", fontWeight: "700", fontSize: "15px", display: "block" }}>
+                <label style={{ color: "#FFFFFF", fontWeight: "800", fontSize: "15px", display: "block" }}>
                   💰 App Global Coin Conversion Rate
                 </label>
-                <span style={{ fontSize: "12px", color: "#94A3B8" }}>
+                <span style={{ fontSize: "12px", color: "#E2E8F0", fontWeight: "600" }}>
                   Set how many coins equal ₹1 (e.g. 100 coins = ₹1)
                 </span>
               </div>
@@ -1118,7 +1118,7 @@ export default function Redeem() {
                   onChange={(e) => setConfig({ ...config, conversionRate: Number(e.target.value) })}
                   style={{ width: "120px", textAlign: "center", fontWeight: "700", fontSize: "16px" }}
                 />
-                <span style={{ color: "#F8FAFC", fontWeight: "600" }}>Coins = ₹1</span>
+                <span style={{ color: "#FFFFFF", fontWeight: "700" }}>Coins = ₹1</span>
 
                 <button
                   onClick={() => saveRewardConfig()}
@@ -1134,13 +1134,13 @@ export default function Redeem() {
 
           {/* 2. ADD NEW REWARD TIER FORM */}
           <div className="glass-card" style={{ padding: "24px" }}>
-            <h3 style={{ margin: "0 0 16px 0", color: "#F8FAFC", fontSize: "18px", fontWeight: "700" }}>
+            <h3 style={{ margin: "0 0 16px 0", color: "#FFFFFF", fontSize: "18px", fontWeight: "800" }}>
               ➕ Add New Reward Option Card
             </h3>
 
             <form onSubmit={handleAddTier} style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "flex-end" }}>
               <div>
-                <label style={{ display: "block", fontSize: "12px", color: "#94A3B8", fontWeight: "600", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "12px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase", marginBottom: "4px" }}>
                   Withdraw Type:
                 </label>
                 <select
@@ -1158,7 +1158,7 @@ export default function Redeem() {
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "12px", color: "#94A3B8", fontWeight: "600", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "12px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase", marginBottom: "4px" }}>
                   Coins Cost:
                 </label>
                 <input
@@ -1172,7 +1172,7 @@ export default function Redeem() {
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "12px", color: "#94A3B8", fontWeight: "600", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "12px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase", marginBottom: "4px" }}>
                   Rupee Amount (₹):
                 </label>
                 <input
@@ -1227,7 +1227,7 @@ export default function Redeem() {
                     <button
                       onClick={() => handleToggleTier(t.id)}
                       style={{
-                        background: t.enabled ? "#10B981" : "#64748B",
+                        background: t.enabled ? "#10B981" : "#475569",
                         color: "#FFF",
                         border: "none",
                         padding: "4px 10px",

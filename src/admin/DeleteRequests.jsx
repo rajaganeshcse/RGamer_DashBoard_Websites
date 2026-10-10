@@ -140,10 +140,10 @@ export default function DeleteRequests() {
             ← Back
           </button>
           <div>
-            <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "700", color: "#F8FAFC" }}>
+            <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "800", color: "#FFFFFF" }}>
               🗑️ Account Deletion Requests
             </h2>
-            <p style={{ margin: "2px 0 0 0", fontSize: "13px", color: "#94A3B8" }}>
+            <p style={{ margin: "2px 0 0 0", fontSize: "13px", color: "#E2E8F0", fontWeight: "600" }}>
               Approve, cancel, or audit user account deletion requests.
             </p>
           </div>
@@ -196,12 +196,12 @@ export default function DeleteRequests() {
             onClick={() => setActiveTab(tab.key)}
             style={{
               background: activeTab === tab.key ? tab.color : "rgba(255, 255, 255, 0.05)",
-              color: activeTab === tab.key ? "#FFFFFF" : "#94A3B8",
+              color: activeTab === tab.key ? "#FFFFFF" : "#E2E8F0",
               border: `1px solid ${activeTab === tab.key ? tab.color : "rgba(255, 255, 255, 0.1)"}`,
               padding: "8px 16px",
               borderRadius: "10px",
               fontSize: "13px",
-              fontWeight: "600",
+              fontWeight: "700",
               cursor: "pointer",
               transition: "all 0.2s ease"
             }}
@@ -215,10 +215,10 @@ export default function DeleteRequests() {
       {loading ? (
         <div className="glass-card" style={{ padding: "50px", textAlign: "center" }}>
           <div className="spinner"></div>
-          <p style={{ color: "#94A3B8" }}>Loading Deletion Requests...</p>
+          <p style={{ color: "#FFFFFF", fontWeight: "700" }}>Loading Deletion Requests...</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="glass-card" style={{ padding: "50px", textAlign: "center", color: "#94A3B8" }}>
+        <div className="glass-card" style={{ padding: "50px", textAlign: "center", color: "#FFFFFF", fontWeight: "700" }}>
           No {activeTab} requests found.
         </div>
       ) : (
@@ -254,10 +254,10 @@ export default function DeleteRequests() {
                         {(req.name || req.email || "?")[0].toUpperCase()}
                       </div>
                       <div>
-                        <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#F8FAFC" }}>
+                        <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "800", color: "#FFFFFF" }}>
                           {req.name || "Unknown User"}
                         </h4>
-                        <div style={{ fontSize: "12px", color: "#94A3B8" }}>{req.email || "No Email"}</div>
+                        <div style={{ fontSize: "12px", color: "#E2E8F0", fontWeight: "600" }}>{req.email || "No Email"}</div>
                       </div>
                     </div>
 
@@ -269,12 +269,12 @@ export default function DeleteRequests() {
                   {/* INFO CONTAINER */}
                   <div style={{ background: "rgba(15, 23, 42, 0.8)", padding: "12px 16px", borderRadius: "10px", marginBottom: "14px", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px", fontSize: "12px" }}>
-                      <span style={{ color: "#64748B", fontWeight: "600" }}>USER ID:</span>
-                      <code style={{ color: "#38BDF8" }}>{req.userId || req.id}</code>
+                      <span style={{ color: "#FFFFFF", fontWeight: "800" }}>USER ID:</span>
+                      <code style={{ color: "#00F2FE", fontWeight: "700" }}>{req.userId || req.id}</code>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
-                      <span style={{ color: "#64748B", fontWeight: "600" }}>REQUESTED:</span>
-                      <span style={{ color: "#CBD5E1" }}>{formatDate(req.requestedAt)}</span>
+                      <span style={{ color: "#FFFFFF", fontWeight: "800" }}>REQUESTED:</span>
+                      <span style={{ color: "#E2E8F0", fontWeight: "600" }}>{formatDate(req.requestedAt)}</span>
                     </div>
                   </div>
 
@@ -335,11 +335,11 @@ export default function DeleteRequests() {
             <div style={{ fontSize: "40px", marginBottom: "12px" }}>
               {confirmModal.type === "delete" ? "🗑️" : "↩️"}
             </div>
-            <h3 style={{ margin: "0 0 8px 0", color: "#F8FAFC", fontSize: "18px" }}>
+            <h3 style={{ margin: "0 0 8px 0", color: "#FFFFFF", fontSize: "18px", fontWeight: "800" }}>
               {confirmModal.type === "delete" ? "Confirm Account Deletion" : "Restore User Account"}
             </h3>
-            <p style={{ fontSize: "13px", color: "#94A3B8", margin: "0 0 16px 0" }}>
-              Target User: <strong style={{ color: "#F8FAFC" }}>{confirmModal.req.name || confirmModal.req.email || confirmModal.req.userId}</strong>
+            <p style={{ fontSize: "13px", color: "#E2E8F0", margin: "0 0 16px 0", fontWeight: "600" }}>
+              Target User: <strong style={{ color: "#00F2FE" }}>{confirmModal.req.name || confirmModal.req.email || confirmModal.req.userId}</strong>
             </p>
 
             <div style={{ display: "flex", gap: "12px" }}>

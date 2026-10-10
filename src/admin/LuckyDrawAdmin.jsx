@@ -217,11 +217,11 @@ export default function LuckyDrawAdmin() {
 
       {/* ================= 1. CONFIGURATION PRESETS ================= */}
       <div className="glass-card" style={{ padding: "28px", marginBottom: "32px" }}>
-        <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: "700", color: "#F8FAFC", display: "flex", alignItems: "center", gap: "8px" }}>
+        <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: "800", color: "#FFFFFF", display: "flex", alignItems: "center", gap: "8px" }}>
           <span>⚙️</span> Authoritative Draw Parameters
         </h3>
 
-        <div style={{ marginBottom: "14px", fontSize: "12px", color: "#94A3B8", fontWeight: "700", textTransform: "uppercase" }}>
+        <div style={{ marginBottom: "14px", fontSize: "12px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase" }}>
           Quick Preset Switcher:
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
@@ -244,7 +244,7 @@ export default function LuckyDrawAdmin() {
                   borderRadius: "8px",
                   border: isActive ? "1px solid #8B5CF6" : "1px solid rgba(255, 255, 255, 0.08)",
                   background: isActive ? "rgba(139, 92, 246, 0.25)" : "rgba(255, 255, 255, 0.03)",
-                  color: isActive ? "#C084FC" : "#94A3B8",
+                  color: isActive ? "#C084FC" : "#E2E8F0",
                   fontSize: "12px",
                   fontWeight: "700",
                   cursor: "pointer"
@@ -258,7 +258,7 @@ export default function LuckyDrawAdmin() {
 
         <form onSubmit={handleSaveConfig} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", alignItems: "end" }}>
           <div>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#94A3B8", marginBottom: "6px" }}>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: "800", color: "#FFFFFF", marginBottom: "6px" }}>
               PARTICIPATION LIMIT (SLOTS)
             </label>
             <input
@@ -271,7 +271,7 @@ export default function LuckyDrawAdmin() {
           </div>
 
           <div>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#94A3B8", marginBottom: "6px" }}>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: "800", color: "#FFFFFF", marginBottom: "6px" }}>
               REWARD PRIZE (COINS)
             </label>
             <input
@@ -284,7 +284,7 @@ export default function LuckyDrawAdmin() {
           </div>
 
           <div>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#94A3B8", marginBottom: "6px" }}>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: "800", color: "#FFFFFF", marginBottom: "6px" }}>
               TICKET ENTRY COST
             </label>
             <input
@@ -309,19 +309,19 @@ export default function LuckyDrawAdmin() {
 
       {/* ================= 2. ACTIVE OPEN DRAWS ================= */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: "700", color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.8px", margin: 0 }}>
+        <h3 style={{ fontSize: "15px", fontWeight: "900", color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.8px", margin: 0 }}>
           🔥 Active Open Draws ({openDraws.length})
         </h3>
-        <span style={{ fontSize: "12px", color: "#94A3B8" }}>Auto-completes and regenerates when slots fill</span>
+        <span style={{ fontSize: "12px", color: "#E2E8F0", fontWeight: "600" }}>Auto-completes and regenerates when slots fill</span>
       </div>
 
       {loading ? (
         <div style={{ textAlign: "center", padding: "60px 20px" }}>
           <div className="spinner"></div>
-          <p style={{ color: "#94A3B8" }}>Loading active lucky draws...</p>
+          <p style={{ color: "#FFFFFF", fontWeight: "700" }}>Loading active lucky draws...</p>
         </div>
       ) : openDraws.length === 0 ? (
-        <div className="glass-card" style={{ padding: "40px", textAlign: "center", color: "#94A3B8", marginBottom: "32px" }}>
+        <div className="glass-card" style={{ padding: "40px", textAlign: "center", color: "#FFFFFF", marginBottom: "32px", fontWeight: "700" }}>
           No active open draws found. Backend automatically regenerates them on demand.
         </div>
       ) : (
@@ -347,7 +347,7 @@ export default function LuckyDrawAdmin() {
               >
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                    <span style={{ fontSize: "12px", color: "#94A3B8", fontFamily: "monospace" }}>
+                    <span style={{ fontSize: "12px", color: "#00F2FE", fontFamily: "monospace", fontWeight: "700" }}>
                       #{drawId.slice(0, 8)}
                     </span>
                     <span className="badge badge-success">
@@ -355,18 +355,18 @@ export default function LuckyDrawAdmin() {
                     </span>
                   </div>
 
-                  <div style={{ fontSize: "20px", fontWeight: "800", color: "#F8FAFC", marginBottom: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <div style={{ fontSize: "20px", fontWeight: "800", color: "#FFFFFF", marginBottom: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
                     <span>🎁</span> Win {Number(draw.rewardCoins || 0).toLocaleString()} Coins
                   </div>
 
                   <div style={{ background: "rgba(255, 255, 255, 0.03)", borderRadius: "8px", padding: "10px 12px", marginBottom: "14px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#94A3B8", marginBottom: "4px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#E2E8F0", marginBottom: "4px", fontWeight: "600" }}>
                       <span>Ticket Entry Cost:</span>
-                      <strong style={{ color: "#60A5FA" }}>🎟️ {draw.ticketCost || 1} Ticket</strong>
+                      <strong style={{ color: "#00F2FE" }}>🎟️ {draw.ticketCost || 1} Ticket</strong>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#94A3B8" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#E2E8F0", fontWeight: "600" }}>
                       <span>Remaining Slots:</span>
-                      <strong style={{ color: remSlots > 0 ? "#34D399" : "#F87171" }}>{remSlots} slots left</strong>
+                      <strong style={{ color: remSlots > 0 ? "#00F5A0" : "#FF4B72" }}>{remSlots} slots left</strong>
                     </div>
                   </div>
 

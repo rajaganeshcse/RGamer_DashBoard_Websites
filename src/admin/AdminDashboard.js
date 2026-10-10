@@ -383,7 +383,7 @@ export default function AdminDashboard() {
           label="Account Deletions (Play Store)"
           value={metrics.pendingDeletions}
           sub="7-day grace period enforcement"
-          accent={metrics.pendingDeletions > 0 ? "#FF4B72" : "#94A3B8"}
+          accent={metrics.pendingDeletions > 0 ? "#FF4B72" : "#10B981"}
           badge={metrics.pendingDeletions > 0 ? "Review Ticket" : "Zero Queued"}
           badgeClass={metrics.pendingDeletions > 0 ? "badge-pending" : "badge-info"}
           onClick={() => navigate("/admin/delete-requests")}

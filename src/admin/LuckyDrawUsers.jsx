@@ -105,10 +105,10 @@ const LuckyDrawUsers = () => {
             ← Back to Draws
           </button>
           <div>
-            <h2 style={{ margin: 0, fontSize: "22px", fontWeight: "800", color: "#F8FAFC" }}>
+            <h2 style={{ margin: 0, fontSize: "22px", fontWeight: "800", color: "#FFFFFF" }}>
               👥 Lucky Draw Participants
             </h2>
-            <div style={{ fontSize: "13px", color: "#94A3B8", marginTop: "4px" }}>
+            <div style={{ fontSize: "13px", color: "#E2E8F0", marginTop: "4px", fontWeight: "600" }}>
               Event #{drawId?.slice(0, 10)} {draw && `• Win ${draw.rewardCoins} Coins (${draw.filledSlots}/${draw.totalSlots} Slots)`}
             </div>
           </div>
@@ -132,10 +132,10 @@ const LuckyDrawUsers = () => {
         {loading ? (
           <div style={{ textAlign: "center", padding: "60px 20px" }}>
             <div className="spinner"></div>
-            <p style={{ color: "#94A3B8" }}>Loading enrolled participants...</p>
+            <p style={{ color: "#FFFFFF", fontWeight: "700" }}>Loading enrolled participants...</p>
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "50px 20px", color: "#64748B" }}>
+          <div style={{ textAlign: "center", padding: "50px 20px", color: "#FFFFFF", fontWeight: "700" }}>
             No participants joined this lucky draw yet.
           </div>
         ) : (
@@ -169,12 +169,12 @@ const LuckyDrawUsers = () => {
                             className="user-avatar"
                             style={{ width: "36px", height: "36px" }}
                           />
-                          <span style={{ fontWeight: "700", color: "#F8FAFC" }}>{u.name}</span>
+                          <span style={{ fontWeight: "800", color: "#FFFFFF" }}>{u.name}</span>
                         </div>
                       </td>
                       <td className="email-cell">{u.email}</td>
                       <td>
-                        <code style={{ fontSize: "11px", color: "#94A3B8", background: "rgba(255,255,255,0.05)", padding: "3px 6px", borderRadius: "4px" }}>
+                        <code style={{ fontSize: "11px", color: "#00F2FE", fontWeight: "700", background: "rgba(6, 182, 212, 0.15)", border: "1px solid rgba(6, 182, 212, 0.3)", padding: "3px 6px", borderRadius: "4px" }}>
                           {u.uid}
                         </code>
                       </td>

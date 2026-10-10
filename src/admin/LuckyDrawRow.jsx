@@ -20,7 +20,7 @@ const LuckyDrawRow = ({ draw }) => {
     >
       {/* HEADER */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-        <span style={{ fontSize: "12px", color: "#94A3B8", fontFamily: "monospace" }}>
+        <span style={{ fontSize: "12px", color: "#00F2FE", fontFamily: "monospace", fontWeight: "700" }}>
           #{draw.id.slice(0, 8)}
         </span>
         <span className={`badge ${isCompleted ? "badge-success" : "badge-info"}`}>
@@ -29,14 +29,14 @@ const LuckyDrawRow = ({ draw }) => {
       </div>
 
       {/* REWARD */}
-      <div style={{ fontSize: "17px", fontWeight: "700", color: "#F8FAFC", display: "flex", alignItems: "center", gap: "6px" }}>
+      <div style={{ fontSize: "17px", fontWeight: "800", color: "#FFFFFF", display: "flex", alignItems: "center", gap: "6px" }}>
         <span>🎁</span> Win {Number(draw.rewardCoins || 0).toLocaleString()} Coins
       </div>
 
       {/* SLOTS */}
-      <div style={{ fontSize: "13px", color: "#94A3B8", marginTop: "6px", display: "flex", justifyContent: "space-between" }}>
-        <span>Enrolled: <strong>{draw.filledSlots}</strong> / {draw.totalSlots}</span>
-        <span style={{ color: "#38BDF8", fontWeight: "700" }}>{percent}%</span>
+      <div style={{ fontSize: "13px", color: "#E2E8F0", marginTop: "6px", display: "flex", justifyContent: "space-between", fontWeight: "600" }}>
+        <span>Enrolled: <strong style={{ color: "#FFFFFF" }}>{draw.filledSlots}</strong> / {draw.totalSlots}</span>
+        <span style={{ color: "#00F2FE", fontWeight: "800" }}>{percent}%</span>
       </div>
 
       {/* PROGRESS BAR */}

@@ -120,10 +120,10 @@ const WinnerHistory = () => {
             ← Lucky Draws
           </button>
           <div>
-            <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "800", color: "#F8FAFC" }}>
+            <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "800", color: "#FFFFFF" }}>
               🏅 Official Winner Records &amp; Payout Audit
             </h2>
-            <div style={{ fontSize: "12px", color: "#94A3B8" }}>
+            <div style={{ fontSize: "12px", color: "#E2E8F0", fontWeight: "600" }}>
               Immutable log of completed lottery drawings and awarded prizes
             </div>
           </div>
@@ -146,10 +146,10 @@ const WinnerHistory = () => {
         {loading ? (
           <div style={{ textAlign: "center", padding: "60px 20px" }}>
             <div className="spinner"></div>
-            <p style={{ color: "#94A3B8" }}>Loading Winner Audit Records...</p>
+            <p style={{ color: "#FFFFFF", fontWeight: "700" }}>Loading Winner Audit Records...</p>
           </div>
         ) : filteredHistory.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "50px 20px", color: "#64748B" }}>
+          <div style={{ textAlign: "center", padding: "50px 20px", color: "#FFFFFF", fontWeight: "700" }}>
             No winner records found matching your query.
           </div>
         ) : (
@@ -169,13 +169,13 @@ const WinnerHistory = () => {
                 {filteredHistory.map((item) => (
                   <tr key={item.drawId} className="table-row">
                     <td>
-                      <code style={{ fontSize: "12px", color: "#38BDF8", background: "rgba(56, 189, 248, 0.1)", padding: "4px 8px", borderRadius: "6px" }}>
+                      <code style={{ fontSize: "12px", color: "#00F2FE", fontWeight: "700", background: "rgba(6, 182, 212, 0.15)", border: "1px solid rgba(6, 182, 212, 0.3)", padding: "4px 8px", borderRadius: "6px" }}>
                         #{item.drawId.slice(0, 8)}
                       </code>
                     </td>
                     <td>
-                      <div style={{ fontWeight: "700", color: "#F8FAFC" }}>{item.username}</div>
-                      <div style={{ fontSize: "11px", color: "#94A3B8", fontFamily: "monospace" }}>
+                      <div style={{ fontWeight: "800", color: "#FFFFFF" }}>{item.username}</div>
+                      <div style={{ fontSize: "11px", color: "#00F2FE", fontFamily: "monospace", fontWeight: "700" }}>
                         UID: {item.winnerUid}
                       </div>
                     </td>

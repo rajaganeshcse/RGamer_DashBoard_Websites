@@ -504,25 +504,25 @@ export default function NotificationsAdmin() {
 
             {/* LIVE ANDROID NOTIFICATION PREVIEW */}
             <div style={{ marginTop: "16px", marginBottom: "20px" }}>
-              <div style={{ fontSize: "11px", fontWeight: "700", color: "#94A3B8", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>
+              <div style={{ fontSize: "11px", fontWeight: "800", color: "#FFFFFF", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>
                 📱 Real-Time Android Push Preview:
               </div>
               <div style={{
                 background: "#0F172A",
                 borderRadius: "14px",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
                 padding: "14px 16px",
                 boxShadow: "0 8px 24px rgba(0,0,0,0.4)"
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
                   <span style={{ fontSize: "16px" }}>🎮</span>
-                  <span style={{ fontSize: "12px", fontWeight: "700", color: "#CBD5E1" }}>RGamer</span>
-                  <span style={{ fontSize: "11px", color: "#64748B" }}>• now</span>
+                  <span style={{ fontSize: "12px", fontWeight: "800", color: "#FFFFFF" }}>RGamer</span>
+                  <span style={{ fontSize: "11px", color: "#00F2FE", fontWeight: "700" }}>• now</span>
                 </div>
-                <div style={{ fontWeight: "700", color: "#F8FAFC", fontSize: "14px", marginBottom: "2px" }}>
+                <div style={{ fontWeight: "800", color: "#FFFFFF", fontSize: "14px", marginBottom: "2px" }}>
                   {title || "Notification Title"}
                 </div>
-                <div style={{ fontSize: "13px", color: "#94A3B8", lineHeight: "1.4" }}>
+                <div style={{ fontSize: "13px", color: "#E2E8F0", lineHeight: "1.4", fontWeight: "600" }}>
                   {message || "Notification body message preview..."}
                 </div>
                 {imageUrl && (
@@ -705,8 +705,8 @@ export default function NotificationsAdmin() {
                 {history.map((item) => (
                   <tr key={item.id} style={styles.tr}>
                     <td style={styles.td}>
-                      <strong style={{ color: "#F8FAFC" }}>{item.title}</strong>
-                      <div style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>{item.message}</div>
+                      <strong style={{ color: "#FFFFFF" }}>{item.title}</strong>
+                      <div style={{ fontSize: 12, color: "#E2E8F0", marginTop: 2, fontWeight: "600" }}>{item.message}</div>
                     </td>
                     <td style={styles.td}>
                       <span style={styles.typeTag}>{item.notificationType || "PROMOTION"}</span>
@@ -716,10 +716,10 @@ export default function NotificationsAdmin() {
                       <span style={styles.screenTag}>{item.screen || "HOME"}</span>
                     </td>
                     <td style={styles.td}>{item.totalRecipients ?? 0}</td>
-                    <td style={{ ...styles.td, color: "#34D399", fontWeight: "bold" }}>
+                    <td style={{ ...styles.td, color: "#00F5A0", fontWeight: "bold" }}>
                       {item.successfulCount ?? 0}
                     </td>
-                    <td style={{ ...styles.td, color: item.failedCount > 0 ? "#F87171" : "#64748B" }}>
+                    <td style={{ ...styles.td, color: item.failedCount > 0 ? "#FF4B72" : "#CBD5E1" }}>
                       {item.failedCount ?? 0}
                     </td>
                     <td style={styles.td}>

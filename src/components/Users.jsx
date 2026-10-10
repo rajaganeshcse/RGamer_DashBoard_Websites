@@ -251,33 +251,49 @@ function Users() {
         </div>
       )}
 
-      {/* STATS HEADER CARDS */}
+      {/* STATS HEADER CARDS (4 OPERATIONAL KPIS) */}
       <div className="stats-grid">
-        <div className="stat-card glass-card" style={{ borderTop: "3px solid #818CF8" }}>
-          <div className="stat-icon" style={{ background: "rgba(99, 102, 241, 0.15)", color: "#818CF8" }}>👥</div>
-          <div>
-            <div className="stat-value" style={{ color: "#818CF8" }}>{users.length.toLocaleString()}</div>
-            <div className="stat-label">Total Players ({bannedCount} Banned)</div>
+        <div className="stat-card user-stat-card-indigo">
+          <div className="stat-icon stat-icon-indigo">👥</div>
+          <div className="stat-content">
+            <div className="stat-value-row">
+              <span className="stat-value stat-val-indigo">{users.length.toLocaleString()}</span>
+              <span className="stat-pill pill-indigo">{users.length - bannedCount} Active</span>
+            </div>
+            <div className="stat-label">Total Registered Players</div>
           </div>
         </div>
 
-        <div className="stat-card glass-card" style={{ borderTop: "3px solid #F59E0B" }}>
-          <div className="stat-icon" style={{ background: "rgba(245, 158, 11, 0.15)", color: "#F59E0B" }}>💰</div>
-          <div>
-            <div className="stat-value" style={{ color: "#F59E0B" }}>
-              {totalCoins.toLocaleString()}
+        <div className="stat-card user-stat-card-gold">
+          <div className="stat-icon stat-icon-gold">🪙</div>
+          <div className="stat-content">
+            <div className="stat-value-row">
+              <span className="stat-value stat-val-gold">{totalCoins.toLocaleString()}</span>
+              <span className="stat-pill pill-gold">In Circulation</span>
             </div>
             <div className="stat-label">Total Circulating Coins</div>
           </div>
         </div>
 
-        <div className="stat-card glass-card" style={{ borderTop: "3px solid #3B82F6" }}>
-          <div className="stat-icon" style={{ background: "rgba(59, 130, 246, 0.15)", color: "#3B82F6" }}>🎟️</div>
-          <div>
-            <div className="stat-value" style={{ color: "#3B82F6" }}>
-              {totalTickets.toLocaleString()}
+        <div className="stat-card user-stat-card-cyan">
+          <div className="stat-icon stat-icon-cyan">🎟️</div>
+          <div className="stat-content">
+            <div className="stat-value-row">
+              <span className="stat-value stat-val-cyan">{totalTickets.toLocaleString()}</span>
+              <span className="stat-pill pill-cyan">Game Passes</span>
             </div>
-            <div className="stat-label">Active User Tickets</div>
+            <div className="stat-label">Active Player Tickets</div>
+          </div>
+        </div>
+
+        <div className="stat-card user-stat-card-rose">
+          <div className="stat-icon stat-icon-rose">🛡️</div>
+          <div className="stat-content">
+            <div className="stat-value-row">
+              <span className="stat-value stat-val-rose">{bannedCount}</span>
+              <span className="stat-pill pill-rose">{((bannedCount / (users.length || 1)) * 100).toFixed(1)}% Flagged</span>
+            </div>
+            <div className="stat-label">Banned / Flagged Accounts</div>
           </div>
         </div>
       </div>
@@ -392,17 +408,18 @@ function Users() {
                       </td>
                       <td className="email-cell">{user.email || "No Email"}</td>
                       <td>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                          <span className="badge badge-pending">
+                        <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                          <span className="user-coin-badge">
                             🪙 {Number(user.coins || 0).toLocaleString()}
                           </span>
-                          <span className="badge badge-info" style={{ fontSize: "10px" }}>
+                          <span className="user-ticket-badge">
                             🎟️ {Number(user.tickets || 0)}
                           </span>
                         </div>
                       </td>
                       <td>
-                        <span className={`badge ${isBanned ? "badge-danger" : "badge-success"}`}>
+                        <span className={`status-pill ${isBanned ? "status-pill-banned" : "status-pill-active"}`}>
+                          <span className="status-dot"></span>
                           {isBanned ? "BANNED" : "ACTIVE"}
                         </span>
                       </td>
@@ -495,29 +512,30 @@ function Users() {
       {/* ── MODAL 1: INSPECT USER PROFILE ── */}
       {showInspectModal && selectedUser && (
         <div className="modal-backdrop" onClick={() => setShowInspectModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content user-modal-box" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 style={{ margin: 0, fontSize: "18px", color: "#F8FAFC", display: "flex", alignItems: "center", gap: "8px" }}>
-                <span>👤</span> Player Account Profile
+              <h3 className="modal-title">
+                <span className="modal-title-icon">👤</span> Player Account Profile
               </h3>
               <button className="modal-close-btn" onClick={() => setShowInspectModal(false)}>✕</button>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "20px" }}>
+            <div className="user-profile-hero">
               <img
                 src={selectedUser.profile_pic || selectedUser.profile_image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedUser.id}`}
                 alt="avatar"
-                style={{ width: "64px", height: "64px", borderRadius: "50%", border: "2px solid #6366F1" }}
+                className="user-profile-hero-avatar"
               />
-              <div>
-                <h4 style={{ margin: 0, fontSize: "18px", color: "#F8FAFC" }}>
+              <div className="user-profile-hero-info">
+                <h4 className="user-hero-name">
                   {selectedUser.name || "Anonymous Player"}
                 </h4>
-                <div style={{ fontSize: "13px", color: "#94A3B8", marginTop: "2px" }}>
+                <div className="user-hero-email">
                   {selectedUser.email || "No Email Registered"}
                 </div>
-                <div style={{ marginTop: "6px" }}>
-                  <span className={`badge ${(selectedUser.status || "").toUpperCase() === "BANNED" ? "badge-danger" : "badge-success"}`}>
+                <div style={{ marginTop: "8px" }}>
+                  <span className={`status-pill ${(selectedUser.status || "").toUpperCase() === "BANNED" ? "status-pill-banned" : "status-pill-active"}`}>
+                    <span className="status-dot"></span>
                     {(selectedUser.status || "").toUpperCase() === "BANNED" ? "BANNED" : "ACTIVE"}
                   </span>
                 </div>
@@ -527,48 +545,52 @@ function Users() {
             <div className="profile-detail-grid">
               <div className="profile-detail-box">
                 <div className="profile-detail-label">Full Firestore UID</div>
-                <div className="profile-detail-val" style={{ fontSize: "12px", fontFamily: "monospace" }}>
+                <div className="profile-detail-val profile-val-uid">
                   {selectedUser.id}
                 </div>
               </div>
 
               <div className="profile-detail-box">
                 <div className="profile-detail-label">Referral Code</div>
-                <div className="profile-detail-val" style={{ color: "#38BDF8" }}>
+                <div className="profile-detail-val profile-val-cyan">
                   {selectedUser.referralCode || "NONE"}
                 </div>
               </div>
 
               <div className="profile-detail-box">
                 <div className="profile-detail-label">Coin Balance</div>
-                <div className="profile-detail-val" style={{ color: "#FBBF24" }}>
+                <div className="profile-detail-val profile-val-gold">
                   🪙 {Number(selectedUser.coins || 0).toLocaleString()}
                 </div>
               </div>
 
               <div className="profile-detail-box">
                 <div className="profile-detail-label">Tickets Available</div>
-                <div className="profile-detail-val" style={{ color: "#60A5FA" }}>
+                <div className="profile-detail-val profile-val-cyan">
                   🎟️ {Number(selectedUser.tickets || 0).toLocaleString()}
                 </div>
               </div>
 
               <div className="profile-detail-box">
                 <div className="profile-detail-label">Account Joined</div>
-                <div className="profile-detail-val">
+                <div className="profile-detail-val profile-val-white">
                   {formatDate(selectedUser.created_at)}
                 </div>
               </div>
 
               <div className="profile-detail-box">
                 <div className="profile-detail-label">FCM Token Status</div>
-                <div className="profile-detail-val" style={{ fontSize: "12px" }}>
-                  {selectedUser.fcmToken ? "🟢 Registered" : "⚪ Not Registered"}
+                <div className="profile-detail-val">
+                  {selectedUser.fcmToken ? (
+                    <span className="fcm-registered">🟢 Registered</span>
+                  ) : (
+                    <span className="fcm-unregistered">⚪ Not Registered</span>
+                  )}
                 </div>
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+            <div className="modal-footer-actions">
               <button
                 className="btn-glow"
                 style={{ flex: 1, justifyContent: "center" }}
@@ -595,63 +617,62 @@ function Users() {
       {/* ── MODAL 2: ADJUST BALANCE ── */}
       {showAdjustModal && selectedUser && (
         <div className="modal-backdrop" onClick={() => setShowAdjustModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content user-modal-box" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 style={{ margin: 0, fontSize: "18px", color: "#F8FAFC", display: "flex", alignItems: "center", gap: "8px" }}>
-                <span>⚖️</span> Adjust Player Balance
+              <h3 className="modal-title">
+                <span className="modal-title-icon">⚖️</span> Adjust Player Balance
               </h3>
               <button className="modal-close-btn" onClick={() => setShowAdjustModal(false)}>✕</button>
             </div>
 
             <form onSubmit={handleSaveAdjustment}>
-              <div style={{ background: "rgba(255, 255, 255, 0.03)", padding: "12px", borderRadius: "8px", marginBottom: "18px" }}>
-                <div style={{ fontSize: "13px", color: "#94A3B8" }}>Target Player:</div>
-                <div style={{ fontWeight: "700", color: "#F8FAFC", fontSize: "15px" }}>
-                  {selectedUser.name || "Anonymous Player"} ({selectedUser.email || selectedUser.id})
+              <div className="modal-target-card">
+                <div className="modal-target-label">Target Player</div>
+                <div className="modal-target-name">
+                  {selectedUser.name || "Anonymous Player"}
                 </div>
-                <div style={{ fontSize: "12px", color: "#FBBF24", marginTop: "4px" }}>
-                  Current: 🪙 {Number(selectedUser.coins || 0).toLocaleString()} coins • 🎟️ {Number(selectedUser.tickets || 0)} tickets
+                <div className="modal-target-email">
+                  {selectedUser.email || selectedUser.id}
+                </div>
+                <div className="modal-target-current">
+                  <span>Current:</span>
+                  <span className="target-coin-pill">🪙 {Number(selectedUser.coins || 0).toLocaleString()} Coins</span>
+                  <span className="target-ticket-pill">🎟️ {Number(selectedUser.tickets || 0)} Tickets</span>
                 </div>
               </div>
 
               {/* Action Type & Asset Grid */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+              <div className="adjust-form-grid">
                 <div>
-                  <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#94A3B8", marginBottom: "6px" }}>
-                    OPERATION
-                  </label>
+                  <label className="form-field-label">OPERATION TYPE</label>
                   <select
                     className="select-input"
                     style={{ width: "100%" }}
                     value={adjustData.type}
                     onChange={(e) => setAdjustData({ ...adjustData, type: e.target.value })}
                   >
-                    <option value="ADD">➕ Add (+)</option>
-                    <option value="DEDUCT">➖ Deduct (-)</option>
+                    <option value="ADD">➕ Add to Balance (+)</option>
+                    <option value="DEDUCT">➖ Deduct from Balance (-)</option>
                   </select>
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#94A3B8", marginBottom: "6px" }}>
-                    BALANCE ASSET
-                  </label>
+                  <label className="form-field-label">BALANCE ASSET</label>
                   <select
                     className="select-input"
                     style={{ width: "100%" }}
                     value={adjustData.asset}
                     onChange={(e) => setAdjustData({ ...adjustData, asset: e.target.value })}
                   >
-                    <option value="COINS">🪙 Coins</option>
-                    <option value="TICKETS">🎟️ Tickets</option>
+                    <option value="COINS">🪙 Gold Coins</option>
+                    <option value="TICKETS">🎟️ Play Tickets</option>
                   </select>
                 </div>
               </div>
 
               {/* Amount */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#94A3B8", marginBottom: "6px" }}>
-                  AMOUNT
-                </label>
+              <div style={{ marginBottom: "18px" }}>
+                <label className="form-field-label">AMOUNT TO {adjustData.type === "ADD" ? "CREDIT" : "DEBIT"}</label>
                 <input
                   type="number"
                   min="1"
@@ -664,20 +685,18 @@ function Users() {
               </div>
 
               {/* Reason */}
-              <div style={{ marginBottom: "22px" }}>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#94A3B8", marginBottom: "6px" }}>
-                  AUDIT REASON (SAVED TO LEDGER)
-                </label>
+              <div style={{ marginBottom: "24px" }}>
+                <label className="form-field-label">AUDIT REASON (SAVED TO LEDGER)</label>
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="e.g. Tournament Prize, Missing Bonus, Fraud Penalty"
+                  placeholder="e.g. Tournament Prize, Missing Bonus, Fraud Rectification"
                   value={adjustData.reason}
                   onChange={(e) => setAdjustData({ ...adjustData, reason: e.target.value })}
                 />
               </div>
 
-              <div style={{ display: "flex", gap: "10px" }}>
+              <div style={{ display: "flex", gap: "12px" }}>
                 <button
                   type="button"
                   className="btn-secondary"
@@ -692,7 +711,7 @@ function Users() {
                   className="btn-glow"
                   style={{ flex: 2, justifyContent: "center" }}
                 >
-                  {adjusting ? "Processing..." : `Confirm ${adjustData.type === "ADD" ? "Addition" : "Deduction"} →`}
+                  {adjusting ? "Updating Ledger..." : `Confirm ${adjustData.type === "ADD" ? "Addition" : "Deduction"} →`}
                 </button>
               </div>
             </form>

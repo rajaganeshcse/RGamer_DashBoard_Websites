@@ -80,10 +80,10 @@ const CreateLuckyDraw = () => {
         
         <div style={{ textAlign: "center", marginBottom: "28px" }}>
           <span style={{ fontSize: "40px", display: "inline-block", marginBottom: "8px" }}>🎯</span>
-          <h2 style={{ margin: 0, fontSize: "24px", fontWeight: "800", color: "#F8FAFC" }}>
+          <h2 style={{ margin: 0, fontSize: "24px", fontWeight: "800", color: "#FFFFFF" }}>
             Configure Next Lucky Draw
           </h2>
-          <p style={{ margin: "6px 0 0 0", fontSize: "14px", color: "#94A3B8" }}>
+          <p style={{ margin: "6px 0 0 0", fontSize: "14px", color: "#E2E8F0", fontWeight: "600" }}>
             Authoritative parameters for auto-generating lottery events
           </p>
         </div>
@@ -95,7 +95,7 @@ const CreateLuckyDraw = () => {
         )}
 
         <div style={{ marginBottom: "20px" }}>
-          <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#94A3B8", marginBottom: "8px", textTransform: "uppercase" }}>
+          <label style={{ display: "block", fontSize: "12px", fontWeight: "800", color: "#FFFFFF", marginBottom: "8px", textTransform: "uppercase" }}>
             Select Popular Preset
           </label>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
@@ -118,9 +118,9 @@ const CreateLuckyDraw = () => {
                     borderRadius: "8px",
                     border: active ? "1px solid #6366F1" : "1px solid rgba(255,255,255,0.08)",
                     background: active ? "rgba(99, 102, 241, 0.2)" : "rgba(255,255,255,0.03)",
-                    color: active ? "#818CF8" : "#CBD5E1",
+                    color: active ? "#818CF8" : "#E2E8F0",
                     fontSize: "12px",
-                    fontWeight: "600",
+                    fontWeight: "700",
                     cursor: "pointer",
                     textAlign: "center"
                   }}
@@ -134,7 +134,7 @@ const CreateLuckyDraw = () => {
 
         <form onSubmit={handleSave}>
           <div style={{ marginBottom: "18px" }}>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#94A3B8", marginBottom: "6px" }}>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: "800", color: "#FFFFFF", marginBottom: "6px" }}>
               PARTICIPATION LIMIT (SLOTS)
             </label>
             <input
@@ -149,7 +149,7 @@ const CreateLuckyDraw = () => {
           </div>
 
           <div style={{ marginBottom: "18px" }}>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#94A3B8", marginBottom: "6px" }}>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: "800", color: "#FFFFFF", marginBottom: "6px" }}>
               REWARD PRIZE (COINS)
             </label>
             <input
@@ -164,7 +164,7 @@ const CreateLuckyDraw = () => {
           </div>
 
           <div style={{ marginBottom: "26px" }}>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#94A3B8", marginBottom: "6px" }}>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: "800", color: "#FFFFFF", marginBottom: "6px" }}>
               TICKET ENTRY COST
             </label>
             <input
