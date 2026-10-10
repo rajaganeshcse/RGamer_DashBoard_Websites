@@ -253,16 +253,16 @@ function Users() {
 
       {/* STATS HEADER CARDS */}
       <div className="stats-grid">
-        <div className="stat-card glass-card">
-          <div className="stat-icon">👥</div>
+        <div className="stat-card glass-card" style={{ borderTop: "3px solid #818CF8" }}>
+          <div className="stat-icon" style={{ background: "rgba(99, 102, 241, 0.15)", color: "#818CF8" }}>👥</div>
           <div>
-            <div className="stat-value">{users.length.toLocaleString()}</div>
+            <div className="stat-value" style={{ color: "#818CF8" }}>{users.length.toLocaleString()}</div>
             <div className="stat-label">Total Players ({bannedCount} Banned)</div>
           </div>
         </div>
 
-        <div className="stat-card glass-card">
-          <div className="stat-icon">💰</div>
+        <div className="stat-card glass-card" style={{ borderTop: "3px solid #F59E0B" }}>
+          <div className="stat-icon" style={{ background: "rgba(245, 158, 11, 0.15)", color: "#F59E0B" }}>💰</div>
           <div>
             <div className="stat-value" style={{ color: "#F59E0B" }}>
               {totalCoins.toLocaleString()}
@@ -271,8 +271,8 @@ function Users() {
           </div>
         </div>
 
-        <div className="stat-card glass-card">
-          <div className="stat-icon">🎟️</div>
+        <div className="stat-card glass-card" style={{ borderTop: "3px solid #3B82F6" }}>
+          <div className="stat-icon" style={{ background: "rgba(59, 130, 246, 0.15)", color: "#3B82F6" }}>🎟️</div>
           <div>
             <div className="stat-value" style={{ color: "#3B82F6" }}>
               {totalTickets.toLocaleString()}

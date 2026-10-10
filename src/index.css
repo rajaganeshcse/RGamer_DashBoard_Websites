@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
+  color-scheme: dark;
   --bg-dark: #090D16;
   --bg-card: #121827;
   --bg-card-hover: #1E293B;
@@ -34,7 +35,8 @@
   font-family: var(--font-family);
 }
 
-body {
+html, body {
+  color-scheme: dark;
   background-color: var(--bg-dark);
   color: var(--text-main);
   min-height: 100vh;
@@ -44,6 +46,28 @@ body {
     radial-gradient(at 10% 10%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
     radial-gradient(at 90% 90%, rgba(6, 182, 212, 0.06) 0px, transparent 50%);
   background-attachment: fixed;
+}
+
+/* Fix browser autofill and select option white-on-white text bugs */
+select, input, textarea {
+  color-scheme: dark;
+  color: var(--text-main);
+}
+
+select option {
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: #F8FAFC !important;
+  -webkit-box-shadow: 0 0 0px 1000px #0F172A inset !important;
+  box-shadow: 0 0 0px 1000px #0F172A inset !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 code {
