@@ -257,6 +257,16 @@ export default function Redeem() {
       return;
     }
     const headers = ["RequestID", "User", "Email", "Method", "AmountINR", "CoinsDeducted", "PaymentAddress", "Status", "Date"];
+    const getSafeDateStr = (val) => {
+      if (!val) return "";
+      try {
+        const d = typeof val?.toDate === "function" ? val.toDate() : typeof val?.seconds === "number" ? new Date(val.seconds * 1000) : new Date(val);
+        return isNaN(d.getTime()) ? "" : d.toLocaleString("en-IN");
+      } catch {
+        return "";
+      }
+    };
+
     const rows = filteredRequests.map((r) => [
       `"${r.id}"`,
       `"${(r.username || "").replace(/"/g, '""')}"`,
@@ -266,7 +276,7 @@ export default function Redeem() {
       r.coins || 0,
       `"${(r.withdraw_details || r.payment_address || "").replace(/"/g, '""')}"`,
       `"${(r.status || "pending").toUpperCase()}"`,
-      `"${new Date(r.created_at || Date.now()).toLocaleDateString("en-IN")}"`
+      `"${getSafeDateStr(r.created_at)}"`
     ]);
 
     const csvContent = [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
@@ -681,6 +691,16 @@ export default function Redeem() {
                             {req.username || "Anonymous User"}
                           </h3>
                           <div style={{ fontSize: "12px", color: "#94A3B8" }}>{req.email || "No Email"}</div>
+                          {req.created_at && (
+                            <div style={{ fontSize: "11px", color: "#64748B", marginTop: "3px" }}>
+                              🕒 {(() => {
+                                try {
+                                  const d = typeof req.created_at?.toDate === "function" ? req.created_at.toDate() : typeof req.created_at?.seconds === "number" ? new Date(req.created_at.seconds * 1000) : new Date(req.created_at);
+                                  return isNaN(d.getTime()) ? "" : d.toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+                                } catch { return ""; }
+                              })()}
+                            </div>
+                          )}
                         </div>
 
                         <div style={{ textAlign: "right" }}>

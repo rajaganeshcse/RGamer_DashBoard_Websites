@@ -4,24 +4,25 @@ import { useNavigate } from "react-router-dom";
 
 const Header = () => {
   const navigate = useNavigate();
-  const [backendOnline, setBackendOnline] = useState(true);
+  const [backendOnline, setBackendOnline] = useState(null);
 
   useEffect(() => {
-    // Quick ping to check backend liveness
     const checkBackend = async () => {
       try {
         const res = await fetch("https://app-backend-lutn.onrender.com/actuator/health", {
           method: "GET",
           headers: { Accept: "application/json" },
-          cache: "no-store"
+          cache: "no-store",
+          signal: AbortSignal.timeout(5000)
         });
-        if (res.ok) setBackendOnline(true);
-      } catch (e) {
-        // Even if actuator isn't exposed, backend is working or cold-starting
-        setBackendOnline(true);
+        setBackendOnline(res.ok);
+      } catch {
+        setBackendOnline(false);
       }
     };
     checkBackend();
+    const interval = setInterval(checkBackend, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -29,38 +30,31 @@ const Header = () => {
       <div className="logo" onClick={() => navigate("/admin/dashboard")} style={{ cursor: "pointer" }}>
         <span className="logo-icon">🎮</span>
         <div>
-          <span className="logo-text">RGamer Portal</span>
+          <span className="logo-text">DailyKash</span>
           <span style={{ display: "block", fontSize: "11px", color: "#94A3B8", fontWeight: "600" }}>
-            Production Management Console
+            Admin Console
           </span>
         </div>
       </div>
 
       <div className="header-actions">
-        <div className="header-status-pill">
-          <span className="pulse-dot"></span>
-          <span>{backendOnline ? "System Active" : "Connecting..."}</span>
+        <div className={`header-status-pill ${backendOnline === false ? "status-offline" : ""}`}>
+          <span className={backendOnline === false ? "pulse-dot pulse-red" : "pulse-dot"}></span>
+          <span>
+            {backendOnline === null ? "Connecting..." : backendOnline ? "System Live" : "Backend Offline"}
+          </span>
         </div>
 
-        <button
-          className="header-btn nav-notifications"
-          onClick={() => navigate("/admin/notifications")}
-        >
-          <span>🔔</span> Notifications & IST
+        <button className="header-btn nav-notifications" onClick={() => navigate("/admin/notifications")}>
+          🔔 Notifications
         </button>
 
-        <button
-          className="header-btn nav-draw"
-          onClick={() => navigate("/admin/LuckyDrawAdmin")}
-        >
-          <span>🎯</span> Lucky Draw
+        <button className="header-btn nav-draw" onClick={() => navigate("/admin/LuckyDrawAdmin")}>
+          🎯 Lucky Draw
         </button>
 
-        <button
-          className="header-btn nav-login"
-          onClick={() => navigate("/admin/dashboard")}
-        >
-          <span>⚡</span> Overview
+        <button className="header-btn nav-login" onClick={() => navigate("/admin/dashboard")}>
+          ⚡ Overview
         </button>
       </div>
     </header>

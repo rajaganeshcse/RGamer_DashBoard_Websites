@@ -50,11 +50,18 @@ export default function NotificationsAdmin() {
         id: d.id,
         ...d.data(),
       }));
-      // Sort newest first
+      // Sort newest first safely supporting Timestamps, ISO strings, and numbers
       list.sort((a, b) => {
-        const t1 = a.sentAt || a.createdAt || "";
-        const t2 = b.sentAt || b.createdAt || "";
-        return t2.localeCompare(t1);
+        const getMillis = (item) => {
+          const val = item.sentAt || item.createdAt || item.timestamp;
+          if (!val) return 0;
+          if (typeof val?.toDate === "function") return val.toDate().getTime();
+          if (typeof val?.seconds === "number") return val.seconds * 1000;
+          if (typeof val === "number") return val;
+          const parsed = new Date(val).getTime();
+          return isNaN(parsed) ? 0 : parsed;
+        };
+        return getMillis(b) - getMillis(a);
       });
       setHistory(list);
       setLoadingHistory(false);

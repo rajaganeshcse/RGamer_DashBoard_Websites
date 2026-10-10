@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./Header.css";
 import { useNavigate, useLocation } from "react-router-dom";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../Firebase";
 
 const SubHeader = () => {
@@ -13,7 +13,6 @@ const SubHeader = () => {
   const [pendingConversions, setPendingConversions] = useState(0);
 
   useEffect(() => {
-    // 1. Pending Redeem requests
     const unsubRedeems = onSnapshot(
       collection(db, "redeem_requests"),
       (snap) => {
@@ -25,7 +24,6 @@ const SubHeader = () => {
       (err) => console.error("Redeem counter error:", err)
     );
 
-    // 2. Pending Account Deletion requests
     const unsubDeletions = onSnapshot(
       collection(db, "account_delete_requests"),
       (snap) => {
@@ -37,7 +35,6 @@ const SubHeader = () => {
       (err) => console.error("Deletion counter error:", err)
     );
 
-    // 3. Pending Share & Earn conversions
     const unsubConversions = onSnapshot(
       collection(db, "conversions"),
       (snap) => {
@@ -58,72 +55,58 @@ const SubHeader = () => {
 
   const isActive = (path) => location.pathname === path;
 
+  const navItems = [
+    { path: "/admin/dashboard", label: "Overview", icon: "📊", exact: true },
+    { path: "/user", label: "Users", icon: "👥", match: ["/user", "/"] },
+    { path: "/admin/notifications", label: "Notifications", icon: "🔔" },
+    {
+      path: "/redeem",
+      label: "Payouts",
+      icon: "💳",
+      badge: pendingRedeems > 0 ? pendingRedeems : null,
+      badgeClass: "badge-amber",
+    },
+    {
+      path: "/admin/share-earn",
+      label: "Share & Earn",
+      icon: "🔗",
+      badge: pendingConversions > 0 ? pendingConversions : null,
+      badgeClass: "badge-cyan",
+    },
+    { path: "/admin/LuckyDrawAdmin", label: "Lucky Draw", icon: "🎯" },
+    { path: "/admin/createluckydraw", label: "Create Draw", icon: "✨" },
+    { path: "/admin/winner-history", label: "Winners", icon: "🏆" },
+    {
+      path: "/admin/delete-requests",
+      label: "Deletions",
+      icon: "🗑️",
+      badge: pendingDeletions > 0 ? pendingDeletions : null,
+      badgeClass: "badge-rose",
+    },
+  ];
+
+  const checkActive = (item) => {
+    if (item.match) return item.match.includes(location.pathname);
+    return location.pathname === item.path ||
+      (item.path !== "/admin/dashboard" && location.pathname.startsWith(item.path));
+  };
+
   return (
     <nav className="sub-header">
       <ul>
-        <li
-          className={isActive("/admin/dashboard") ? "active" : ""}
-          onClick={() => navigate("/admin/dashboard")}
-        >
-          <span>⚡</span> Overview
-        </li>
-        <li
-          className={isActive("/user") || isActive("/") ? "active" : ""}
-          onClick={() => navigate("/user")}
-        >
-          <span>👤</span> Users
-        </li>
-        <li
-          className={isActive("/admin/notifications") ? "active" : ""}
-          onClick={() => navigate("/admin/notifications")}
-        >
-          <span>🔔</span> Notifications & IST
-        </li>
-        <li
-          className={isActive("/redeem") ? "active" : ""}
-          onClick={() => navigate("/redeem")}
-        >
-          <span>💳</span> Redeem Payouts
-          {pendingRedeems > 0 && (
-            <span className="tab-badge badge-amber">{pendingRedeems}</span>
-          )}
-        </li>
-        <li
-          className={isActive("/admin/share-earn") ? "active" : ""}
-          onClick={() => navigate("/admin/share-earn")}
-        >
-          <span>🚀</span> Share & Earn
-          {pendingConversions > 0 && (
-            <span className="tab-badge badge-cyan">{pendingConversions}</span>
-          )}
-        </li>
-        <li
-          className={isActive("/admin/LuckyDrawAdmin") ? "active" : ""}
-          onClick={() => navigate("/admin/LuckyDrawAdmin")}
-        >
-          <span>🎯</span> Lucky Draw Admin
-        </li>
-        <li
-          className={isActive("/admin/createluckydraw") ? "active" : ""}
-          onClick={() => navigate("/admin/createluckydraw")}
-        >
-          <span>⚙️</span> Create Draw
-        </li>
-        <li
-          className={isActive("/admin/winner-history") ? "active" : ""}
-          onClick={() => navigate("/admin/winner-history")}
-        >
-          <span>🏆</span> Winners
-        </li>
-        <li
-          className={isActive("/admin/delete-requests") ? "active" : ""}
-          onClick={() => navigate("/admin/delete-requests")}
-        >
-          <span>🗑️</span> Deletions
-          {pendingDeletions > 0 && (
-            <span className="tab-badge badge-rose">{pendingDeletions}</span>
-          )}
-        </li>
+        {navItems.map((item) => (
+          <li
+            key={item.path}
+            className={checkActive(item) ? "active" : ""}
+            onClick={() => navigate(item.path)}
+          >
+            <span>{item.icon}</span>
+            {item.label}
+            {item.badge != null && (
+              <span className={`tab-badge ${item.badgeClass}`}>{item.badge}</span>
+            )}
+          </li>
+        ))}
       </ul>
     </nav>
   );
