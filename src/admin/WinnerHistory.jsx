@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { collection, doc, getDoc, onSnapshot, orderBy, query } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { db } from "../Firebase";
+import "./LuckyDraw.css";
 
 const WinnerHistory = () => {
   const [history, setHistory] = useState([]);
@@ -77,36 +78,89 @@ const WinnerHistory = () => {
   });
 
   const totalPrizeDistributed = history.reduce((acc, h) => acc + (Number(h.rewardCoins) || 0), 0);
+  const avgPrize = history.length > 0 ? Math.round(totalPrizeDistributed / history.length) : 0;
 
   return (
-    <div style={{ padding: "28px", maxWidth: "1280px", margin: "0 auto" }} className="animate-fade-in">
+    <div className="luckydraw-container animate-fade-in">
       
-      {/* STATS STRIP */}
-      <div className="stats-grid" style={{ marginBottom: "24px" }}>
-        <div className="stat-card glass-card">
-          <div className="stat-icon" style={{ color: "#F59E0B" }}>🏆</div>
-          <div>
-            <div className="stat-value">{history.length}</div>
-            <div className="stat-label">Verified Winners Crowned</div>
+      {/* HEADER BANNER */}
+      <div className="luckydraw-header">
+        <div className="luckydraw-header-left">
+          <div className="luckydraw-badge-row">
+            <span className="luckydraw-engine-pill">
+              <span>🏆</span> WINNER HALL OF FAME
+            </span>
+            <span className="luckydraw-preset-tag">
+              Official Resolution Ledger
+            </span>
+          </div>
+          <h1 className="luckydraw-main-title">
+            <span>🏅</span> Winner Records &amp; Prize Audit Log
+          </h1>
+          <p className="luckydraw-header-subtitle">
+            Auditable and immutable history of finalized lucky draw tournaments and awarded prize coins.
+          </p>
+        </div>
+
+        <div className="luckydraw-header-actions">
+          <button
+            type="button"
+            className="luckydraw-action-btn-secondary"
+            onClick={() => navigate("/admin/LuckyDrawAdmin")}
+          >
+            <span>←</span> Back to Operations
+          </button>
+        </div>
+      </div>
+
+      {/* 4 STATS CARDS */}
+      <div className="luckydraw-kpi-grid">
+        <div className="luckydraw-kpi-card kpi-variant-violet">
+          <div className="luckydraw-kpi-icon">👑</div>
+          <div className="luckydraw-kpi-content">
+            <div className="luckydraw-kpi-value">{history.length}</div>
+            <div className="luckydraw-kpi-label">Verified Winners Crowned</div>
+            <div className="luckydraw-kpi-subtext">Completed lottery events</div>
           </div>
         </div>
 
-        <div className="stat-card glass-card">
-          <div className="stat-icon" style={{ color: "#10B981" }}>💰</div>
-          <div>
-            <div className="stat-value" style={{ color: "#FBBF24" }}>
+        <div className="luckydraw-kpi-card kpi-variant-gold">
+          <div className="luckydraw-kpi-icon">💰</div>
+          <div className="luckydraw-kpi-content">
+            <div className="luckydraw-kpi-value" style={{ color: "#FFB800" }}>
               {totalPrizeDistributed.toLocaleString()}
             </div>
-            <div className="stat-label">Total Coins Won in Lucky Draws</div>
+            <div className="luckydraw-kpi-label">Total Coins Won</div>
+            <div className="luckydraw-kpi-subtext">Prizes credited to users</div>
+          </div>
+        </div>
+
+        <div className="luckydraw-kpi-card kpi-variant-cyan">
+          <div className="luckydraw-kpi-icon">🎯</div>
+          <div className="luckydraw-kpi-content">
+            <div className="luckydraw-kpi-value">
+              {avgPrize.toLocaleString()}
+            </div>
+            <div className="luckydraw-kpi-label">Average Prize Pool</div>
+            <div className="luckydraw-kpi-subtext">Coins awarded per draw</div>
+          </div>
+        </div>
+
+        <div className="luckydraw-kpi-card kpi-variant-mint">
+          <div className="luckydraw-kpi-icon">✅</div>
+          <div className="luckydraw-kpi-content">
+            <div className="luckydraw-kpi-value" style={{ color: "#00F5A0" }}>100%</div>
+            <div className="luckydraw-kpi-label">Settlement Rate</div>
+            <div className="luckydraw-kpi-subtext">Auto-credited to balances</div>
           </div>
         </div>
       </div>
 
-      {/* TOOLBAR */}
+      {/* SEARCH TOOLBAR */}
       <div
         className="glass-card"
         style={{
-          padding: "20px 24px",
+          padding: "18px 24px",
           marginBottom: "24px",
           display: "flex",
           justifyContent: "space-between",
@@ -115,95 +169,110 @@ const WinnerHistory = () => {
           gap: "16px"
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          <button className="btn-secondary" onClick={() => navigate("/admin/LuckyDrawAdmin")}>
-            ← Lucky Draws
-          </button>
-          <div>
-            <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "800", color: "#FFFFFF" }}>
-              🏅 Official Winner Records &amp; Payout Audit
-            </h2>
-            <div style={{ fontSize: "12px", color: "#E2E8F0", fontWeight: "600" }}>
-              Immutable log of completed lottery drawings and awarded prizes
-            </div>
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ fontSize: "14px", fontWeight: "800", color: "#FFFFFF" }}>
+            Audit Records:
+          </span>
+          <span className="luckydraw-count-chip">
+            {filteredHistory.length} of {history.length}
+          </span>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <input
             type="text"
-            className="form-input"
-            placeholder="Search winner name, UID, draw..."
+            className="luckydraw-input"
+            placeholder="Search winner name, UID, draw ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ width: "260px" }}
+            style={{ width: "290px", padding: "10px 14px", fontSize: "13px" }}
           />
         </div>
       </div>
 
-      {/* WINNERS TABLE */}
-      <div className="table-card glass-card">
+      {/* WINNERS AUDIT TABLE */}
+      <div className="luckydraw-history-box">
         {loading ? (
           <div style={{ textAlign: "center", padding: "60px 20px" }}>
             <div className="spinner"></div>
-            <p style={{ color: "#FFFFFF", fontWeight: "700" }}>Loading Winner Audit Records...</p>
+            <p style={{ color: "#FFFFFF", fontWeight: "800", marginTop: "14px" }}>
+              Loading official winner audit records...
+            </p>
           </div>
         ) : filteredHistory.length === 0 ? (
           <div style={{ textAlign: "center", padding: "50px 20px", color: "#FFFFFF", fontWeight: "700" }}>
-            No winner records found matching your query.
+            {search ? "No winner records match your query." : "No completed lucky draw records found."}
           </div>
         ) : (
-          <div className="table-responsive">
-            <table className="user-table">
+          <div className="luckydraw-table-wrap">
+            <table className="luckydraw-table">
               <thead>
                 <tr>
                   <th>Event ID</th>
-                  <th>Winner Details</th>
-                  <th>Prize Coins</th>
-                  <th>Slots</th>
+                  <th>Crowned Winner</th>
+                  <th>Awarded Prize</th>
+                  <th>Event Tier</th>
                   <th>Finalized Date</th>
-                  <th>Status</th>
+                  <th>Settlement Status</th>
+                  <th>Inspect</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredHistory.map((item) => (
-                  <tr key={item.drawId} className="table-row">
+                  <tr key={item.drawId}>
                     <td>
-                      <code style={{ fontSize: "12px", color: "#00F2FE", fontWeight: "700", background: "rgba(6, 182, 212, 0.15)", border: "1px solid rgba(6, 182, 212, 0.3)", padding: "4px 8px", borderRadius: "6px" }}>
+                      <span className="luckydraw-id-tag">
                         #{item.drawId.slice(0, 8)}
-                      </code>
+                      </span>
                     </td>
                     <td>
-                      <div style={{ fontWeight: "800", color: "#FFFFFF" }}>{item.username}</div>
-                      <div style={{ fontSize: "11px", color: "#00F2FE", fontFamily: "monospace", fontWeight: "700" }}>
-                        UID: {item.winnerUid}
+                      <div style={{ fontWeight: "800", color: "#FFFFFF", fontSize: "14px" }}>
+                        {item.username}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px" }}>
+                        <span className="luckydraw-uid-pill">
+                          UID: {item.winnerUid}
+                        </span>
                       </div>
                     </td>
                     <td>
-                      <span className="badge badge-pending" style={{ fontSize: "13px" }}>
-                        🪙 {Number(item.rewardCoins).toLocaleString()}
+                      <span className="luckydraw-prize-pill" style={{ fontSize: "13.5px" }}>
+                        🪙 {Number(item.rewardCoins).toLocaleString()} COINS
                       </span>
                     </td>
                     <td>
-                      <span style={{ fontSize: "13px", color: "#CBD5E1" }}>
+                      <span style={{ fontSize: "13px", color: "#FFFFFF", fontWeight: "700" }}>
                         {item.totalSlots} Slots
                       </span>
                     </td>
-                    <td className="date-cell">
-                      {item.completedAt
-                        ? item.completedAt.toLocaleDateString("en-IN", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit"
-                          })
-                        : "—"}
+                    <td>
+                      <span style={{ color: "#CBD5E1", fontSize: "12.5px", fontWeight: "600" }}>
+                        {item.completedAt
+                          ? item.completedAt.toLocaleDateString("en-IN", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit"
+                            })
+                          : "—"}
+                      </span>
                     </td>
                     <td>
-                      <span className="badge badge-success">
-                        ✅ CREDITED
+                      <span className="luckydraw-status-badge status-badge-open">
+                        <span className="status-pulse-dot" style={{ background: "#00F5A0" }}></span>
+                        CREDITED
                       </span>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="luckydraw-filter-btn"
+                        style={{ padding: "6px 12px", fontSize: "12px", color: "#00F2FE", borderColor: "rgba(6, 182, 212, 0.4)" }}
+                        onClick={() => navigate(`/admin/lucky-draw/${item.drawId}`)}
+                      >
+                        👥 Roster →
+                      </button>
                     </td>
                   </tr>
                 ))}

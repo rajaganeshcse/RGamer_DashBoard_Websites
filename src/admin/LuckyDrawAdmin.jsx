@@ -15,6 +15,7 @@ import {
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { db } from "../Firebase";
+import "./LuckyDraw.css";
 
 const PRESETS = [
   { participationLimit: 5, rewardCoins: 25, ticketCost: 1, label: "5 Slots → 25 Coins (1 🎟️)" },
@@ -32,6 +33,7 @@ export default function LuckyDrawAdmin() {
   const [historyList, setHistoryList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState(null);
+  const [tierFilter, setTierFilter] = useState("ALL");
 
   // Configuration Form State
   const [participationLimit, setParticipationLimit] = useState("10");
@@ -42,7 +44,7 @@ export default function LuckyDrawAdmin() {
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 3500);
   };
 
   useEffect(() => {
@@ -100,7 +102,7 @@ export default function LuckyDrawAdmin() {
     const c = Number(ticketCost);
 
     if (p <= 0 || r <= 0 || c <= 0) {
-      alert("All values must be positive integers!");
+      alert("All parameters must be positive integers!");
       return;
     }
 
@@ -118,10 +120,10 @@ export default function LuckyDrawAdmin() {
       await setDoc(doc(db, "lucky_draw_config", "current"), configData);
       await addDoc(collection(db, "lucky_draw_config_history"), configData);
 
-      showToast("✅ Lucky draw configuration updated successfully!");
+      showToast("✅ Lucky draw authoritative configuration published successfully!");
     } catch (err) {
       console.error("Save config error:", err);
-      showToast("❌ Failed to save configuration", "error");
+      showToast("❌ Failed to save configuration: " + err.message, "error");
     } finally {
       setSavingConfig(false);
     }
@@ -158,73 +160,162 @@ export default function LuckyDrawAdmin() {
         cancelledBy: "admin"
       });
 
-      showToast(`Draw cancelled & ${entriesSnap.size} players refunded ${refundCost} tickets each!`);
+      showToast(`✅ Draw cancelled & ${entriesSnap.size} players refunded ${refundCost} tickets each!`);
     } catch (err) {
       console.error("Cancel draw failed:", err);
-      showToast("Failed to cancel draw: " + err.message, "error");
+      showToast("❌ Failed to cancel draw: " + err.message, "error");
     } finally {
       setCancellingId(null);
     }
   };
 
+  // Calculate Operational KPI Metrics
+  const activeEventsCount = openDraws.length;
+  const totalEnrolledSlots = openDraws.reduce(
+    (acc, d) => acc + (d.currentParticipation ?? d.filledSlots ?? 0),
+    0
+  );
+  const totalCapacitySlots = openDraws.reduce(
+    (acc, d) => acc + (d.participationLimit ?? d.totalSlots ?? 10),
+    0
+  );
+  const totalPrizePoolInPlay = openDraws.reduce(
+    (acc, d) => acc + (Number(d.rewardCoins) || 0),
+    0
+  );
+  const totalWinnersCrowned = historyList.length;
+
+  // Filter Active Draws by Tier
+  const filteredDraws = openDraws.filter((draw) => {
+    const maxPart = draw.participationLimit ?? draw.totalSlots ?? 10;
+    if (tierFilter === "SMALL") return maxPart <= 10;
+    if (tierFilter === "MEDIUM") return maxPart > 10 && maxPart <= 25;
+    if (tierFilter === "HIGH") return maxPart > 25;
+    return true;
+  });
+
   return (
-    <div style={{ padding: "28px", maxWidth: "1400px", margin: "0 auto" }} className="animate-fade-in">
+    <div className="luckydraw-container animate-fade-in">
       
-      {/* FLOATING TOAST */}
+      {/* FLOATING TOAST NOTIFICATION */}
       {toast && (
-        <div className={`floating-toast ${toast.type === "error" ? "toast-error" : "toast-success"}`}>
+        <div className={`luckydraw-toast ${toast.type === "error" ? "luckydraw-toast-error" : "luckydraw-toast-success"}`}>
           {toast.message}
         </div>
       )}
 
-      {/* HEADER BANNER */}
-      <div
-        className="glass-card"
-        style={{
-          padding: "28px 32px",
-          marginBottom: "28px",
-          background: "linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(6, 182, 212, 0.15) 100%)",
-          borderColor: "rgba(139, 92, 246, 0.4)",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: "20px"
-        }}
-      >
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-            <span className="badge badge-info">🎯 LOTTERY ENGINE</span>
-            <span style={{ fontSize: "12px", color: "#94A3B8" }}>6 Active Presets (5, 10, 20, 25, 50, 100 Slots)</span>
+      {/* ================= HEADER BANNER ================= */}
+      <div className="luckydraw-header">
+        <div className="luckydraw-header-left">
+          <div className="luckydraw-badge-row">
+            <span className="luckydraw-engine-pill">
+              <span>🎯</span> LOTTERY ENGINE COMMAND
+            </span>
+            <span className="luckydraw-preset-tag">
+              6 Active Preset Tiers (5, 10, 20, 25, 50, 100 Slots)
+            </span>
           </div>
-          <h1 style={{ margin: 0, fontSize: "28px", fontWeight: "800", color: "#F8FAFC", letterSpacing: "-0.5px" }}>
-            Lucky Draw Management &amp; Automation
+          <h1 className="luckydraw-main-title">
+            <span>🎲</span> Lucky Draw Operations &amp; Live Monitoring
           </h1>
-          <p style={{ margin: "6px 0 0 0", fontSize: "14px", color: "#CBD5E1" }}>
-            Monitor real-time participant fills, inspect lottery entrants, manage presets, and audit winner histories.
+          <p className="luckydraw-header-subtitle">
+            Real-time participant fill tracking, auto-regenerating prize pools, authoritative preset config &amp; winner verification.
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-          <button className="btn-glow" onClick={() => navigate("/admin/createluckydraw")}>
+        <div className="luckydraw-header-actions">
+          <button
+            type="button"
+            className="luckydraw-action-btn-primary"
+            onClick={() => navigate("/admin/createluckydraw")}
+          >
             <span>⚙️</span> Configure Next Draw
           </button>
-          <button className="btn-secondary" onClick={() => navigate("/admin/winner-history")}>
-            <span>🏆</span> Full Winner History
+          <button
+            type="button"
+            className="luckydraw-action-btn-secondary"
+            onClick={() => navigate("/admin/winner-history")}
+          >
+            <span>🏆</span> Winner Hall of Fame
           </button>
         </div>
       </div>
 
-      {/* ================= 1. CONFIGURATION PRESETS ================= */}
-      <div className="glass-card" style={{ padding: "28px", marginBottom: "32px" }}>
-        <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: "800", color: "#FFFFFF", display: "flex", alignItems: "center", gap: "8px" }}>
-          <span>⚙️</span> Authoritative Draw Parameters
-        </h3>
-
-        <div style={{ marginBottom: "14px", fontSize: "12px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase" }}>
-          Quick Preset Switcher:
+      {/* ================= 4 OPERATIONAL KPI CARDS ================= */}
+      <div className="luckydraw-kpi-grid">
+        {/* KPI 1: Active Open Draws */}
+        <div className="luckydraw-kpi-card kpi-variant-violet">
+          <div className="luckydraw-kpi-icon">🔥</div>
+          <div className="luckydraw-kpi-content">
+            <div className="luckydraw-kpi-value">{activeEventsCount}</div>
+            <div className="luckydraw-kpi-label">Active Open Events</div>
+            <div className="luckydraw-kpi-subtext">Live lottery pools running</div>
+          </div>
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
+
+        {/* KPI 2: Total Enrolled Slots */}
+        <div className="luckydraw-kpi-card kpi-variant-cyan">
+          <div className="luckydraw-kpi-icon">👥</div>
+          <div className="luckydraw-kpi-content">
+            <div className="luckydraw-kpi-value">
+              {totalEnrolledSlots}
+              <span style={{ fontSize: "15px", fontWeight: "700", color: "#E2E8F0" }}>
+                {" "}/ {totalCapacitySlots}
+              </span>
+            </div>
+            <div className="luckydraw-kpi-label">Total Enrolled Slots</div>
+            <div className="luckydraw-kpi-subtext">
+              {totalCapacitySlots > 0
+                ? `${Math.round((totalEnrolledSlots / totalCapacitySlots) * 100)}% overall fill rate`
+                : "Active participant tickets"}
+            </div>
+          </div>
+        </div>
+
+        {/* KPI 3: Prize Pool in Play */}
+        <div className="luckydraw-kpi-card kpi-variant-gold">
+          <div className="luckydraw-kpi-icon">🪙</div>
+          <div className="luckydraw-kpi-content">
+            <div className="luckydraw-kpi-value">
+              {totalPrizePoolInPlay.toLocaleString()}
+            </div>
+            <div className="luckydraw-kpi-label">Prize Pool in Play</div>
+            <div className="luckydraw-kpi-subtext">Coins under active competition</div>
+          </div>
+        </div>
+
+        {/* KPI 4: Winners Crowned */}
+        <div className="luckydraw-kpi-card kpi-variant-mint">
+          <div className="luckydraw-kpi-icon">🏆</div>
+          <div className="luckydraw-kpi-content">
+            <div className="luckydraw-kpi-value">{totalWinnersCrowned}</div>
+            <div className="luckydraw-kpi-label">Winners Crowned</div>
+            <div className="luckydraw-kpi-subtext">Resolved lottery drawings</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ================= 1. AUTHORITATIVE DRAW PARAMETERS ================= */}
+      <div className="luckydraw-config-card">
+        <div className="luckydraw-config-header">
+          <div>
+            <h3 className="luckydraw-config-title">
+              <span>⚙️</span> Authoritative Draw Parameters
+            </h3>
+            <span className="luckydraw-config-desc">
+              Controls the base settings for newly spawned auto-draws across the platform
+            </span>
+          </div>
+          <span className="luckydraw-preset-tag" style={{ color: "#00F2FE", borderColor: "rgba(6, 182, 212, 0.4)" }}>
+            ⚡ Live Firestore Rule: lucky_draw_config/current
+          </span>
+        </div>
+
+        {/* Quick Preset Switcher Chips */}
+        <div className="preset-chips-label">
+          <span>⚡</span> Quick Preset Switcher (Select to Pre-fill):
+        </div>
+        <div className="preset-chips-grid">
           {PRESETS.map((p, idx) => {
             const isActive =
               Number(participationLimit) === p.participationLimit &&
@@ -239,57 +330,53 @@ export default function LuckyDrawAdmin() {
                   setRewardCoins(String(p.rewardCoins));
                   setTicketCost(String(p.ticketCost));
                 }}
-                style={{
-                  padding: "8px 14px",
-                  borderRadius: "8px",
-                  border: isActive ? "1px solid #8B5CF6" : "1px solid rgba(255, 255, 255, 0.08)",
-                  background: isActive ? "rgba(139, 92, 246, 0.25)" : "rgba(255, 255, 255, 0.03)",
-                  color: isActive ? "#C084FC" : "#E2E8F0",
-                  fontSize: "12px",
-                  fontWeight: "700",
-                  cursor: "pointer"
-                }}
+                className={`preset-chip-btn ${isActive ? "active" : ""}`}
               >
-                {p.label}
+                <span>{p.label}</span>
+                {isActive && <span className="chip-badge">ACTIVE</span>}
               </button>
             );
           })}
         </div>
 
-        <form onSubmit={handleSaveConfig} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", alignItems: "end" }}>
-          <div>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: "800", color: "#FFFFFF", marginBottom: "6px" }}>
+        {/* Form Inputs */}
+        <form onSubmit={handleSaveConfig} className="luckydraw-form-grid">
+          <div className="luckydraw-form-group">
+            <label className="luckydraw-input-label">
               PARTICIPATION LIMIT (SLOTS)
             </label>
             <input
               type="number"
-              className="form-input"
+              min="1"
+              className="luckydraw-input"
               value={participationLimit}
               onChange={(e) => setParticipationLimit(e.target.value)}
               required
             />
           </div>
 
-          <div>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: "800", color: "#FFFFFF", marginBottom: "6px" }}>
+          <div className="luckydraw-form-group">
+            <label className="luckydraw-input-label">
               REWARD PRIZE (COINS)
             </label>
             <input
               type="number"
-              className="form-input"
+              min="1"
+              className="luckydraw-input"
               value={rewardCoins}
               onChange={(e) => setRewardCoins(e.target.value)}
               required
             />
           </div>
 
-          <div>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: "800", color: "#FFFFFF", marginBottom: "6px" }}>
+          <div className="luckydraw-form-group">
+            <label className="luckydraw-input-label">
               TICKET ENTRY COST
             </label>
             <input
               type="number"
-              className="form-input"
+              min="1"
+              className="luckydraw-input"
               value={ticketCost}
               onChange={(e) => setTicketCost(e.target.value)}
               required
@@ -299,34 +386,91 @@ export default function LuckyDrawAdmin() {
           <button
             type="submit"
             disabled={savingConfig}
-            className="btn-glow"
-            style={{ padding: "11px 18px", justifyContent: "center" }}
+            className="luckydraw-save-btn"
           >
-            {savingConfig ? "Saving..." : "Save Parameters"}
+            {savingConfig ? (
+              <>
+                <span className="spinner" style={{ width: "16px", height: "16px", borderWidth: "2px" }}></span>
+                Saving...
+              </>
+            ) : (
+              <>
+                <span>💾</span> Save &amp; Publish Parameters
+              </>
+            )}
           </button>
         </form>
       </div>
 
       {/* ================= 2. ACTIVE OPEN DRAWS ================= */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: "900", color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.8px", margin: 0 }}>
-          🔥 Active Open Draws ({openDraws.length})
+      <div className="luckydraw-section-header">
+        <h3 className="luckydraw-section-title">
+          <span>🔥</span> Active Open Draws
+          <span className="luckydraw-count-chip">{filteredDraws.length} Active</span>
         </h3>
-        <span style={{ fontSize: "12px", color: "#E2E8F0", fontWeight: "600" }}>Auto-completes and regenerates when slots fill</span>
+
+        {/* Tier Filter Tabs */}
+        <div className="luckydraw-filter-tabs">
+          <button
+            type="button"
+            className={`luckydraw-filter-btn ${tierFilter === "ALL" ? "active" : ""}`}
+            onClick={() => setTierFilter("ALL")}
+          >
+            All Tiers ({openDraws.length})
+          </button>
+          <button
+            type="button"
+            className={`luckydraw-filter-btn ${tierFilter === "SMALL" ? "active" : ""}`}
+            onClick={() => setTierFilter("SMALL")}
+          >
+            5 - 10 Slots
+          </button>
+          <button
+            type="button"
+            className={`luckydraw-filter-btn ${tierFilter === "MEDIUM" ? "active" : ""}`}
+            onClick={() => setTierFilter("MEDIUM")}
+          >
+            20 - 25 Slots
+          </button>
+          <button
+            type="button"
+            className={`luckydraw-filter-btn ${tierFilter === "HIGH" ? "active" : ""}`}
+            onClick={() => setTierFilter("HIGH")}
+          >
+            50 - 100 Slots
+          </button>
+        </div>
       </div>
 
       {loading ? (
         <div style={{ textAlign: "center", padding: "60px 20px" }}>
           <div className="spinner"></div>
-          <p style={{ color: "#FFFFFF", fontWeight: "700" }}>Loading active lucky draws...</p>
+          <p style={{ color: "#FFFFFF", fontWeight: "800", marginTop: "14px" }}>
+            Synchronizing live lucky draws from Firestore...
+          </p>
         </div>
-      ) : openDraws.length === 0 ? (
-        <div className="glass-card" style={{ padding: "40px", textAlign: "center", color: "#FFFFFF", marginBottom: "32px", fontWeight: "700" }}>
-          No active open draws found. Backend automatically regenerates them on demand.
+      ) : filteredDraws.length === 0 ? (
+        <div
+          className="glass-card"
+          style={{
+            padding: "48px 24px",
+            textAlign: "center",
+            color: "#FFFFFF",
+            marginBottom: "36px",
+            border: "1.5px dashed rgba(255, 255, 255, 0.15)"
+          }}
+        >
+          <div style={{ fontSize: "40px", marginBottom: "12px" }}>🎲</div>
+          <h4 style={{ margin: "0 0 6px 0", fontSize: "18px", fontWeight: "800", color: "#FFFFFF" }}>
+            No Active Draws in This Tier
+          </h4>
+          <p style={{ margin: 0, fontSize: "13.5px", color: "#CBD5E1" }}>
+            Backend automatically spawns new draws on demand as players join.
+          </p>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "20px", marginBottom: "36px" }}>
-          {openDraws.map((draw) => {
+        <div className="luckydraw-cards-grid">
+          {filteredDraws.map((draw) => {
             const currentPart = draw.currentParticipation ?? draw.filledSlots ?? 0;
             const maxPart = draw.participationLimit ?? draw.totalSlots ?? 10;
             const remSlots = Math.max(0, maxPart - currentPart);
@@ -334,76 +478,78 @@ export default function LuckyDrawAdmin() {
             const drawId = draw.id || draw.drawId;
 
             return (
-              <div
-                key={drawId}
-                className="glass-card"
-                style={{
-                  padding: "22px",
-                  borderTop: "3px solid #8B5CF6",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between"
-                }}
-              >
+              <div key={drawId} className="luckydraw-event-card">
                 <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                    <span style={{ fontSize: "12px", color: "#00F2FE", fontFamily: "monospace", fontWeight: "700" }}>
+                  {/* Top Bar: Draw ID + Status */}
+                  <div className="luckydraw-card-topbar">
+                    <span className="luckydraw-card-id">
                       #{drawId.slice(0, 8)}
                     </span>
-                    <span className="badge badge-success">
+                    <span className="luckydraw-status-badge status-badge-open">
+                      <span className="status-pulse-dot"></span>
                       OPEN ({maxPart} Slots)
                     </span>
                   </div>
 
-                  <div style={{ fontSize: "20px", fontWeight: "800", color: "#FFFFFF", marginBottom: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span>🎁</span> Win {Number(draw.rewardCoins || 0).toLocaleString()} Coins
+                  {/* Reward Prize Title */}
+                  <div className="luckydraw-card-reward-title">
+                    <span>🎁</span>
+                    <span>Win </span>
+                    <span className="luckydraw-card-reward-amount">
+                      {Number(draw.rewardCoins || 0).toLocaleString()} Coins
+                    </span>
                   </div>
 
-                  <div style={{ background: "rgba(255, 255, 255, 0.03)", borderRadius: "8px", padding: "10px 12px", marginBottom: "14px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#E2E8F0", marginBottom: "4px", fontWeight: "600" }}>
-                      <span>Ticket Entry Cost:</span>
-                      <strong style={{ color: "#00F2FE" }}>🎟️ {draw.ticketCost || 1} Ticket</strong>
+                  {/* Specs Panel */}
+                  <div className="luckydraw-specs-panel">
+                    <div className="luckydraw-spec-item">
+                      <span className="luckydraw-spec-label">Ticket Entry Cost</span>
+                      <span className="luckydraw-spec-val cyan">
+                        🎟️ {draw.ticketCost || 1} Ticket
+                      </span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#E2E8F0", fontWeight: "600" }}>
-                      <span>Remaining Slots:</span>
-                      <strong style={{ color: remSlots > 0 ? "#00F5A0" : "#FF4B72" }}>{remSlots} slots left</strong>
+                    <div className="luckydraw-spec-item">
+                      <span className="luckydraw-spec-label">Remaining Slots</span>
+                      <span className={`luckydraw-spec-val ${remSlots > 0 ? "mint" : "coral"}`}>
+                        {remSlots} slots left
+                      </span>
                     </div>
                   </div>
 
-                  {/* Progress */}
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#CBD5E1", marginBottom: "6px" }}>
-                    <span>Enrolled: <strong>{currentPart}</strong> / {maxPart}</span>
-                    <span style={{ color: "#818CF8", fontWeight: "700" }}>{pct}%</span>
-                  </div>
-                  <div style={{ height: "7px", width: "100%", background: "rgba(255,255,255,0.06)", borderRadius: "6px", overflow: "hidden", marginBottom: "16px" }}>
-                    <div
-                      style={{
-                        height: "100%",
-                        width: `${pct}%`,
-                        background: "linear-gradient(90deg, #6366F1, #C084FC)",
-                        transition: "width 0.4s ease"
-                      }}
-                    />
+                  {/* Slot Progress */}
+                  <div className="luckydraw-progress-wrap">
+                    <div className="luckydraw-progress-meta">
+                      <span className="luckydraw-progress-label">
+                        Enrolled: <strong>{currentPart}</strong> / {maxPart}
+                      </span>
+                      <span className="luckydraw-progress-pct">{pct}% Fill</span>
+                    </div>
+                    <div className="luckydraw-progress-track">
+                      <div
+                        className="luckydraw-progress-fill"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div style={{ display: "flex", gap: "8px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="luckydraw-card-actions">
                   <button
-                    className="btn-secondary"
-                    style={{ flex: 1, padding: "8px 10px", fontSize: "12px", justifyContent: "center" }}
+                    type="button"
+                    className="luckydraw-btn-participants"
                     onClick={() => navigate(`/admin/lucky-draw/${drawId}`)}
                   >
-                    👥 Participants ({currentPart})
+                    <span>👥</span> Participants ({currentPart})
                   </button>
                   <button
-                    className="btn-danger"
-                    style={{ padding: "8px 12px", fontSize: "12px" }}
+                    type="button"
+                    className="luckydraw-btn-cancel"
                     disabled={cancellingId === drawId}
                     onClick={() => handleCancelDraw(draw)}
                     title="Cancel draw and refund tickets to players"
                   >
-                    {cancellingId === drawId ? "..." : "🚫 Cancel"}
+                    {cancellingId === drawId ? "Refunding..." : "🚫 Cancel"}
                   </button>
                 </div>
               </div>
@@ -413,24 +559,27 @@ export default function LuckyDrawAdmin() {
       )}
 
       {/* ================= 3. RECENT COMPLETED DRAWS ================= */}
-      <div className="glass-card" style={{ padding: "24px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
-          <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#F8FAFC", display: "flex", alignItems: "center", gap: "8px" }}>
+      <div className="luckydraw-history-box">
+        <div className="luckydraw-history-header">
+          <h4 className="luckydraw-history-title">
             <span>📜</span> Recent Completed Draw History
           </h4>
           <button
+            type="button"
             onClick={() => navigate("/admin/winner-history")}
-            style={{ background: "transparent", border: "none", color: "#818CF8", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}
+            className="luckydraw-link-all"
           >
             View Full Records ({historyList.length}) →
           </button>
         </div>
 
         {historyList.length === 0 ? (
-          <p style={{ color: "#94A3B8", fontSize: "13px" }}>No completed draw history records yet.</p>
+          <div style={{ textAlign: "center", padding: "30px 10px", color: "#FFFFFF", fontWeight: "700" }}>
+            No completed draw history records yet.
+          </div>
         ) : (
-          <div className="table-responsive">
-            <table className="user-table">
+          <div className="luckydraw-table-wrap">
+            <table className="luckydraw-table">
               <thead>
                 <tr>
                   <th>Draw ID</th>
@@ -442,29 +591,38 @@ export default function LuckyDrawAdmin() {
                 </tr>
               </thead>
               <tbody>
-                {historyList.slice(0, 5).map((item) => (
-                  <tr key={item.id || item.drawId} className="table-row">
+                {historyList.slice(0, 6).map((item) => (
+                  <tr key={item.id || item.drawId}>
                     <td>
-                      <code style={{ color: "#38BDF8", fontSize: "12px" }}>
+                      <span className="luckydraw-id-tag">
                         #{(item.drawId || item.id)?.slice(0, 8)}
-                      </code>
-                    </td>
-                    <td>{item.participationLimit || item.totalSlots || 10} Slots</td>
-                    <td>
-                      <span className="badge badge-pending">
-                        🪙 {item.rewardCoins || item.rewardAmount || 0}
                       </span>
                     </td>
                     <td>
-                      <code style={{ color: "#A855F7", fontWeight: "700" }}>{item.winningToken || "—"}</code>
+                      <strong style={{ color: "#FFFFFF" }}>
+                        {item.participationLimit || item.totalSlots || 10} Slots
+                      </strong>
                     </td>
                     <td>
-                      <span style={{ fontSize: "12px", fontFamily: "monospace", color: "#94A3B8" }}>
+                      <span className="luckydraw-prize-pill">
+                        🪙 {Number(item.rewardCoins || item.rewardAmount || 0).toLocaleString()}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="luckydraw-token-chip">
+                        {item.winningToken || "—"}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="luckydraw-uid-pill">
                         {item.winningUserId || item.winnerUid || "—"}
                       </span>
                     </td>
                     <td>
-                      <span className="badge badge-success">COMPLETED</span>
+                      <span className="luckydraw-status-badge status-badge-open">
+                        <span className="status-pulse-dot" style={{ background: "#00F5A0" }}></span>
+                        COMPLETED
+                      </span>
                     </td>
                   </tr>
                 ))}

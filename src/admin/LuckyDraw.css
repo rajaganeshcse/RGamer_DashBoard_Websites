@@ -1,0 +1,946 @@
+/* ==========================================================================
+   LUCKY DRAW COMMAND CENTER - PROFESSIONAL GAMING FINTECH UI
+   Theme Palette:
+   - Electric Violet/Indigo: #818CF8 / #6366F1
+   - Cyber Gold:            #FFB800 / #F59E0B
+   - Neon Cyan:             #00F2FE / #06B6D4
+   - Neon Mint Green:       #00F5A0 / #10B981
+   - Vivid Coral:           #FF4B72 / #EF4444
+   - High Contrast Text:    Pure White #FFFFFF & Crisp Silver #E2E8F0
+   ========================================================================== */
+
+/* Container */
+.luckydraw-container {
+  padding: 28px 32px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+/* ================= HEADER BANNER ================= */
+.luckydraw-header {
+  padding: 24px 30px;
+  margin-bottom: 26px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%);
+  border: 1px solid rgba(129, 140, 248, 0.25);
+  border-radius: 20px;
+  box-shadow: 0 12px 35px -5px rgba(0, 0, 0, 0.55), 0 0 25px rgba(99, 102, 241, 0.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.luckydraw-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.luckydraw-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.luckydraw-engine-pill {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(139, 92, 246, 0.2) 100%);
+  color: #C084FC;
+  border: 1.5px solid rgba(139, 92, 246, 0.55);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
+}
+
+.luckydraw-preset-tag {
+  font-size: 12.5px;
+  color: #E2E8F0;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.luckydraw-main-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 900;
+  color: #FFFFFF;
+  letter-spacing: -0.4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.luckydraw-header-subtitle {
+  margin: 0;
+  font-size: 13.5px;
+  color: #E2E8F0;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.luckydraw-header-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.luckydraw-action-btn-primary {
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  color: #FFFFFF;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+  transition: all 0.2s ease;
+}
+
+.luckydraw-action-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+  filter: brightness(1.1);
+}
+
+.luckydraw-action-btn-secondary {
+  background: rgba(15, 23, 42, 0.8);
+  color: #FFFFFF;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.luckydraw-action-btn-secondary:hover {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* ================= 4 OPERATIONAL KPI CARDS ================= */
+.luckydraw-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.luckydraw-kpi-card {
+  padding: 20px 22px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.luckydraw-kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+}
+
+.luckydraw-kpi-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+/* KPI Card Variants */
+.kpi-variant-violet {
+  border-color: rgba(129, 140, 248, 0.3);
+}
+.kpi-variant-violet::before {
+  background: linear-gradient(90deg, #6366F1, #A855F7);
+}
+
+.kpi-variant-cyan {
+  border-color: rgba(6, 182, 212, 0.3);
+}
+.kpi-variant-cyan::before {
+  background: linear-gradient(90deg, #00F2FE, #06B6D4);
+}
+
+.kpi-variant-gold {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+.kpi-variant-gold::before {
+  background: linear-gradient(90deg, #FFB800, #F59E0B);
+}
+
+.kpi-variant-mint {
+  border-color: rgba(16, 185, 129, 0.3);
+}
+.kpi-variant-mint::before {
+  background: linear-gradient(90deg, #00F5A0, #10B981);
+}
+
+.luckydraw-kpi-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.kpi-variant-violet .luckydraw-kpi-icon {
+  background: rgba(99, 102, 241, 0.18);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+}
+
+.kpi-variant-cyan .luckydraw-kpi-icon {
+  background: rgba(6, 182, 212, 0.18);
+  border: 1px solid rgba(6, 182, 212, 0.4);
+}
+
+.kpi-variant-gold .luckydraw-kpi-icon {
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.kpi-variant-mint .luckydraw-kpi-icon {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.luckydraw-kpi-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.luckydraw-kpi-value {
+  font-size: 26px;
+  font-weight: 900;
+  color: #FFFFFF;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+
+.luckydraw-kpi-label {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #FFFFFF;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+.luckydraw-kpi-subtext {
+  font-size: 12px;
+  font-weight: 600;
+  color: #CBD5E1;
+  margin-top: 2px;
+}
+
+/* ================= AUTHORITATIVE CONFIGURATION BOX ================= */
+.luckydraw-config-card {
+  padding: 26px 28px;
+  margin-bottom: 30px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(20, 27, 45, 0.9) 100%);
+  border: 1.5px solid rgba(129, 140, 248, 0.25);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.luckydraw-config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.luckydraw-config-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 900;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -0.2px;
+}
+
+.luckydraw-config-desc {
+  font-size: 12.5px;
+  color: #CBD5E1;
+  font-weight: 600;
+}
+
+/* Preset Chips Switcher */
+.preset-chips-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: #00F2FE;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.preset-chips-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.preset-chip-btn {
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: #E2E8F0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.preset-chip-btn:hover {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.preset-chip-btn.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(139, 92, 246, 0.25) 100%);
+  border-color: #818CF8;
+  color: #FFFFFF;
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.4), inset 0 0 8px rgba(99, 102, 241, 0.2);
+}
+
+.preset-chip-btn .chip-badge {
+  background: rgba(255, 255, 255, 0.12);
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.preset-chip-btn.active .chip-badge {
+  background: #6366F1;
+  color: #FFFFFF;
+}
+
+/* Config Inputs Form */
+.luckydraw-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 18px;
+  align-items: end;
+}
+
+.luckydraw-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.luckydraw-input-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: #FFFFFF;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.luckydraw-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: #0B1120;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 700;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.luckydraw-input:focus {
+  border-color: #00F2FE;
+  box-shadow: 0 0 0 3px rgba(0, 242, 254, 0.2);
+  background: #0F172A;
+}
+
+.luckydraw-save-btn {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #FFFFFF;
+  border: none;
+  padding: 13px 22px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  transition: all 0.2s ease;
+  height: 48px;
+}
+
+.luckydraw-save-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.55);
+  filter: brightness(1.1);
+}
+
+.luckydraw-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ================= ACTIVE OPEN DRAWS SECTION ================= */
+.luckydraw-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.luckydraw-section-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+  color: #FFFFFF;
+  letter-spacing: -0.2px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.luckydraw-count-chip {
+  background: rgba(99, 102, 241, 0.25);
+  color: #818CF8;
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.luckydraw-filter-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.luckydraw-filter-btn {
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #CBD5E1;
+  transition: all 0.2s ease;
+}
+
+.luckydraw-filter-btn:hover {
+  color: #FFFFFF;
+  background: rgba(30, 41, 59, 0.8);
+}
+
+.luckydraw-filter-btn.active {
+  background: rgba(99, 102, 241, 0.25);
+  border-color: #818CF8;
+  color: #FFFFFF;
+  font-weight: 800;
+}
+
+/* Open Draws Grid */
+.luckydraw-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 22px;
+  margin-bottom: 34px;
+}
+
+/* Single Open Draw Card */
+.luckydraw-event-card {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(26, 35, 58, 0.85) 100%);
+  border: 1.5px solid rgba(129, 140, 248, 0.25);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.luckydraw-event-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(129, 140, 248, 0.55);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(99, 102, 241, 0.2);
+}
+
+.luckydraw-card-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.luckydraw-card-id {
+  font-family: 'Fira Code', monospace;
+  font-size: 12px;
+  font-weight: 800;
+  color: #00F2FE;
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  padding: 4px 9px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.luckydraw-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.status-badge-open {
+  background: rgba(16, 185, 129, 0.18);
+  color: #00F5A0;
+  border: 1.5px solid rgba(16, 185, 129, 0.45);
+}
+
+.status-badge-closing {
+  background: rgba(245, 158, 11, 0.18);
+  color: #FFB800;
+  border: 1.5px solid rgba(245, 158, 11, 0.45);
+}
+
+.status-badge-lock {
+  background: rgba(239, 68, 68, 0.18);
+  color: #FF4B72;
+  border: 1.5px solid rgba(239, 68, 68, 0.45);
+}
+
+.status-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00F5A0;
+  box-shadow: 0 0 8px #00F5A0;
+  animation: pulseGlow 1.8s infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* Reward Title */
+.luckydraw-card-reward-title {
+  margin: 0 0 14px 0;
+  font-size: 22px;
+  font-weight: 900;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.3px;
+}
+
+.luckydraw-card-reward-amount {
+  color: #FFB800;
+  text-shadow: 0 0 16px rgba(255, 184, 0, 0.35);
+}
+
+/* Card Specs Panel */
+.luckydraw-specs-panel {
+  background: rgba(11, 17, 32, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.luckydraw-spec-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.luckydraw-spec-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #CBD5E1;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.luckydraw-spec-val {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin-top: 2px;
+}
+
+.luckydraw-spec-val.cyan {
+  color: #00F2FE;
+}
+
+.luckydraw-spec-val.mint {
+  color: #00F5A0;
+}
+
+.luckydraw-spec-val.coral {
+  color: #FF4B72;
+}
+
+/* Progress Section */
+.luckydraw-progress-wrap {
+  margin-bottom: 18px;
+}
+
+.luckydraw-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.luckydraw-progress-label {
+  color: #E2E8F0;
+  font-weight: 700;
+}
+
+.luckydraw-progress-label strong {
+  color: #FFFFFF;
+  font-weight: 900;
+}
+
+.luckydraw-progress-pct {
+  font-weight: 900;
+  color: #818CF8;
+}
+
+.luckydraw-progress-track {
+  height: 9px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.luckydraw-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366F1 0%, #A855F7 60%, #00F2FE 100%);
+  border-radius: 10px;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.55);
+  transition: width 0.4s ease;
+}
+
+/* Actions in Card */
+.luckydraw-card-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.luckydraw-btn-participants {
+  flex: 1;
+  background: rgba(15, 23, 42, 0.8);
+  color: #FFFFFF;
+  border: 1.5px solid rgba(129, 140, 248, 0.3);
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.luckydraw-btn-participants:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: #818CF8;
+  color: #FFFFFF;
+}
+
+.luckydraw-btn-cancel {
+  background: rgba(239, 68, 68, 0.12);
+  color: #FF4B72;
+  border: 1.5px solid rgba(239, 68, 68, 0.35);
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.luckydraw-btn-cancel:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #EF4444;
+  color: #FFFFFF;
+}
+
+.luckydraw-btn-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ================= DRAW HISTORY & WINNER AUDIT ================= */
+.luckydraw-history-box {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(20, 27, 45, 0.9) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 24px 26px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.luckydraw-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.luckydraw-history-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -0.2px;
+}
+
+.luckydraw-link-all {
+  background: none;
+  border: none;
+  color: #00F2FE;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.luckydraw-link-all:hover {
+  color: #FFFFFF;
+  text-decoration: underline;
+}
+
+/* Data Table */
+.luckydraw-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.luckydraw-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.luckydraw-table th {
+  background: rgba(11, 17, 32, 0.9);
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.12);
+  white-space: nowrap;
+}
+
+.luckydraw-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 13.5px;
+  color: #FFFFFF;
+  vertical-align: middle;
+}
+
+.luckydraw-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.luckydraw-id-tag {
+  font-family: 'Fira Code', monospace;
+  font-size: 12px;
+  font-weight: 800;
+  color: #00F2FE;
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.luckydraw-prize-pill {
+  background: rgba(245, 158, 11, 0.16);
+  color: #FFB800;
+  border: 1.5px solid rgba(245, 158, 11, 0.4);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.luckydraw-token-chip {
+  font-family: 'Fira Code', monospace;
+  color: #C084FC;
+  font-weight: 800;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.luckydraw-uid-pill {
+  font-family: 'Fira Code', monospace;
+  font-size: 11.5px;
+  color: #CBD5E1;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* Toast */
+.luckydraw-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 99999;
+  padding: 14px 22px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  animation: slideInToast 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInToast {
+  from { transform: translateX(50px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.luckydraw-toast-success {
+  background: #064E3B;
+  color: #A7F3D0;
+  border: 1.5px solid #059669;
+}
+
+.luckydraw-toast-error {
+  background: #7F1D1D;
+  color: #FECACA;
+  border: 1.5px solid #DC2626;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 1200px) {
+  .luckydraw-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .luckydraw-container {
+    padding: 16px 14px;
+  }
+  
+  .luckydraw-header {
+    padding: 18px 20px;
+  }
+
+  .luckydraw-main-title {
+    font-size: 20px;
+  }
+
+  .luckydraw-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .luckydraw-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .luckydraw-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,4 +1,5 @@
 import React from "react";
+import "./LuckyDraw.css";
 
 const LuckyDrawRow = ({ draw }) => {
   const percent =
@@ -10,58 +11,60 @@ const LuckyDrawRow = ({ draw }) => {
 
   return (
     <div
-      className="glass-card"
+      className="luckydraw-event-card"
       style={{
         padding: "18px",
         marginBottom: "14px",
-        borderTop: isCompleted ? "3px solid #10B981" : "3px solid #8B5CF6",
-        background: "rgba(18, 24, 39, 0.85)"
+        borderTop: isCompleted ? "3px solid #00F5A0" : "3px solid #818CF8"
       }}
     >
       {/* HEADER */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-        <span style={{ fontSize: "12px", color: "#00F2FE", fontFamily: "monospace", fontWeight: "700" }}>
+      <div className="luckydraw-card-topbar" style={{ marginBottom: "10px" }}>
+        <span className="luckydraw-card-id">
           #{draw.id.slice(0, 8)}
         </span>
-        <span className={`badge ${isCompleted ? "badge-success" : "badge-info"}`}>
+        <span className={`luckydraw-status-badge ${isCompleted ? "status-badge-open" : "status-badge-closing"}`}>
           {draw.status}
         </span>
       </div>
 
       {/* REWARD */}
-      <div style={{ fontSize: "17px", fontWeight: "800", color: "#FFFFFF", display: "flex", alignItems: "center", gap: "6px" }}>
+      <div className="luckydraw-card-reward-title" style={{ fontSize: "18px", marginBottom: "8px" }}>
         <span>🎁</span> Win {Number(draw.rewardCoins || 0).toLocaleString()} Coins
       </div>
 
       {/* SLOTS */}
-      <div style={{ fontSize: "13px", color: "#E2E8F0", marginTop: "6px", display: "flex", justifyContent: "space-between", fontWeight: "600" }}>
-        <span>Enrolled: <strong style={{ color: "#FFFFFF" }}>{draw.filledSlots}</strong> / {draw.totalSlots}</span>
-        <span style={{ color: "#00F2FE", fontWeight: "800" }}>{percent}%</span>
+      <div className="luckydraw-progress-meta" style={{ marginBottom: "6px" }}>
+        <span className="luckydraw-progress-label">
+          Enrolled: <strong>{draw.filledSlots}</strong> / {draw.totalSlots}
+        </span>
+        <span className="luckydraw-progress-pct">{percent}%</span>
       </div>
 
       {/* PROGRESS BAR */}
-      <div style={{ height: "6px", width: "100%", background: "rgba(255, 255, 255, 0.08)", borderRadius: "6px", overflow: "hidden", marginTop: "8px" }}>
+      <div className="luckydraw-progress-track">
         <div
+          className="luckydraw-progress-fill"
           style={{
-            height: "100%",
             width: `${percent}%`,
-            background: isCompleted ? "linear-gradient(90deg, #10B981, #34D399)" : "linear-gradient(90deg, #6366F1, #8B5CF6)",
-            transition: "width 0.4s ease"
+            background: isCompleted
+              ? "linear-gradient(90deg, #10B981, #00F5A0)"
+              : "linear-gradient(90deg, #6366F1, #C084FC)"
           }}
         />
       </div>
 
       {/* STATUS FOOTER */}
       {draw.status === "OPEN" && (
-        <div style={{ marginTop: "12px", fontSize: "12px", color: "#FBBF24", display: "flex", alignItems: "center", gap: "6px" }}>
+        <div style={{ marginTop: "12px", fontSize: "12px", color: "#FFB800", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
           <span>⏳</span> Open for participant entries…
         </div>
       )}
 
       {isCompleted && (
-        <div style={{ marginTop: "12px", fontSize: "12px", color: "#34D399" }}>
+        <div style={{ marginTop: "12px", fontSize: "12px", color: "#00F5A0", fontWeight: "700" }}>
           <div>✅ Event Finalized &amp; Reward Credited</div>
-          <div style={{ color: "#F8FAFC", marginTop: "4px", fontSize: "11px", fontFamily: "monospace" }}>
+          <div style={{ color: "#CBD5E1", marginTop: "4px", fontSize: "11px", fontFamily: "monospace" }}>
             🏆 Winner: {draw.winnerUid || "—"}
           </div>
         </div>
