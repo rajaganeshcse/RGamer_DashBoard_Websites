@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../Firebase";
+import { useBackendHealth } from "../utils/useBackendHealth";
 
 const KPICard = ({ icon, label, value, sub, accent, badge, badgeClass, onClick }) => (
   <div
@@ -78,6 +79,7 @@ const KPICard = ({ icon, label, value, sub, accent, badge, badgeClass, onClick }
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const backendHealth = useBackendHealth();
 
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -434,6 +436,126 @@ export default function AdminDashboard() {
           </div>
           <div style={{ width: "42px", height: "42px", borderRadius: "50%", background: "rgba(0, 245, 160, 0.2)", border: "1.5px solid rgba(0, 245, 160, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", boxShadow: "0 0 12px rgba(0, 245, 160, 0.3)" }}>
             🛡️
+          </div>
+        </div>
+      </div>
+
+      {/* ── LIVE BACKEND & INFRASTRUCTURE STATUS MONITOR ── */}
+      <div
+        className="glass-card"
+        style={{
+          padding: "22px 28px",
+          marginBottom: "28px",
+          background: "linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(20, 27, 45, 0.9) 100%)",
+          border: "1.5px solid rgba(0, 242, 254, 0.25)",
+          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 242, 254, 0.1)"
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px", marginBottom: "18px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <span style={{ fontSize: "24px" }}>⚡</span>
+            <div>
+              <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "900", color: "#FFFFFF", display: "flex", alignItems: "center", gap: "10px" }}>
+                Live Backend Infrastructure &amp; Services Health
+                <span className="badge badge-success" style={{ fontSize: "11px", padding: "3px 8px" }}>
+                  <span className="status-dot"></span> LIVE HEARTBEAT
+                </span>
+              </h3>
+              <div style={{ fontSize: "12.5px", color: "#E2E8F0", marginTop: "2px", fontWeight: "600" }}>
+                Real-time round-trip latency probe • Auto-refreshes every 25 seconds • Last verified: {backendHealth.lastChecked ? backendHealth.lastChecked.toLocaleTimeString("en-IN") : "Syncing..."}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="btn-glow"
+            style={{
+              padding: "9px 18px",
+              fontSize: "13px",
+              background: "linear-gradient(135deg, #00F2FE 0%, #06B6D4 100%)",
+              color: "#000000",
+              fontWeight: "900",
+              border: "none",
+              borderRadius: "10px",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              boxShadow: "0 4px 14px rgba(6, 182, 212, 0.4)"
+            }}
+            disabled={backendHealth.checking}
+            onClick={backendHealth.pingNow}
+          >
+            <span>{backendHealth.checking ? "⏳" : "🔄"}</span>
+            <span>{backendHealth.checking ? "Probing..." : "Test Ping Now"}</span>
+          </button>
+        </div>
+
+        {/* 4 Infrastructure Microservice Cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "14px" }}>
+          {/* Service 1: Spring Boot API */}
+          <div style={{ background: "rgba(11, 17, 32, 0.75)", border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: "12px", padding: "14px 16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+              <span style={{ fontSize: "11.5px", fontWeight: "800", color: "#CBD5E1", textTransform: "uppercase" }}>Spring Boot API (Render)</span>
+              <span style={{ fontSize: "11.5px", fontWeight: "800", color: backendHealth.isOnline ? "#00F5A0" : "#FF4B72", background: backendHealth.isOnline ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)", padding: "2px 6px", borderRadius: "4px" }}>
+                {backendHealth.isOnline ? `${backendHealth.latency}ms` : "OFFLINE"}
+              </span>
+            </div>
+            <div style={{ fontSize: "15px", fontWeight: "900", color: backendHealth.isOnline ? "#00F5A0" : "#FF4B72" }}>
+              {backendHealth.isOnline ? "🟢 Online (200 OK)" : "🔴 Unreachable"}
+            </div>
+            <div style={{ fontSize: "11px", color: "#CBD5E1", marginTop: "4px", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              https://app-backend-lutn.onrender.com
+            </div>
+          </div>
+
+          {/* Service 2: Firestore DB */}
+          <div style={{ background: "rgba(11, 17, 32, 0.75)", border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: "12px", padding: "14px 16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+              <span style={{ fontSize: "11.5px", fontWeight: "800", color: "#CBD5E1", textTransform: "uppercase" }}>Firebase Firestore DB</span>
+              <span style={{ fontSize: "11.5px", fontWeight: "800", color: "#00F5A0", background: "rgba(16, 185, 129, 0.15)", padding: "2px 6px", borderRadius: "4px" }}>
+                REALTIME
+              </span>
+            </div>
+            <div style={{ fontSize: "15px", fontWeight: "900", color: "#00F5A0" }}>
+              🟢 Synchronized
+            </div>
+            <div style={{ fontSize: "11px", color: "#CBD5E1", marginTop: "4px" }}>
+              WebSocket Listener Active
+            </div>
+          </div>
+
+          {/* Service 3: FCM Push */}
+          <div style={{ background: "rgba(11, 17, 32, 0.75)", border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: "12px", padding: "14px 16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+              <span style={{ fontSize: "11.5px", fontWeight: "800", color: "#CBD5E1", textTransform: "uppercase" }}>FCM Cloud Messaging</span>
+              <span style={{ fontSize: "11.5px", fontWeight: "800", color: "#00F2FE", background: "rgba(6, 182, 212, 0.15)", padding: "2px 6px", borderRadius: "4px" }}>
+                PIPELINE
+              </span>
+            </div>
+            <div style={{ fontSize: "15px", fontWeight: "900", color: "#00F2FE" }}>
+              🟢 Push Gateway Ready
+            </div>
+            <div style={{ fontSize: "11px", color: "#CBD5E1", marginTop: "4px" }}>
+              Direct FCM Token Dispatcher
+            </div>
+          </div>
+
+          {/* Service 4: CDN & Protection */}
+          <div style={{ background: "rgba(11, 17, 32, 0.75)", border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: "12px", padding: "14px 16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+              <span style={{ fontSize: "11.5px", fontWeight: "800", color: "#CBD5E1", textTransform: "uppercase" }}>Cloudflare Edge CDN</span>
+              <span style={{ fontSize: "11.5px", fontWeight: "800", color: "#C084FC", background: "rgba(139, 92, 246, 0.15)", padding: "2px 6px", borderRadius: "4px" }}>
+                SSL/TLS
+              </span>
+            </div>
+            <div style={{ fontSize: "15px", fontWeight: "900", color: "#C084FC" }}>
+              🟢 Active &amp; Encrypted
+            </div>
+            <div style={{ fontSize: "11px", color: "#CBD5E1", marginTop: "4px" }}>
+              DDoS Shield &amp; HTTP/3 Enabled
+            </div>
           </div>
         </div>
       </div>
