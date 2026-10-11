@@ -10,12 +10,14 @@ import {
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { db } from "../Firebase";
+import "./DeleteRequests.css";
 
 export default function DeleteRequests() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("pending");
+  const [viewMode, setViewMode] = useState("cards"); // 'cards' | 'table'
   const [search, setSearch] = useState("");
   const [actionLoading, setActionLoading] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
@@ -60,7 +62,7 @@ export default function DeleteRequests() {
       setConfirmModal(null);
     } catch (e) {
       console.error("Cancel failed:", e);
-      alert("Error cancelling request: " + e.message);
+      alert("Error restoring account: " + e.message);
     } finally {
       setActionLoading(null);
     }
@@ -84,7 +86,7 @@ export default function DeleteRequests() {
       setConfirmModal(null);
     } catch (e) {
       console.error("Delete failed:", e);
-      alert("Error deleting account: " + e.message);
+      alert("Error purging account: " + e.message);
     } finally {
       setActionLoading(null);
     }
@@ -94,11 +96,13 @@ export default function DeleteRequests() {
     pending: "pending",
     deleted: "deleted",
     cancelled: "cancelled",
+    all: "all"
   };
 
   const filtered = requests.filter((r) => {
     const s = (r.status || "").toLowerCase();
-    const statusMatch = s === (statusMap[activeTab] || "pending");
+    const statusMatch =
+      activeTab === "all" ? true : s === (statusMap[activeTab] || "pending");
     const term = search.toLowerCase();
     const searchMatch =
       !term ||
@@ -131,98 +135,199 @@ export default function DeleteRequests() {
   };
 
   return (
-    <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }} className="animate-fade-in">
+    <div className="delete-container animate-fade-in">
       
-      {/* HEADER */}
-      <div className="glass-card" style={{ padding: "20px 24px", marginBottom: "24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          <button className="btn-secondary" onClick={() => navigate(-1)} style={{ padding: "8px 14px" }}>
-            ← Back
-          </button>
-          <div>
-            <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "800", color: "#FFFFFF" }}>
-              🗑️ Account Deletion Requests
-            </h2>
-            <p style={{ margin: "2px 0 0 0", fontSize: "13px", color: "#E2E8F0", fontWeight: "600" }}>
-              Approve, cancel, or audit user account deletion requests.
-            </p>
+      {/* ================= HEADER BANNER ================= */}
+      <div className="delete-header">
+        <div className="delete-header-left">
+          <div className="delete-badge-row">
+            <span className="delete-vault-pill">
+              <span>🛡️</span> PRIVACY &amp; DATA SAFETY VAULT
+            </span>
+            <span className="delete-compliance-tag">
+              <span className="status-pulse-dot" style={{ width: "8px", height: "8px", background: "#00F5A0", borderRadius: "50%", display: "inline-block" }}></span>
+              GOOGLE PLAY CONSOLE COMPLIANT
+            </span>
+            <span style={{ fontSize: "12px", color: "#CBD5E1", fontWeight: "700" }}>
+              7-Day Safety Grace Period Enforcement
+            </span>
           </div>
+          <h1 className="delete-main-title">
+            <span>🗑️</span> Account Deletion &amp; Data Erasure Management
+          </h1>
+          <p className="delete-header-subtitle">
+            Audit user erasure submissions, manage safety grace periods, restore active accounts, or permanently purge player data.
+          </p>
         </div>
 
-        {/* SEARCH */}
-        <input
-          className="form-input"
-          placeholder="Search by User ID, email, or name..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ width: "300px" }}
-        />
-      </div>
-
-      {/* STAT CARDS */}
-      <div className="stats-grid" style={{ marginBottom: "24px" }}>
-        <div className="stat-card glass-card" style={{ borderTop: "3px solid #F59E0B" }}>
-          <div className="stat-icon" style={{ background: "rgba(245, 158, 11, 0.15)", color: "#F59E0B" }}>⏳</div>
-          <div>
-            <div className="stat-value" style={{ color: "#F59E0B" }}>{countOf("pending")}</div>
-            <div className="stat-label">Pending Reviews</div>
-          </div>
-        </div>
-        <div className="stat-card glass-card" style={{ borderTop: "3px solid #EF4444" }}>
-          <div className="stat-icon" style={{ background: "rgba(239, 68, 68, 0.15)", color: "#EF4444" }}>🗑️</div>
-          <div>
-            <div className="stat-value" style={{ color: "#EF4444" }}>{countOf("deleted")}</div>
-            <div className="stat-label">Deleted Accounts</div>
-          </div>
-        </div>
-        <div className="stat-card glass-card" style={{ borderTop: "3px solid #10B981" }}>
-          <div className="stat-icon" style={{ background: "rgba(16, 185, 129, 0.15)", color: "#10B981" }}>↩️</div>
-          <div>
-            <div className="stat-value" style={{ color: "#10B981" }}>{countOf("cancelled")}</div>
-            <div className="stat-label">Restored Active Accounts</div>
-          </div>
-        </div>
-      </div>
-
-      {/* TAB NAVIGATION */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-        {[
-          { key: "pending", label: `⏳ Pending (${countOf("pending")})`, color: "#F59E0B" },
-          { key: "deleted", label: `🗑️ Deleted (${countOf("deleted")})`, color: "#EF4444" },
-          { key: "cancelled", label: `↩️ Restored (${countOf("cancelled")})`, color: "#10B981" },
-        ].map((tab) => (
+        <div>
           <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            style={{
-              background: activeTab === tab.key ? tab.color : "rgba(255, 255, 255, 0.05)",
-              color: activeTab === tab.key ? "#FFFFFF" : "#E2E8F0",
-              border: `1px solid ${activeTab === tab.key ? tab.color : "rgba(255, 255, 255, 0.1)"}`,
-              padding: "8px 16px",
-              borderRadius: "10px",
-              fontSize: "13px",
-              fontWeight: "700",
-              cursor: "pointer",
-              transition: "all 0.2s ease"
-            }}
+            type="button"
+            className="luckydraw-action-btn-secondary"
+            onClick={() => navigate(-1)}
           >
-            {tab.label}
+            <span>←</span> Back
           </button>
-        ))}
+        </div>
       </div>
 
-      {/* REQUEST LIST */}
+      {/* ================= 4 OPERATIONAL KPI METRIC CARDS ================= */}
+      <div className="delete-kpi-grid">
+        {/* Card 1: Pending */}
+        <div className="delete-kpi-card delete-kpi-gold">
+          <div className="delete-kpi-icon">⏳</div>
+          <div className="delete-kpi-content">
+            <div className="delete-kpi-value" style={{ color: "#FFB800" }}>
+              {countOf("pending")}
+            </div>
+            <div className="delete-kpi-label">Pending Reviews</div>
+            <div className="delete-kpi-subtext">Active in 7-day grace period</div>
+          </div>
+        </div>
+
+        {/* Card 2: Deleted */}
+        <div className="delete-kpi-card delete-kpi-coral">
+          <div className="delete-kpi-icon">🗑️</div>
+          <div className="delete-kpi-content">
+            <div className="delete-kpi-value" style={{ color: "#FF4B72" }}>
+              {countOf("deleted")}
+            </div>
+            <div className="delete-kpi-label">Purged Accounts</div>
+            <div className="delete-kpi-subtext">Permanently erased profiles</div>
+          </div>
+        </div>
+
+        {/* Card 3: Restored */}
+        <div className="delete-kpi-card delete-kpi-mint">
+          <div className="delete-kpi-icon">↩️</div>
+          <div className="delete-kpi-content">
+            <div className="delete-kpi-value" style={{ color: "#00F5A0" }}>
+              {countOf("cancelled")}
+            </div>
+            <div className="delete-kpi-label">Restored &amp; Retained</div>
+            <div className="delete-kpi-subtext">Returned to active play</div>
+          </div>
+        </div>
+
+        {/* Card 4: Total Logged */}
+        <div className="delete-kpi-card delete-kpi-cyan">
+          <div className="delete-kpi-icon">🛡️</div>
+          <div className="delete-kpi-content">
+            <div className="delete-kpi-value">
+              {requests.length}
+            </div>
+            <div className="delete-kpi-label">Total Erasure Tickets</div>
+            <div className="delete-kpi-subtext">Lifetime privacy audit records</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ================= TOOLBAR & FILTERS ================= */}
+      <div className="delete-toolbar">
+        {/* Colorful Tab Group */}
+        <div className="delete-tab-group">
+          <button
+            type="button"
+            className={`delete-tab-btn tab-pending ${activeTab === "pending" ? "active" : ""}`}
+            onClick={() => setActiveTab("pending")}
+          >
+            <span>⏳</span>
+            <span>Pending Review</span>
+            <span className="delete-tab-badge">{countOf("pending")}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`delete-tab-btn tab-deleted ${activeTab === "deleted" ? "active" : ""}`}
+            onClick={() => setActiveTab("deleted")}
+          >
+            <span>🗑️</span>
+            <span>Deleted Accounts</span>
+            <span className="delete-tab-badge">{countOf("deleted")}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`delete-tab-btn tab-cancelled ${activeTab === "cancelled" ? "active" : ""}`}
+            onClick={() => setActiveTab("cancelled")}
+          >
+            <span>↩️</span>
+            <span>Restored Active</span>
+            <span className="delete-tab-badge">{countOf("cancelled")}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`delete-tab-btn tab-all ${activeTab === "all" ? "active" : ""}`}
+            onClick={() => setActiveTab("all")}
+          >
+            <span>🌐</span>
+            <span>All Audit Records</span>
+            <span className="delete-tab-badge">{requests.length}</span>
+          </button>
+        </div>
+
+        {/* Search & View Mode Switcher */}
+        <div className="delete-controls-right">
+          <input
+            type="text"
+            className="delete-search-input"
+            placeholder="Search User ID, email, name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          <div className="delete-view-switcher">
+            <button
+              type="button"
+              className={`delete-view-btn ${viewMode === "cards" ? "active" : ""}`}
+              onClick={() => setViewMode("cards")}
+              title="Cards Grid View"
+            >
+              🎴 Cards
+            </button>
+            <button
+              type="button"
+              className={`delete-view-btn ${viewMode === "table" ? "active" : ""}`}
+              onClick={() => setViewMode("table")}
+              title="Audit Table View"
+            >
+              📊 Table
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ================= CONTENT VIEWS ================= */}
       {loading ? (
-        <div className="glass-card" style={{ padding: "50px", textAlign: "center" }}>
+        <div className="glass-card" style={{ padding: "60px", textAlign: "center" }}>
           <div className="spinner"></div>
-          <p style={{ color: "#FFFFFF", fontWeight: "700" }}>Loading Deletion Requests...</p>
+          <p style={{ color: "#FFFFFF", fontWeight: "800", marginTop: "14px" }}>
+            Synchronizing account erasure requests...
+          </p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="glass-card" style={{ padding: "50px", textAlign: "center", color: "#FFFFFF", fontWeight: "700" }}>
-          No {activeTab} requests found.
+        <div
+          className="glass-card"
+          style={{
+            padding: "50px 20px",
+            textAlign: "center",
+            color: "#FFFFFF",
+            fontWeight: "700",
+            border: "1.5px dashed rgba(255, 255, 255, 0.15)"
+          }}
+        >
+          <div style={{ fontSize: "40px", marginBottom: "10px" }}>🛡️</div>
+          <h4 style={{ margin: "0 0 6px 0", fontSize: "18px", color: "#FFFFFF" }}>
+            No {activeTab} deletion requests found.
+          </h4>
+          <p style={{ margin: 0, fontSize: "13px", color: "#CBD5E1" }}>
+            {search ? "Try clearing your search query." : "All user data compliance requests are resolved."}
+          </p>
         </div>
-      ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))", gap: "20px" }}>
+      ) : viewMode === "cards" ? (
+        /* ---------------- VIEW 1: CARDS GRID ---------------- */
+        <div className="delete-cards-grid">
           {filtered.map((req) => {
             const status = (req.status || "").toLowerCase();
             const isPending = status === "pending";
@@ -231,124 +336,276 @@ export default function DeleteRequests() {
             const days = isPending ? daysRemaining(req.requestedAt) : null;
             const busy = actionLoading === req.id;
 
+            let cardAccentClass = "card-accent-pending";
+            if (isDeleted) cardAccentClass = "card-accent-deleted";
+            else if (isCancelled) cardAccentClass = "card-accent-cancelled";
+
             return (
-              <div key={req.id} className="glass-card" style={{ padding: "22px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                
+              <div key={req.id} className={`delete-user-card ${cardAccentClass}`}>
                 <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      <div
-                        style={{
-                          width: "44px",
-                          height: "44px",
-                          borderRadius: "50%",
-                          background: "linear-gradient(135deg, #6366F1, #4F46E5)",
-                          color: "#FFF",
-                          fontSize: "18px",
-                          fontWeight: "700",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center"
-                        }}
-                      >
+                  {/* Top Bar */}
+                  <div className="delete-card-topbar">
+                    <div className="delete-user-profile">
+                      <div className="delete-avatar-ring">
                         {(req.name || req.email || "?")[0].toUpperCase()}
                       </div>
                       <div>
-                        <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "800", color: "#FFFFFF" }}>
+                        <h4 className="delete-user-name">
                           {req.name || "Unknown User"}
                         </h4>
-                        <div style={{ fontSize: "12px", color: "#E2E8F0", fontWeight: "600" }}>{req.email || "No Email"}</div>
+                        <div className="delete-user-email">
+                          {req.email || "No Email Provided"}
+                        </div>
                       </div>
                     </div>
 
-                    <span className={isDeleted ? "badge badge-danger" : isCancelled ? "badge badge-success" : "badge badge-pending"}>
-                      {isDeleted ? "DELETED" : isCancelled ? "ACTIVE" : "PENDING"}
+                    <span className={`delete-status-pill ${isDeleted ? "status-deleted-pill" : isCancelled ? "status-cancelled-pill" : "status-pending-pill"}`}>
+                      {isDeleted ? "DELETED" : isCancelled ? "RESTORED" : "PENDING"}
                     </span>
                   </div>
 
-                  {/* INFO CONTAINER */}
-                  <div style={{ background: "rgba(15, 23, 42, 0.8)", padding: "12px 16px", borderRadius: "10px", marginBottom: "14px", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px", fontSize: "12px" }}>
-                      <span style={{ color: "#FFFFFF", fontWeight: "800" }}>USER ID:</span>
-                      <code style={{ color: "#00F2FE", fontWeight: "700" }}>{req.userId || req.id}</code>
+                  {/* Info Box */}
+                  <div className="delete-specs-box">
+                    <div className="delete-spec-row">
+                      <span className="delete-spec-label">User ID:</span>
+                      <code className="delete-uid-tag">{req.userId || req.id}</code>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
-                      <span style={{ color: "#FFFFFF", fontWeight: "800" }}>REQUESTED:</span>
-                      <span style={{ color: "#E2E8F0", fontWeight: "600" }}>{formatDate(req.requestedAt)}</span>
+                    <div className="delete-spec-row">
+                      <span className="delete-spec-label">Requested Date:</span>
+                      <span style={{ color: "#FFFFFF", fontWeight: "700" }}>{formatDate(req.requestedAt)}</span>
                     </div>
+                    {req.reason && (
+                      <div className="delete-spec-row" style={{ alignItems: "flex-start" }}>
+                        <span className="delete-spec-label">Reason:</span>
+                        <span style={{ color: "#E2E8F0", fontStyle: "italic", textAlign: "right", maxWidth: "200px" }}>
+                          "{req.reason}"
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* COUNTDOWN FOR PENDING */}
+                  {/* Grace Period Banner */}
                   {isPending && days !== null && (
-                    <div
-                      style={{
-                        padding: "10px 14px",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        marginBottom: "14px",
-                        background: days <= 1 ? "rgba(239, 68, 68, 0.15)" : "rgba(245, 158, 11, 0.15)",
-                        color: days <= 1 ? "#F87171" : "#FBBF24",
-                        border: `1px solid ${days <= 1 ? "rgba(239, 68, 68, 0.3)" : "rgba(245, 158, 11, 0.3)"}`
-                      }}
-                    >
-                      {days <= 0
-                        ? "⚠️ Overdue — 7-day review period expired"
-                        : `⏱️ ${days} day${days !== 1 ? "s" : ""} remaining in 7-day review period`}
+                    <div className={`delete-countdown-banner ${days <= 1 ? "banner-urgent" : "banner-safe"}`}>
+                      <span>{days <= 1 ? "⚠️" : "⏱️"}</span>
+                      <span>
+                        {days <= 0
+                          ? "Overdue — 7-day safety grace period expired"
+                          : `${days} day${days !== 1 ? "s" : ""} remaining in 7-day safety grace period`}
+                      </span>
+                    </div>
+                  )}
+
+                  {isDeleted && (
+                    <div className="delete-countdown-banner banner-urgent" style={{ background: "rgba(239, 68, 68, 0.12)" }}>
+                      <span>🚫</span>
+                      <span>Account permanently purged and disabled in database</span>
+                    </div>
+                  )}
+
+                  {isCancelled && (
+                    <div className="delete-countdown-banner banner-done">
+                      <span>✅</span>
+                      <span>Account successfully restored to active play</span>
                     </div>
                   )}
                 </div>
 
-                {/* ACTION BUTTONS */}
+                {/* Action Buttons for Pending */}
                 {isPending && (
-                  <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                  <div className="delete-card-actions">
                     <button
-                      className="btn-secondary"
+                      type="button"
+                      className="delete-btn-restore"
                       disabled={busy}
                       onClick={() => setConfirmModal({ type: "cancel", req })}
-                      style={{ flex: 1, color: "#34D399", borderColor: "rgba(16, 185, 129, 0.3)" }}
                     >
-                      ↩️ Restore Account
+                      <span>↩️</span> Restore Account
                     </button>
 
                     <button
-                      className="btn-secondary"
+                      type="button"
+                      className="delete-btn-purge"
                       disabled={busy}
                       onClick={() => setConfirmModal({ type: "delete", req })}
-                      style={{ flex: 1, color: "#F87171", borderColor: "rgba(239, 68, 68, 0.3)" }}
                     >
-                      🗑️ Force Delete
+                      <span>🗑️</span> Force Purge
                     </button>
                   </div>
                 )}
-
               </div>
             );
           })}
         </div>
+      ) : (
+        /* ---------------- VIEW 2: AUDIT TABLE VIEW ---------------- */
+        <div className="delete-table-card">
+          <div className="delete-table-wrap">
+            <table className="delete-table">
+              <thead>
+                <tr>
+                  <th className="delete-th">Target User</th>
+                  <th className="delete-th">User ID</th>
+                  <th className="delete-th">Requested At</th>
+                  <th className="delete-th">Grace Period / Countdown</th>
+                  <th className="delete-th">Status</th>
+                  <th className="delete-th">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((req) => {
+                  const status = (req.status || "").toLowerCase();
+                  const isPending = status === "pending";
+                  const isDeleted = status === "deleted";
+                  const isCancelled = status === "cancelled";
+                  const days = isPending ? daysRemaining(req.requestedAt) : null;
+                  const busy = actionLoading === req.id;
+
+                  return (
+                    <tr key={req.id} className="delete-tr">
+                      <td className="delete-td">
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <div
+                            style={{
+                              width: "34px",
+                              height: "34px",
+                              borderRadius: "10px",
+                              background: "linear-gradient(135deg, #6366F1, #A855F7)",
+                              color: "#FFFFFF",
+                              fontWeight: "900",
+                              fontSize: "14px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center"
+                            }}
+                          >
+                            {(req.name || req.email || "?")[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: "900", color: "#FFFFFF", fontSize: "14px" }}>
+                              {req.name || "Unknown User"}
+                            </div>
+                            <div style={{ fontSize: "12px", color: "#E2E8F0", fontWeight: "600" }}>
+                              {req.email || "No Email"}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="delete-td">
+                        <code className="delete-uid-tag">{req.userId || req.id}</code>
+                      </td>
+
+                      <td className="delete-td">
+                        <span style={{ color: "#E2E8F0", fontSize: "13px", fontWeight: "600" }}>
+                          {formatDate(req.requestedAt)}
+                        </span>
+                      </td>
+
+                      <td className="delete-td">
+                        {isPending && days !== null ? (
+                          <span
+                            className="delete-status-pill"
+                            style={{
+                              background: days <= 1 ? "rgba(239, 68, 68, 0.18)" : "rgba(245, 158, 11, 0.18)",
+                              color: days <= 1 ? "#FF4B72" : "#FFB800",
+                              borderColor: days <= 1 ? "rgba(239, 68, 68, 0.5)" : "rgba(245, 158, 11, 0.5)"
+                            }}
+                          >
+                            {days <= 0 ? "⚠️ Overdue" : `⏱️ ${days} days left`}
+                          </span>
+                        ) : isDeleted ? (
+                          <span style={{ color: "#FF4B72", fontWeight: "700", fontSize: "12.5px" }}>
+                            🚫 Purged
+                          </span>
+                        ) : (
+                          <span style={{ color: "#00F5A0", fontWeight: "700", fontSize: "12.5px" }}>
+                            ✅ Active
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="delete-td">
+                        <span className={`delete-status-pill ${isDeleted ? "status-deleted-pill" : isCancelled ? "status-cancelled-pill" : "status-pending-pill"}`}>
+                          {isDeleted ? "DELETED" : isCancelled ? "RESTORED" : "PENDING"}
+                        </span>
+                      </td>
+
+                      <td className="delete-td">
+                        {isPending ? (
+                          <div style={{ display: "flex", gap: "8px" }}>
+                            <button
+                              type="button"
+                              className="delete-btn-restore"
+                              disabled={busy}
+                              style={{ padding: "6px 12px", fontSize: "12px" }}
+                              onClick={() => setConfirmModal({ type: "cancel", req })}
+                            >
+                              ↩️ Restore
+                            </button>
+                            <button
+                              type="button"
+                              className="delete-btn-purge"
+                              disabled={busy}
+                              style={{ padding: "6px 12px", fontSize: "12px" }}
+                              onClick={() => setConfirmModal({ type: "delete", req })}
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
+                        ) : (
+                          <span style={{ color: "#CBD5E1", fontSize: "12px" }}>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
-      {/* CONFIRM MODAL */}
+      {/* ================= CONFIRMATION MODAL ================= */}
       {confirmModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
-          <div className="glass-card" style={{ padding: "28px", width: "100%", maxWidth: "420px", textAlign: "center" }}>
-            <div style={{ fontSize: "40px", marginBottom: "12px" }}>
+        <div className="delete-modal-overlay">
+          <div
+            className="delete-modal-box"
+            style={{
+              borderColor: confirmModal.type === "delete" ? "rgba(239, 68, 68, 0.5)" : "rgba(16, 185, 129, 0.5)",
+              boxShadow: confirmModal.type === "delete"
+                ? "0 0 35px rgba(239, 68, 68, 0.35)"
+                : "0 0 35px rgba(16, 185, 129, 0.35)"
+            }}
+          >
+            <div className="delete-modal-icon">
               {confirmModal.type === "delete" ? "🗑️" : "↩️"}
             </div>
-            <h3 style={{ margin: "0 0 8px 0", color: "#FFFFFF", fontSize: "18px", fontWeight: "800" }}>
-              {confirmModal.type === "delete" ? "Confirm Account Deletion" : "Restore User Account"}
+            <h3 className="delete-modal-title">
+              {confirmModal.type === "delete" ? "Confirm Account Purge" : "Restore User Account"}
             </h3>
-            <p style={{ fontSize: "13px", color: "#E2E8F0", margin: "0 0 16px 0", fontWeight: "600" }}>
-              Target User: <strong style={{ color: "#00F2FE" }}>{confirmModal.req.name || confirmModal.req.email || confirmModal.req.userId}</strong>
+            <p className="delete-modal-body">
+              {confirmModal.type === "delete"
+                ? "Are you sure you want to permanently erase and deactivate the account for:"
+                : "Cancel this erasure request and restore full active platform access to:"}
+              <br />
+              <strong style={{ color: "#00F2FE", display: "inline-block", marginTop: "8px", fontSize: "15px" }}>
+                {confirmModal.req.name || confirmModal.req.email || confirmModal.req.userId}
+              </strong>
             </p>
 
-            <div style={{ display: "flex", gap: "12px" }}>
-              <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setConfirmModal(null)} disabled={actionLoading}>
-                Cancel
+            <div className="delete-modal-actions">
+              <button
+                type="button"
+                className="delete-modal-cancel"
+                onClick={() => setConfirmModal(null)}
+                disabled={actionLoading}
+              >
+                Dismiss
               </button>
               <button
-                className="btn-glow"
-                style={{ flex: 1, background: confirmModal.type === "delete" ? "#EF4444" : "#10B981", justifyContent: "center" }}
+                type="button"
+                className={confirmModal.type === "delete" ? "delete-modal-confirm-purge" : "delete-modal-confirm-restore"}
                 disabled={actionLoading}
                 onClick={() =>
                   confirmModal.type === "cancel"
@@ -356,7 +613,7 @@ export default function DeleteRequests() {
                     : handleDelete(confirmModal.req)
                 }
               >
-                {actionLoading ? "Processing..." : "Confirm Action"}
+                {actionLoading ? "Processing..." : confirmModal.type === "delete" ? "Yes, Purge Account" : "Yes, Restore User"}
               </button>
             </div>
           </div>
