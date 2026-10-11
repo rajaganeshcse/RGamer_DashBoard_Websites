@@ -12,6 +12,7 @@ import {
   serverTimestamp
 } from "firebase/firestore";
 import { db } from "../Firebase";
+import "./Redeem.css";
 
 export default function Redeem() {
   const [activeTab, setActiveTab] = useState("REQUESTS"); // "REQUESTS", "INVENTORY", or "CONFIG"
@@ -22,6 +23,8 @@ export default function Redeem() {
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState(null);
+  const [viewMode, setViewMode] = useState("CARDS"); // "CARDS" or "TABLE"
+  const [copiedTarget, setCopiedTarget] = useState(null);
 
   // Bulk Code Add Form State
   const [bulkMethod, setBulkMethod] = useState("GOOGLE_PLAY");
@@ -76,6 +79,26 @@ export default function Redeem() {
     return upper;
   };
 
+  const getMethodBadgeClass = (type) => {
+    const norm = normalizeMethodName(type);
+    if (norm === "UPI") return "method-upi";
+    if (norm === "BANK") return "method-bank";
+    if (norm === "GOOGLE_PLAY") return "method-google";
+    if (norm === "AMAZON") return "method-amazon";
+    if (norm === "PHONEPE") return "method-phonepe";
+    return "method-upi";
+  };
+
+  const getMethodIcon = (type) => {
+    const norm = normalizeMethodName(type);
+    if (norm === "UPI") return "💸";
+    if (norm === "BANK") return "🏦";
+    if (norm === "GOOGLE_PLAY") return "🎮";
+    if (norm === "AMAZON") return "🛒";
+    if (norm === "PHONEPE") return "📱";
+    return "💳";
+  };
+
   useEffect(() => {
     // 1. Fetch Redemption Requests
     const qRequests = query(
@@ -86,9 +109,9 @@ export default function Redeem() {
     const unsubRequests = onSnapshot(
       qRequests,
       (snapshot) => {
-        const list = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
+        const list = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data()
         }));
         setRequests(list);
         setLoading(false);
@@ -104,9 +127,9 @@ export default function Redeem() {
     const unsubCodes = onSnapshot(
       qCodes,
       (snapshot) => {
-        const list = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
+        const list = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data()
         }));
         setWithdrawalCodes(list);
       },
@@ -138,6 +161,28 @@ export default function Redeem() {
   const showToast = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
+  };
+
+  const formatDate = (val) => {
+    if (!val) return "N/A";
+    try {
+      const d =
+        typeof val?.toDate === "function"
+          ? val.toDate()
+          : typeof val?.seconds === "number"
+          ? new Date(val.seconds * 1000)
+          : new Date(val);
+      return isNaN(d.getTime())
+        ? "N/A"
+        : d.toLocaleString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit"
+          });
+    } catch {
+      return "N/A";
+    }
   };
 
   /* ================= SAVE REWARD CONFIG ================= */
@@ -202,6 +247,27 @@ export default function Redeem() {
     setNewTier({ type: "upi", coins: "", amount: "" });
   };
 
+  /* ================= STOCK CODE LOOKUP HELPER ================= */
+  const getAvailableStockCode = (req) => {
+    if (!req || req.type === "upi" || req.type === "bank") return null;
+    const norm = normalizeMethodName(req.type);
+    const amt = Number(req.amount) || 0;
+    return withdrawalCodes.find(
+      (c) =>
+        c.status === "AVAILABLE" &&
+        normalizeMethodName(c.method) === norm &&
+        Number(c.amount) === amt
+    );
+  };
+
+  const handleUseStockCode = (reqId, code) => {
+    setVoucherInput((prev) => ({
+      ...prev,
+      [reqId]: code
+    }));
+    showToast(`⚡ Stock code ${code} auto-filled!`);
+  };
+
   /* ================= UPDATE REQUEST STATUS ================= */
   const updateStatus = async (id, status, type, rejectReason = "") => {
     const voucher = voucherInput[id]?.trim();
@@ -229,6 +295,23 @@ export default function Redeem() {
       ) {
         data.voucher_code = voucher;
         data.voucher_added_at = Date.now();
+
+        // Check if this voucher code exists in withdrawalCodes as AVAILABLE, and mark it as ALLOCATED
+        const matchedCode = withdrawalCodes.find(
+          (c) => c.status === "AVAILABLE" && c.code === voucher
+        );
+        if (matchedCode) {
+          try {
+            await updateDoc(doc(db, "withdrawal_codes", matchedCode.id), {
+              status: "ALLOCATED",
+              allocatedAt: Date.now(),
+              allocatedTo: id,
+              withdrawalRequestId: id
+            });
+          } catch (codeErr) {
+            console.error("Could not update withdrawal code doc:", codeErr);
+          }
+        }
       }
 
       if (status === "failed" || status === "rejected") {
@@ -237,18 +320,19 @@ export default function Redeem() {
       }
 
       await updateDoc(doc(db, "redeem_requests", id), data);
-      showToast(`Request marked as ${status.toUpperCase()}`);
-
+      showToast(`✅ Request marked as ${status.toUpperCase()}`);
     } catch (err) {
-      showToast("Failed to update status", "error");
+      showToast("❌ Failed to update status: " + err.message, "error");
       console.error(err);
     }
   };
 
-  const copyAddress = (address) => {
+  const copyAddress = (address, key) => {
     if (!address) return;
     navigator.clipboard.writeText(address);
-    showToast("📋 Payment Address copied to clipboard!");
+    setCopiedTarget(key);
+    showToast("📋 Copied to clipboard!");
+    setTimeout(() => setCopiedTarget(null), 2000);
   };
 
   const handleExportRedeemsCSV = () => {
@@ -256,16 +340,18 @@ export default function Redeem() {
       alert("No redemption requests to export!");
       return;
     }
-    const headers = ["RequestID", "User", "Email", "Method", "AmountINR", "CoinsDeducted", "PaymentAddress", "Status", "Date"];
-    const getSafeDateStr = (val) => {
-      if (!val) return "";
-      try {
-        const d = typeof val?.toDate === "function" ? val.toDate() : typeof val?.seconds === "number" ? new Date(val.seconds * 1000) : new Date(val);
-        return isNaN(d.getTime()) ? "" : d.toLocaleString("en-IN");
-      } catch {
-        return "";
-      }
-    };
+    const headers = [
+      "RequestID",
+      "User",
+      "Email",
+      "Method",
+      "AmountINR",
+      "CoinsDeducted",
+      "PaymentAddress",
+      "VoucherCode",
+      "Status",
+      "Date"
+    ];
 
     const rows = filteredRequests.map((r) => [
       `"${r.id}"`,
@@ -275,8 +361,9 @@ export default function Redeem() {
       r.amount || 0,
       r.coins || 0,
       `"${(r.withdraw_details || r.payment_address || "").replace(/"/g, '""')}"`,
+      `"${(r.voucher_code || "").replace(/"/g, '""')}"`,
       `"${(r.status || "pending").toUpperCase()}"`,
-      `"${getSafeDateStr(r.created_at)}"`
+      `"${formatDate(r.created_at)}"`
     ]);
 
     const csvContent = [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
@@ -302,11 +389,11 @@ export default function Redeem() {
     try {
       await updateDoc(doc(db, "redeem_requests", id), {
         voucher_code: voucher,
-        voucher_added_at: Date.now(),
+        voucher_added_at: Date.now()
       });
-      showToast("Voucher code saved successfully!");
+      showToast("✅ Voucher code saved successfully!");
     } catch (err) {
-      showToast("Failed to save voucher", "error");
+      showToast("❌ Failed to save voucher", "error");
       console.error(err);
     }
   };
@@ -364,7 +451,6 @@ export default function Redeem() {
       }
 
       // 2. Direct Firestore insertion + FIFO Auto-Allocation Fallback
-      // Find matching pending requests for FIFO allocation
       const pendingForMethod = requests
         .filter((r) => {
           const rMethod = normalizeMethodName(r.type);
@@ -376,7 +462,6 @@ export default function Redeem() {
       let pendingIndex = 0;
 
       for (const codeStr of uniqueCodes) {
-        // Check duplicate locally
         const exists = withdrawalCodes.some(
           (c) => normalizeMethodName(c.method) === bulkMethod && Number(c.amount) === amountNum && c.code === codeStr
         );
@@ -395,7 +480,6 @@ export default function Redeem() {
           withdrawalRequestId = reqToFulfill.id;
           allocatedAt = Date.now();
 
-          // Update redeem_request document
           await updateDoc(doc(db, "redeem_requests", reqToFulfill.id), {
             status: "success",
             voucher_code: codeStr,
@@ -406,7 +490,6 @@ export default function Redeem() {
           pendingIndex++;
         }
 
-        // Add code document to withdrawal_codes
         await addDoc(collection(db, "withdrawal_codes"), {
           method: bulkMethod,
           amount: amountNum,
@@ -444,16 +527,41 @@ export default function Redeem() {
       (req.email && req.email.toLowerCase().includes(q)) ||
       (req.type && req.type.toLowerCase().includes(q)) ||
       (req.withdraw_details && req.withdraw_details.toLowerCase().includes(q)) ||
-      (req.voucher_code && req.voucher_code.toLowerCase().includes(q));
+      (req.voucher_code && req.voucher_code.toLowerCase().includes(q)) ||
+      (req.id && req.id.toLowerCase().includes(q));
 
     return matchStatus && matchSearch;
   });
 
-  const pendingCount = requests.filter((r) => (r.status || "pending").toLowerCase() === "pending").length;
-  const successCount = requests.filter((r) => (r.status || "").toLowerCase() === "success").length;
-  const totalAmountPaid = requests
-    .filter((r) => (r.status || "").toLowerCase() === "success")
-    .reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
+  // KPI Calculations
+  const pendingRequests = requests.filter(
+    (r) => (r.status || "pending").toLowerCase() === "pending"
+  );
+  const successRequests = requests.filter(
+    (r) => (r.status || "").toLowerCase() === "success"
+  );
+  const failedRequests = requests.filter(
+    (r) =>
+      (r.status || "").toLowerCase() === "failed" ||
+      (r.status || "").toLowerCase() === "rejected"
+  );
+
+  const pendingCount = pendingRequests.length;
+  const successCount = successRequests.length;
+  const failedCount = failedRequests.length;
+
+  const pendingAmount = pendingRequests.reduce(
+    (acc, r) => acc + (Number(r.amount) || 0),
+    0
+  );
+  const totalAmountPaid = successRequests.reduce(
+    (acc, r) => acc + (Number(r.amount) || 0),
+    0
+  );
+  const totalCoinsPaid = successRequests.reduce(
+    (acc, r) => acc + (Number(r.coins) || 0),
+    0
+  );
 
   // Code Inventory Metrics
   const totalAvailableCodes = withdrawalCodes.filter((c) => c.status === "AVAILABLE").length;
@@ -488,327 +596,568 @@ export default function Redeem() {
 
   if (loading) {
     return (
-      <div style={{ textAlign: "center", padding: "60px 20px" }} className="animate-fade-in">
+      <div className="users-loading animate-fade-in">
         <div className="spinner"></div>
-        <p style={{ color: "#FFFFFF", fontWeight: "700" }}>Loading Redemption & Inventory Dashboard...</p>
+        <p style={{ marginTop: "16px", color: "#FFFFFF", fontWeight: "800" }}>
+          Loading Payouts &amp; Rewards Engine...
+        </p>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }} className="animate-fade-in">
-      
-      {/* TOAST NOTIFICATION */}
+    <div className="payout-container animate-fade-in">
+      {/* FLOATING TOAST NOTIFICATION */}
       {toast && (
-        <div style={{
-          position: "fixed",
-          bottom: "30px",
-          right: "30px",
-          background: toast.type === "error" ? "#EF4444" : "#10B981",
-          color: "#fff",
-          padding: "12px 24px",
-          borderRadius: "12px",
-          fontWeight: "600",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
-          zIndex: 9999,
-          animation: "fadeIn 0.2s ease"
-        }}>
+        <div className={`floating-toast ${toast.type === "error" ? "toast-error" : "toast-success"}`}>
           {toast.message}
         </div>
       )}
 
-      {/* TOP TAB CONTROLLER & HEADER */}
-      <div className="glass-card" style={{ padding: "20px 24px", marginBottom: "24px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "800", color: "#FFFFFF" }}>
-              🏆 Reward &amp; Payout Management
-            </h2>
-            <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "#E2E8F0", fontWeight: "600" }}>
-              Fulfill user redemption requests, manage Google Play / Gift Code inventory &amp; configure rates.
-            </p>
+      {/* TOP HEADER & TAB SWITCHER */}
+      <div className="payout-header">
+        <div className="payout-header-left">
+          <div className="payout-title-row">
+            <h1 className="payout-main-title">
+              <span>💳</span> Reward &amp; Payout Command Center
+            </h1>
+            <span className="payout-queue-pill">
+              ⏳ {pendingCount} Payouts Awaiting Action
+            </span>
           </div>
+          <p className="payout-header-subtitle">
+            Authorize withdrawal requests, disburse Google Play &amp; Amazon codes, and calibrate app token economy.
+          </p>
+        </div>
 
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <button
-              onClick={() => setActiveTab("REQUESTS")}
-              style={{
-                background: activeTab === "REQUESTS" ? "#6366F1" : "rgba(15, 23, 42, 0.6)",
-                color: "#FFFFFF",
-                border: "1px solid rgba(255,255,255,0.1)",
-                padding: "10px 20px",
-                borderRadius: "10px",
-                fontSize: "13px",
-                fontWeight: "700",
-                cursor: "pointer",
-                transition: "all 0.2s ease"
-              }}
-            >
-              💸 User Requests ({requests.length})
-            </button>
+        <div className="payout-nav-tabs">
+          <button
+            className={`payout-tab-btn ${activeTab === "REQUESTS" ? "active" : ""}`}
+            onClick={() => setActiveTab("REQUESTS")}
+          >
+            <span>💸</span> Payout Requests ({requests.length})
+          </button>
 
-            <button
-              onClick={() => setActiveTab("INVENTORY")}
-              style={{
-                background: activeTab === "INVENTORY" ? "#6366F1" : "rgba(15, 23, 42, 0.6)",
-                color: "#FFFFFF",
-                border: "1px solid rgba(255,255,255,0.1)",
-                padding: "10px 20px",
-                borderRadius: "10px",
-                fontSize: "13px",
-                fontWeight: "700",
-                cursor: "pointer",
-                transition: "all 0.2s ease"
-              }}
-            >
-              🎟️ Code Inventory ({totalAvailableCodes} Available)
-            </button>
+          <button
+            className={`payout-tab-btn ${activeTab === "INVENTORY" ? "active" : ""}`}
+            onClick={() => setActiveTab("INVENTORY")}
+          >
+            <span>🎟️</span> Code Inventory ({totalAvailableCodes} In Stock)
+          </button>
 
-            <button
-              onClick={() => setActiveTab("CONFIG")}
-              style={{
-                background: activeTab === "CONFIG" ? "#6366F1" : "rgba(15, 23, 42, 0.6)",
-                color: "#FFFFFF",
-                border: "1px solid rgba(255,255,255,0.1)",
-                padding: "10px 20px",
-                borderRadius: "10px",
-                fontSize: "13px",
-                fontWeight: "700",
-                cursor: "pointer",
-                transition: "all 0.2s ease"
-              }}
-            >
-              ⚙️ Reward Options &amp; Rates
-            </button>
-          </div>
+          <button
+            className={`payout-tab-btn ${activeTab === "CONFIG" ? "active" : ""}`}
+            onClick={() => setActiveTab("CONFIG")}
+          >
+            <span>⚙️</span> Rates &amp; Reward Options
+          </button>
         </div>
       </div>
 
       {/* ========================================================
-          TAB 1: USER REDEMPTION REQUESTS
+          TAB 1: USER REDEMPTION & PAYOUT REQUESTS
           ======================================================== */}
       {activeTab === "REQUESTS" && (
         <>
-          {/* STATS SUMMARY CARDS */}
-          <div className="stats-grid" style={{ marginBottom: "24px" }}>
-            <div className="stat-card glass-card">
-              <div className="stat-icon" style={{ background: "rgba(245, 158, 11, 0.15)", color: "#F59E0B" }}>⏳</div>
-              <div>
-                <div className="stat-value" style={{ color: "#F59E0B" }}>{pendingCount}</div>
-                <div className="stat-label">Pending Redemptions</div>
+          {/* 4 OPERATIONAL KPI CARDS */}
+          <div className="payout-stats-grid">
+            <div className="payout-kpi-card kpi-amber">
+              <div className="payout-kpi-icon icon-amber">⏳</div>
+              <div className="payout-kpi-content">
+                <div className="payout-kpi-val-row">
+                  <span className="payout-kpi-val val-amber">{pendingCount}</span>
+                  <span className="payout-kpi-pill pill-amber">₹{pendingAmount.toLocaleString()} Queued</span>
+                </div>
+                <div className="payout-kpi-label">Pending Verifications</div>
               </div>
             </div>
-            <div className="stat-card glass-card">
-              <div className="stat-icon" style={{ background: "rgba(16, 185, 129, 0.15)", color: "#10B981" }}>✅</div>
-              <div>
-                <div className="stat-value" style={{ color: "#10B981" }}>{successCount}</div>
-                <div className="stat-label">Approved &amp; Fulfilled</div>
+
+            <div className="payout-kpi-card kpi-green">
+              <div className="payout-kpi-icon icon-green">✅</div>
+              <div className="payout-kpi-content">
+                <div className="payout-kpi-val-row">
+                  <span className="payout-kpi-val val-green">{successCount}</span>
+                  <span className="payout-kpi-pill pill-green">Approved &amp; Paid</span>
+                </div>
+                <div className="payout-kpi-label">Fulfilled Redemptions</div>
               </div>
             </div>
-            <div className="stat-card glass-card">
-              <div className="stat-icon" style={{ background: "rgba(99, 102, 241, 0.15)", color: "#6366F1" }}>💸</div>
-              <div>
-                <div className="stat-value">₹{totalAmountPaid.toLocaleString()}</div>
-                <div className="stat-label">Total Amount Paid Out</div>
+
+            <div className="payout-kpi-card kpi-indigo">
+              <div className="payout-kpi-icon icon-indigo">💸</div>
+              <div className="payout-kpi-content">
+                <div className="payout-kpi-val-row">
+                  <span className="payout-kpi-val val-indigo">₹{totalAmountPaid.toLocaleString()}</span>
+                  <span className="payout-kpi-pill pill-indigo">{totalCoinsPaid.toLocaleString()} Coins</span>
+                </div>
+                <div className="payout-kpi-label">Total Capital Disbursed</div>
+              </div>
+            </div>
+
+            <div className="payout-kpi-card kpi-rose">
+              <div className="payout-kpi-icon icon-rose">🛡️</div>
+              <div className="payout-kpi-content">
+                <div className="payout-kpi-val-row">
+                  <span className="payout-kpi-val val-rose">{failedCount}</span>
+                  <span className="payout-kpi-pill pill-rose">
+                    {((failedCount / (requests.length || 1)) * 100).toFixed(1)}% Flag Rate
+                  </span>
+                </div>
+                <div className="payout-kpi-label">Rejected / Invalid Tickets</div>
               </div>
             </div>
           </div>
 
-          {/* CONTROLS HEADER */}
-          <div className="glass-card" style={{ padding: "16px 24px", marginBottom: "24px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
-              <div style={{ display: "flex", background: "rgba(15, 23, 42, 0.8)", padding: "4px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)" }}>
-                {["ALL", "PENDING", "SUCCESS"].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setFilterStatus(tab)}
-                    style={{
-                      background: filterStatus === tab ? "#6366F1" : "transparent",
-                      color: filterStatus === tab ? "#FFFFFF" : "#E2E8F0",
-                      border: "none",
-                      padding: "6px 14px",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                      fontWeight: "700",
-                      cursor: "pointer"
-                    }}
-                  >
-                    {tab}
-                  </button>
-                ))}
+          {/* TOOLBAR CONTROLS */}
+          <div className="payout-toolbar">
+            <div className="payout-filter-group">
+              {[
+                { key: "ALL", label: `All (${requests.length})` },
+                { key: "PENDING", label: `⏳ Pending (${pendingCount})` },
+                { key: "SUCCESS", label: `✅ Approved (${successCount})` },
+                { key: "FAILED", label: `❌ Rejected (${failedCount})` }
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  className={`payout-filter-btn ${filterStatus === tab.key ? "active" : ""}`}
+                  onClick={() => setFilterStatus(tab.key)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="payout-toolbar-actions">
+              {/* View Mode Switcher */}
+              <div className="view-mode-toggle">
+                <button
+                  className={`view-mode-btn ${viewMode === "CARDS" ? "active" : ""}`}
+                  onClick={() => setViewMode("CARDS")}
+                  title="Card Grid View"
+                >
+                  🗂️ Cards
+                </button>
+                <button
+                  className={`view-mode-btn ${viewMode === "TABLE" ? "active" : ""}`}
+                  onClick={() => setViewMode("TABLE")}
+                  title="Spreadsheet Table View"
+                >
+                  📋 Table
+                </button>
               </div>
 
-              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                <button
-                  className="btn-csv"
-                  onClick={handleExportRedeemsCSV}
-                  title="Export all filtered payouts to CSV"
-                >
-                  <span>📥</span> Export CSV
-                </button>
+              {/* Search Box */}
+              <div className="search-wrapper" style={{ minWidth: "260px" }}>
+                <span className="search-icon">🔍</span>
                 <input
                   type="text"
-                  className="form-input"
-                  placeholder="Search user, email, UPI, code..."
+                  className="search-input"
+                  placeholder="Search player, UPI, email, voucher..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  style={{ width: "240px" }}
                 />
+                {search && (
+                  <button className="clear-btn" onClick={() => setSearch("")}>✕</button>
+                )}
               </div>
+
+              {/* Export CSV */}
+              <button
+                className="btn-csv"
+                onClick={handleExportRedeemsCSV}
+                title="Export filtered records to CSV"
+              >
+                <span>📥</span> CSV
+              </button>
             </div>
           </div>
 
-          {/* REQUEST CARDS GRID */}
+          {/* EMPTY STATE */}
           {filteredRequests.length === 0 ? (
-            <div className="glass-card" style={{ padding: "40px", textAlign: "center", color: "#FFFFFF", fontWeight: "700" }}>
-              No redemption requests match your filter.
+            <div className="table-card" style={{ padding: "60px 20px", textAlign: "center" }}>
+              <div style={{ fontSize: "40px", marginBottom: "12px" }}>🔍</div>
+              <h3 style={{ margin: "0 0 6px 0", color: "#FFFFFF", fontSize: "18px", fontWeight: "800" }}>
+                No Payout Requests Found
+              </h3>
+              <p style={{ margin: 0, color: "#E2E8F0", fontSize: "14px", fontWeight: "600" }}>
+                There are no requests matching your active filter "{filterStatus}".
+              </p>
             </div>
-          ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: "20px" }}>
+          ) : viewMode === "CARDS" ? (
+            /* ================= VIEW MODE 1: RICH CARDS GRID ================= */
+            <div className="payout-grid">
               {filteredRequests.map((req) => {
                 const currentVoucher = voucherInput[req.id] ?? req.voucher_code ?? "";
                 const isVoucherType = req.type !== "upi" && req.type !== "bank";
                 const currentStatus = (req.status || "pending").toLowerCase();
+                const availableCodeMatch = isVoucherType && currentStatus === "pending" ? getAvailableStockCode(req) : null;
+
+                const cardStatusClass =
+                  currentStatus === "success"
+                    ? "card-success"
+                    : currentStatus === "failed" || currentStatus === "rejected"
+                    ? "card-failed"
+                    : "card-pending";
 
                 return (
-                  <div
-                    key={req.id}
-                    className="glass-card"
-                    style={{
-                      padding: "20px",
-                      display: "flex",
-                      flexDirection: "column",
-                      borderColor: currentStatus === "success" ? "rgba(16, 185, 129, 0.3)" : currentStatus === "failed" ? "rgba(239, 68, 68, 0.3)" : "rgba(255, 255, 255, 0.08)"
-                    }}
-                  >
+                  <div key={req.id} className={`payout-request-card ${cardStatusClass}`}>
                     <div>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
-                        <div>
-                          <span className="badge badge-info" style={{ textTransform: "uppercase" }}>
-                            {req.type || "REDEEM"}
-                          </span>
-                          <h3 style={{ margin: "8px 0 2px 0", fontSize: "16px", fontWeight: "800", color: "#FFFFFF" }}>
-                            {req.username || "Anonymous User"}
-                          </h3>
-                          <div style={{ fontSize: "12px", color: "#E2E8F0", fontWeight: "600" }}>{req.email || "No Email"}</div>
-                          {req.created_at && (
-                            <div style={{ fontSize: "11px", color: "#00F2FE", fontWeight: "700", marginTop: "3px" }}>
-                              🕒 {(() => {
-                                try {
-                                  const d = typeof req.created_at?.toDate === "function" ? req.created_at.toDate() : typeof req.created_at?.seconds === "number" ? new Date(req.created_at.seconds * 1000) : new Date(req.created_at);
-                                  return isNaN(d.getTime()) ? "" : d.toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
-                                } catch { return ""; }
-                              })()}
+                      {/* Top Row: User Avatar & Amount */}
+                      <div className="payout-card-top">
+                        <div className="payout-user-row">
+                          <img
+                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${req.uid || req.id}`}
+                            alt="avatar"
+                            className="payout-user-avatar"
+                          />
+                          <div>
+                            <div className={`payout-method-badge ${getMethodBadgeClass(req.type)}`}>
+                              <span>{getMethodIcon(req.type)}</span> {req.type?.toUpperCase() || "REDEEM"}
                             </div>
-                          )}
+                            <h3 className="payout-user-name">
+                              {req.username || "Anonymous Player"}
+                            </h3>
+                            <div className="payout-user-email">
+                              {req.email || "No Email Provided"}
+                            </div>
+                            <div className="payout-time-text">
+                              <span>🕒</span> {formatDate(req.created_at)}
+                            </div>
+                          </div>
                         </div>
 
-                        <div style={{ textAlign: "right" }}>
-                          <div style={{ fontSize: "20px", fontWeight: "800", color: "#10B981" }}>
-                            ₹{req.amount}
-                          </div>
-                          <div style={{ fontSize: "11px", color: "#F59E0B" }}>
-                            💰 {req.coins} coins
+                        <div className="payout-amount-box">
+                          <div className="payout-amount-inr">₹{req.amount}</div>
+                          <div className="payout-amount-coins">
+                            <span>🪙</span> {Number(req.coins || 0).toLocaleString()}
                           </div>
                         </div>
                       </div>
 
-                      <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.06)", margin: "12px 0" }} />
+                      <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.08)", margin: "14px 0" }} />
 
-                      {(req.type === "upi" || req.type === "bank") && (
-                        <div style={{ background: "rgba(15, 23, 42, 0.8)", padding: "10px 14px", borderRadius: "8px", marginBottom: "12px", border: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      {/* Payment Destination Box for UPI / Bank */}
+                      {(!isVoucherType) && (
+                        <div className="payout-target-box">
                           <div>
-                            <div style={{ fontSize: "11px", color: "#FFFFFF", textTransform: "uppercase", fontWeight: "800" }}>
-                              Payment Target ({req.type.toUpperCase()})
+                            <div className="target-label">
+                              Payment Target ({req.type?.toUpperCase()})
                             </div>
-                            <div style={{ fontSize: "13px", fontWeight: "600", color: "#38BDF8", marginTop: "2px", wordBreak: "break-all" }}>
+                            <div className="target-address">
                               {req.withdraw_details || req.payment_address || "N/A"}
                             </div>
                           </div>
                           <button
                             className="copy-btn"
-                            style={{ padding: "4px 8px", fontSize: "11px", marginLeft: "8px" }}
-                            onClick={() => copyAddress(req.withdraw_details || req.payment_address)}
+                            onClick={() => copyAddress(req.withdraw_details || req.payment_address, req.id)}
                             title="Copy payment target"
                           >
-                            📋 Copy
+                            {copiedTarget === req.id ? "✓ Copied" : "📋 Copy"}
                           </button>
                         </div>
                       )}
 
+                      {/* Voucher Code Box for Google Play, Amazon, PhonePe */}
                       {isVoucherType && (
-                        <div style={{ marginBottom: "12px" }}>
-                          <label style={{ fontSize: "11px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase", display: "block", marginBottom: "4px" }}>
-                            🎟️ Voucher Code:
-                          </label>
-                          <div style={{ display: "flex", gap: "8px" }}>
-                            <input
-                              type="text"
-                              className="form-input"
-                              placeholder="Paste voucher code here..."
-                              value={currentVoucher}
-                              onChange={(e) =>
-                                setVoucherInput({
-                                  ...voucherInput,
-                                  [req.id]: e.target.value,
-                                })
-                              }
-                            />
-                            <button
-                              className="btn-secondary"
-                              onClick={() => saveVoucher(req.id)}
-                              disabled={!currentVoucher.trim()}
-                              style={{ padding: "8px 12px", fontSize: "12px" }}
-                            >
-                              Save
-                            </button>
+                        <div className="voucher-box">
+                          <div className="voucher-label-row">
+                            <span className="voucher-label">🎟️ Gift Voucher Code</span>
+                            {availableCodeMatch && (
+                              <button
+                                type="button"
+                                className="stock-autofill-btn"
+                                onClick={() => handleUseStockCode(req.id, availableCodeMatch.code)}
+                                title="Auto-fill available code from inventory"
+                              >
+                                ⚡ In Stock: {availableCodeMatch.code.slice(0, 8)}... (Use)
+                              </button>
+                            )}
                           </div>
+
+                          {currentStatus === "success" && req.voucher_code ? (
+                            <div className="voucher-display-pill">
+                              <span>{req.voucher_code}</span>
+                              <button
+                                className="copy-btn"
+                                style={{ padding: "4px 8px", fontSize: "11px" }}
+                                onClick={() => copyAddress(req.voucher_code, req.id)}
+                              >
+                                {copiedTarget === req.id ? "✓" : "📋"}
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="voucher-input-row">
+                              <input
+                                type="text"
+                                className="form-input"
+                                placeholder="Paste or assign voucher code..."
+                                value={currentVoucher}
+                                onChange={(e) =>
+                                  setVoucherInput({
+                                    ...voucherInput,
+                                    [req.id]: e.target.value
+                                  })
+                                }
+                                style={{ flex: 1, fontFamily: "monospace", fontSize: "13px" }}
+                              />
+                              <button
+                                className="btn-secondary"
+                                onClick={() => saveVoucher(req.id)}
+                                disabled={!currentVoucher.trim()}
+                                style={{ padding: "8px 14px", fontSize: "12px" }}
+                              >
+                                Save
+                              </button>
+                            </div>
+                          )}
                         </div>
                       )}
 
+                      {/* Rejection Alert */}
                       {req.reject_reason && (
-                        <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", padding: "8px 12px", fontSize: "12px", color: "#F87171", marginBottom: "8px" }}>
-                          ⚠️ Rejection Reason: {req.reject_reason}
+                        <div className="rejection-banner" style={{ marginTop: "12px" }}>
+                          ⚠️ Rejection Audit: {req.reject_reason}
                         </div>
                       )}
                     </div>
 
-                    <div style={{ marginTop: "16px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span className={currentStatus === "success" ? "badge badge-success" : currentStatus === "failed" ? "badge badge-danger" : "badge badge-pending"}>
-                        {currentStatus === "success" ? "✅ APPROVED" : currentStatus === "failed" ? "❌ REJECTED" : "⏳ PENDING"}
-                      </span>
+                    {/* Card Footer: Status Pill & Action Buttons */}
+                    <div className="payout-card-footer">
+                      <div>
+                        {currentStatus === "success" ? (
+                          <span className="status-pill status-pill-active">
+                            <span className="status-dot"></span> APPROVED &amp; PAID
+                          </span>
+                        ) : currentStatus === "failed" || currentStatus === "rejected" ? (
+                          <span className="status-pill status-pill-banned">
+                            <span className="status-dot"></span> REJECTED
+                          </span>
+                        ) : (
+                          <span className="payout-kpi-pill pill-amber" style={{ fontSize: "12px", padding: "5px 12px" }}>
+                            ⏳ PENDING
+                          </span>
+                        )}
+                      </div>
 
-                      <select
-                        className="form-input"
-                        value={currentStatus}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === "failed") {
-                            const reason = window.prompt("Enter rejection reason (saved to player record):", "Invalid payment address / verification failed");
-                            if (reason !== null) {
-                              updateStatus(req.id, "failed", req.type, reason);
+                      <div className="payout-quick-actions">
+                        {currentStatus === "pending" && (
+                          <>
+                            <button
+                              className="btn-approve"
+                              onClick={() => updateStatus(req.id, "success", req.type)}
+                              title="Approve and disburse"
+                            >
+                              ✓ Approve
+                            </button>
+                            <button
+                              className="btn-reject"
+                              onClick={() => {
+                                const reason = window.prompt("Enter rejection reason (saved to player record):", "Verification failed / invalid address");
+                                if (reason !== null) {
+                                  updateStatus(req.id, "failed", req.type, reason);
+                                }
+                              }}
+                              title="Reject request"
+                            >
+                              ✕ Reject
+                            </button>
+                          </>
+                        )}
+
+                        <select
+                          className="status-dropdown"
+                          value={currentStatus}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "failed") {
+                              const reason = window.prompt("Enter rejection reason (saved to player record):", "Invalid payment address / verification failed");
+                              if (reason !== null) {
+                                updateStatus(req.id, "failed", req.type, reason);
+                              }
+                            } else {
+                              updateStatus(req.id, val, req.type);
                             }
-                          } else {
-                            updateStatus(req.id, val, req.type);
-                          }
-                        }}
-                        style={{
-                          width: "auto",
-                          padding: "6px 12px",
-                          fontSize: "12px",
-                          fontWeight: "700",
-                          background: currentStatus === "success" ? "rgba(16, 185, 129, 0.2)" : currentStatus === "failed" ? "rgba(239, 68, 68, 0.2)" : "rgba(245, 158, 11, 0.2)",
-                          color: currentStatus === "success" ? "#34D399" : currentStatus === "failed" ? "#F87171" : "#FBBF24"
-                        }}
-                      >
-                        <option value="pending">Set ⏳ PENDING</option>
-                        <option value="success">Approve &amp; Fulfill ✅</option>
-                        <option value="failed">Reject Request ❌</option>
-                      </select>
+                          }}
+                        >
+                          <option value="pending">⏳ Set Pending</option>
+                          <option value="success">✅ Set Approved</option>
+                          <option value="failed">❌ Set Rejected</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                 );
               })}
+            </div>
+          ) : (
+            /* ================= VIEW MODE 2: SPREADSHEET TABLE ================= */
+            <div className="payout-table-card">
+              <div className="table-responsive">
+                <table className="user-table">
+                  <thead>
+                    <tr>
+                      <th>Player &amp; Email</th>
+                      <th>Method &amp; Value</th>
+                      <th>Payment Target / Voucher</th>
+                      <th>Requested Date</th>
+                      <th>Status</th>
+                      <th>Operations</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRequests.map((req) => {
+                      const currentVoucher = voucherInput[req.id] ?? req.voucher_code ?? "";
+                      const isVoucherType = req.type !== "upi" && req.type !== "bank";
+                      const currentStatus = (req.status || "pending").toLowerCase();
+
+                      return (
+                        <tr key={req.id} className="table-row">
+                          <td>
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                              <img
+                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${req.uid || req.id}`}
+                                alt="avatar"
+                                className="user-avatar"
+                                style={{ width: "38px", height: "38px" }}
+                              />
+                              <div>
+                                <div className="user-name-text">{req.username || "Anonymous Player"}</div>
+                                <div className="email-cell" style={{ fontSize: "12px" }}>{req.email || "No Email"}</div>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td>
+                            <div>
+                              <div className={`payout-method-badge ${getMethodBadgeClass(req.type)}`} style={{ marginBottom: "2px" }}>
+                                {getMethodIcon(req.type)} {req.type?.toUpperCase()}
+                              </div>
+                              <div style={{ fontSize: "16px", fontWeight: "900", color: "#00F5A0" }}>
+                                ₹{req.amount}
+                              </div>
+                              <div style={{ fontSize: "11px", color: "#FFB800", fontWeight: "700" }}>
+                                🪙 {Number(req.coins || 0).toLocaleString()} coins
+                              </div>
+                            </div>
+                          </td>
+
+                          <td>
+                            {!isVoucherType ? (
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <code className="target-address" style={{ fontSize: "12.5px" }}>
+                                  {req.withdraw_details || req.payment_address || "N/A"}
+                                </code>
+                                <button
+                                  className="copy-btn"
+                                  style={{ padding: "3px 8px", fontSize: "11px" }}
+                                  onClick={() => copyAddress(req.withdraw_details || req.payment_address, req.id)}
+                                >
+                                  {copiedTarget === req.id ? "✓" : "📋"}
+                                </button>
+                              </div>
+                            ) : req.voucher_code ? (
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <span className="target-coin-pill" style={{ fontFamily: "monospace", fontSize: "12px" }}>
+                                  {req.voucher_code}
+                                </span>
+                                <button
+                                  className="copy-btn"
+                                  style={{ padding: "3px 8px", fontSize: "11px" }}
+                                  onClick={() => copyAddress(req.voucher_code, req.id)}
+                                >
+                                  {copiedTarget === req.id ? "✓" : "📋"}
+                                </button>
+                              </div>
+                            ) : (
+                              <div style={{ display: "flex", gap: "6px" }}>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  placeholder="Paste code..."
+                                  value={currentVoucher}
+                                  onChange={(e) =>
+                                    setVoucherInput({ ...voucherInput, [req.id]: e.target.value })
+                                  }
+                                  style={{ width: "130px", padding: "5px 8px", fontSize: "12px" }}
+                                />
+                                <button
+                                  className="btn-secondary"
+                                  onClick={() => saveVoucher(req.id)}
+                                  disabled={!currentVoucher.trim()}
+                                  style={{ padding: "4px 8px", fontSize: "11px" }}
+                                >
+                                  Save
+                                </button>
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="date-cell">{formatDate(req.created_at)}</td>
+
+                          <td>
+                            {currentStatus === "success" ? (
+                              <span className="status-pill status-pill-active">
+                                <span className="status-dot"></span> PAID
+                              </span>
+                            ) : currentStatus === "failed" || currentStatus === "rejected" ? (
+                              <span className="status-pill status-pill-banned">
+                                <span className="status-dot"></span> REJECTED
+                              </span>
+                            ) : (
+                              <span className="payout-kpi-pill pill-amber">
+                                ⏳ PENDING
+                              </span>
+                            )}
+                          </td>
+
+                          <td>
+                            <div className="action-btn-group">
+                              {currentStatus === "pending" && (
+                                <>
+                                  <button
+                                    className="btn-action-sm btn-unban"
+                                    onClick={() => updateStatus(req.id, "success", req.type)}
+                                    title="Approve payout"
+                                  >
+                                    ✓ Approve
+                                  </button>
+                                  <button
+                                    className="btn-action-sm btn-ban"
+                                    onClick={() => {
+                                      const reason = window.prompt("Enter rejection reason:", "Verification failed");
+                                      if (reason !== null) updateStatus(req.id, "failed", req.type, reason);
+                                    }}
+                                    title="Reject request"
+                                  >
+                                    ✕ Reject
+                                  </button>
+                                </>
+                              )}
+                              <select
+                                className="status-dropdown"
+                                value={currentStatus}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === "failed") {
+                                    const reason = window.prompt("Enter rejection reason:", "Verification failed");
+                                    if (reason !== null) updateStatus(req.id, "failed", req.type, reason);
+                                  } else {
+                                    updateStatus(req.id, val, req.type);
+                                  }
+                                }}
+                              >
+                                <option value="pending">⏳ Pending</option>
+                                <option value="success">✅ Paid</option>
+                                <option value="failed">❌ Rejected</option>
+                              </select>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </>
@@ -818,105 +1167,111 @@ export default function Redeem() {
           TAB 2: CODE INVENTORY MANAGER (GOOGLE PLAY, AMAZON, PHONEPE)
           ======================================================== */}
       {activeTab === "INVENTORY" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-          
+        <div style={{ display: "flex", flexDirection: "column", gap: "26px" }}>
           {/* STATS OVERVIEW FOR CODE INVENTORY */}
-          <div className="stats-grid">
-            <div className="stat-card glass-card">
-              <div className="stat-icon" style={{ background: "rgba(16, 185, 129, 0.15)", color: "#10B981" }}>🎟️</div>
-              <div>
-                <div className="stat-value" style={{ color: "#10B981" }}>{totalAvailableCodes}</div>
-                <div className="stat-label">Available Codes in Stock</div>
+          <div className="payout-stats-grid">
+            <div className="payout-kpi-card kpi-green">
+              <div className="payout-kpi-icon icon-green">🎟️</div>
+              <div className="payout-kpi-content">
+                <div className="payout-kpi-val-row">
+                  <span className="payout-kpi-val val-green">{totalAvailableCodes}</span>
+                  <span className="payout-kpi-pill pill-green">Ready to Disburse</span>
+                </div>
+                <div className="payout-kpi-label">Available Codes in Stock</div>
               </div>
             </div>
 
-            <div className="stat-card glass-card">
-              <div className="stat-icon" style={{ background: "rgba(99, 102, 241, 0.15)", color: "#6366F1" }}>🔒</div>
-              <div>
-                <div className="stat-value" style={{ color: "#818CF8" }}>{totalAllocatedCodes}</div>
-                <div className="stat-label">Codes Allocated to Users</div>
+            <div className="payout-kpi-card kpi-indigo">
+              <div className="payout-kpi-icon icon-indigo">🔒</div>
+              <div className="payout-kpi-content">
+                <div className="payout-kpi-val-row">
+                  <span className="payout-kpi-val val-indigo">{totalAllocatedCodes}</span>
+                  <span className="payout-kpi-pill pill-indigo">Delivered to Players</span>
+                </div>
+                <div className="payout-kpi-label">Codes Successfully Allocated</div>
               </div>
             </div>
 
-            <div className="stat-card glass-card">
-              <div className="stat-icon" style={{ background: "rgba(245, 158, 11, 0.15)", color: "#F59E0B" }}>⌛</div>
-              <div>
-                <div className="stat-value" style={{ color: "#F59E0B" }}>{pendingCodeRequestsCount}</div>
-                <div className="stat-label">Pending Requests Awaiting Codes</div>
+            <div className="payout-kpi-card kpi-amber">
+              <div className="payout-kpi-icon icon-amber">⌛</div>
+              <div className="payout-kpi-content">
+                <div className="payout-kpi-val-row">
+                  <span className="payout-kpi-val val-amber">{pendingCodeRequestsCount}</span>
+                  <span className="payout-kpi-pill pill-amber">Awaiting Inventory</span>
+                </div>
+                <div className="payout-kpi-label">Pending Gift Card Demand</div>
               </div>
             </div>
           </div>
 
           {/* BULK ADD CODE FORM */}
-          <div className="glass-card" style={{ padding: "24px" }}>
-            <div style={{ marginBottom: "16px" }}>
-              <h3 style={{ margin: "0 0 4px 0", color: "#FFFFFF", fontSize: "18px", fontWeight: "800" }}>
-                📥 Bulk Code Inventory Upload
-              </h3>
-              <p style={{ margin: 0, fontSize: "13px", color: "#E2E8F0", fontWeight: "600" }}>
-                Add Google Play, Amazon, or PhonePe codes. Newly uploaded codes automatically resolve pending requests in FIFO order!
+          <div className="bulk-upload-card">
+            <div style={{ marginBottom: "18px" }}>
+              <h2 style={{ margin: "0 0 6px 0", color: "#FFFFFF", fontSize: "20px", fontWeight: "900" }}>
+                📥 Bulk Gift Code Inventory Deposit
+              </h2>
+              <p style={{ margin: 0, fontSize: "13.5px", color: "#E2E8F0", fontWeight: "600" }}>
+                Deposit Google Play, Amazon, or PhonePe codes. Newly deposited codes immediately auto-fulfill matching pending requests in FIFO order!
               </p>
             </div>
 
-            <form onSubmit={handleBulkAddCodes} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-                <div style={{ flex: 1, minWidth: "200px" }}>
-                  <label style={{ display: "block", fontSize: "12px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase", marginBottom: "4px" }}>
-                    Redemption Method:
-                  </label>
+            <form onSubmit={handleBulkAddCodes} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
+                <div>
+                  <label className="form-field-label">REDEMPTION METHOD</label>
                   <select
-                    className="form-input"
+                    className="select-input"
                     value={bulkMethod}
                     onChange={(e) => setBulkMethod(e.target.value)}
-                    style={{ width: "100%", fontWeight: "600" }}
+                    style={{ width: "100%" }}
                   >
                     <option value="GOOGLE_PLAY">🎮 Google Play Gift Code (GOOGLE_PLAY)</option>
                     <option value="AMAZON">🛒 Amazon Gift Card (AMAZON)</option>
-                    <option value="PHONEPE">📱 PhonePe Gift Code (PHONEPE)</option>
+                    <option value="PHONEPE">📱 PhonePe Voucher Code (PHONEPE)</option>
                   </select>
                 </div>
 
-                <div style={{ flex: 1, minWidth: "160px" }}>
-                  <label style={{ display: "block", fontSize: "12px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase", marginBottom: "4px" }}>
-                    Denomination Amount (₹):
-                  </label>
+                <div>
+                  <label className="form-field-label">DENOMINATION AMOUNT (₹)</label>
                   <select
-                    className="form-input"
+                    className="select-input"
                     value={bulkAmount}
                     onChange={(e) => setBulkAmount(e.target.value)}
-                    style={{ width: "100%", fontWeight: "600" }}
+                    style={{ width: "100%" }}
                   >
-                    <option value="10">₹10</option>
-                    <option value="25">₹25</option>
-                    <option value="35">₹35</option>
-                    <option value="50">₹50</option>
-                    <option value="100">₹100</option>
-                    <option value="200">₹200</option>
-                    <option value="500">₹500</option>
+                    <option value="10">₹10 Voucher</option>
+                    <option value="25">₹25 Voucher</option>
+                    <option value="35">₹35 Voucher</option>
+                    <option value="50">₹50 Voucher</option>
+                    <option value="100">₹100 Voucher</option>
+                    <option value="200">₹200 Voucher</option>
+                    <option value="500">₹500 Voucher</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "12px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase", marginBottom: "4px" }}>
-                  Paste Codes (One code per line):
-                </label>
+                <label className="form-field-label">PASTE CODES (ONE CODE PER LINE)</label>
                 <textarea
-                  className="form-input"
+                  className="search-input"
                   rows={5}
-                  placeholder={`GP100-001\nGP100-002\nGP100-003\nGP100-004`}
+                  placeholder={`GP100-ABCD-1234-EFGH\nGP100-WXYZ-5678-IJKL\nGP100-MNOP-9012-QRST`}
                   value={bulkCodesInput}
                   onChange={(e) => setBulkCodesInput(e.target.value)}
-                  style={{ fontFamily: "monospace", fontSize: "13px" }}
+                  style={{
+                    fontFamily: "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace",
+                    fontSize: "13px",
+                    resize: "vertical"
+                  }}
                 />
               </div>
 
               <div style={{ display: "flex", justifyContent: "flex-end" }}>
                 <button
                   type="submit"
-                  className="btn-primary"
+                  className="btn-glow"
                   disabled={isSubmittingBulk || !bulkCodesInput.trim()}
-                  style={{ padding: "12px 28px", fontSize: "14px", fontWeight: "700" }}
+                  style={{ padding: "12px 28px", fontSize: "14px", fontWeight: "800" }}
                 >
                   {isSubmittingBulk ? "Processing & Auto-Allocating..." : "🚀 Upload & Auto-Allocate Codes"}
                 </button>
@@ -925,27 +1280,23 @@ export default function Redeem() {
           </div>
 
           {/* INVENTORY GROUPS BREAKDOWN */}
-          <div className="glass-card" style={{ padding: "24px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
-              <h3 style={{ margin: 0, color: "#F8FAFC", fontSize: "18px", fontWeight: "700" }}>
-                📦 Code Inventory Status by Denomination
-              </h3>
+          <div className="table-card" style={{ padding: "24px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "14px" }}>
+              <div>
+                <h3 style={{ margin: "0 0 4px 0", color: "#FFFFFF", fontSize: "18px", fontWeight: "900" }}>
+                  📦 Active Stock Batches by Denomination
+                </h3>
+                <span style={{ fontSize: "12.5px", color: "#E2E8F0", fontWeight: "600" }}>
+                  Real-time inventory levels across all gift providers
+                </span>
+              </div>
 
-              <div style={{ display: "flex", gap: "8px" }}>
+              <div className="payout-filter-group">
                 {["ALL", "GOOGLE_PLAY", "AMAZON", "PHONEPE"].map((m) => (
                   <button
                     key={m}
+                    className={`payout-filter-btn ${inventoryFilterMethod === m ? "active" : ""}`}
                     onClick={() => setInventoryFilterMethod(m)}
-                    style={{
-                      background: inventoryFilterMethod === m ? "#6366F1" : "rgba(15, 23, 42, 0.6)",
-                      color: "#FFFFFF",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      padding: "6px 12px",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                      fontWeight: "600",
-                      cursor: "pointer"
-                    }}
                   >
                     {m.replace("_", " ")}
                   </button>
@@ -954,79 +1305,62 @@ export default function Redeem() {
             </div>
 
             {Object.keys(codeInventoryGroups).length === 0 ? (
-              <div style={{ padding: "40px", textAlign: "center", color: "#FFFFFF", fontWeight: "700" }}>
-                No codes uploaded yet. Use the bulk uploader above to add codes for Google Play, Amazon, or PhonePe!
+              <div style={{ padding: "50px 20px", textAlign: "center", color: "#FFFFFF", fontWeight: "700" }}>
+                No voucher codes registered yet. Use the bulk uploader above to deposit codes!
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px" }}>
+              <div className="stock-grid">
                 {Object.values(codeInventoryGroups)
                   .filter((group) => inventoryFilterMethod === "ALL" || group.method === inventoryFilterMethod)
                   .map((group) => {
                     return (
-                      <div
-                        key={`${group.method}_${group.amount}`}
-                        style={{
-                          background: "rgba(15, 23, 42, 0.8)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                          borderRadius: "12px",
-                          padding: "16px"
-                        }}
-                      >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                      <div key={`${group.method}_${group.amount}`} className="stock-card">
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
                           <div>
-                            <span className="badge badge-info" style={{ textTransform: "uppercase", fontSize: "10px" }}>
-                              {group.method}
+                            <span className={`payout-method-badge ${getMethodBadgeClass(group.method)}`} style={{ margin: 0 }}>
+                              {getMethodIcon(group.method)} {group.method}
                             </span>
-                            <div style={{ fontSize: "20px", fontWeight: "800", color: "#10B981", marginTop: "4px" }}>
+                            <div style={{ fontSize: "24px", fontWeight: "900", color: "#00F5A0", marginTop: "6px" }}>
                               ₹{group.amount}
                             </div>
                           </div>
 
                           <div style={{ textAlign: "right" }}>
-                            <div style={{ fontSize: "13px", fontWeight: "700", color: "#34D399" }}>
+                            <div className="payout-kpi-pill pill-green" style={{ fontSize: "12px", display: "inline-block" }}>
                               {group.available} Available
                             </div>
-                            <div style={{ fontSize: "12px", color: "#818CF8", marginTop: "2px" }}>
-                              {group.allocated} Allocated
+                            <div style={{ fontSize: "12px", color: "#818CF8", marginTop: "4px", fontWeight: "700" }}>
+                              {group.allocated} Delivered
                             </div>
                           </div>
                         </div>
 
-                        <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.06)", margin: "10px 0" }} />
+                        <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.08)", margin: "12px 0" }} />
 
-                        <div style={{ maxHeight: "160px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px" }}>
-                          {group.codes.slice(0, 10).map((c) => (
-                            <div
-                              key={c.id}
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                background: "rgba(255,255,255,0.03)",
-                                padding: "6px 10px",
-                                borderRadius: "6px",
-                                fontSize: "12px",
-                                fontFamily: "monospace"
-                              }}
-                            >
+                        <div style={{ maxHeight: "170px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px" }}>
+                          {group.codes.slice(0, 15).map((c) => (
+                            <div key={c.id} className="stock-code-item">
                               <span style={{ color: "#FFFFFF", fontWeight: "700" }}>{c.code}</span>
-                              <span
-                                style={{
-                                  fontSize: "10px",
-                                  padding: "2px 8px",
-                                  borderRadius: "4px",
-                                  fontWeight: "700",
-                                  background: c.status === "AVAILABLE" ? "rgba(16, 185, 129, 0.2)" : "rgba(139, 92, 246, 0.2)",
-                                  color: c.status === "AVAILABLE" ? "#34D399" : "#C084FC"
-                                }}
-                              >
-                                {c.status}
-                              </span>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <span
+                                  className={`status-pill ${c.status === "AVAILABLE" ? "status-pill-active" : "status-pill-banned"}`}
+                                  style={{ padding: "2px 8px", fontSize: "10px" }}
+                                >
+                                  {c.status}
+                                </span>
+                                <button
+                                  className="copy-btn"
+                                  style={{ padding: "2px 6px", fontSize: "10px" }}
+                                  onClick={() => copyAddress(c.code, c.id)}
+                                >
+                                  {copiedTarget === c.id ? "✓" : "📋"}
+                                </button>
+                              </div>
                             </div>
                           ))}
-                          {group.codes.length > 10 && (
-                            <div style={{ fontSize: "11px", color: "#E2E8F0", textAlign: "center", marginTop: "4px", fontWeight: "600" }}>
-                              + {group.codes.length - 10} more codes
+                          {group.codes.length > 15 && (
+                            <div style={{ fontSize: "11.5px", color: "#E2E8F0", textAlign: "center", marginTop: "6px", fontWeight: "700" }}>
+                              + {group.codes.length - 15} more codes in stock
                             </div>
                           )}
                         </div>
@@ -1036,7 +1370,6 @@ export default function Redeem() {
               </div>
             )}
           </div>
-
         </div>
       )}
 
@@ -1044,54 +1377,39 @@ export default function Redeem() {
           TAB 3: REWARD CONFIG & OPTIONS SETTINGS
           ======================================================== */}
       {activeTab === "CONFIG" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-          
+        <div style={{ display: "flex", flexDirection: "column", gap: "26px" }}>
           {/* 1. ENABLE / DISABLE PAYOUT METHODS & CONVERSION RATE */}
-          <div className="glass-card" style={{ padding: "24px" }}>
-            <h3 style={{ margin: "0 0 16px 0", color: "#F8FAFC", fontSize: "18px", fontWeight: "700" }}>
-              ⚙️ Enable / Disable Payout Methods &amp; Conversion Rate
+          <div className="table-card" style={{ padding: "26px" }}>
+            <h3 style={{ margin: "0 0 16px 0", color: "#FFFFFF", fontSize: "19px", fontWeight: "900" }}>
+              ⚙️ Payout Gateways &amp; Conversion Exchange
             </h3>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px", marginBottom: "24px" }}>
+            <div className="method-toggle-grid" style={{ marginBottom: "26px" }}>
               {[
-                { key: "upiEnabled", label: "💸 UPI Withdraw", icon: "🇮🇳" },
-                { key: "bankEnabled", label: "🏦 Bank Transfer", icon: "🏛️" },
-                { key: "googleEnabled", label: "🎮 Google Play Code", icon: "🎟️" },
-                { key: "amazonEnabled", label: "🛒 Amazon Gift Card", icon: "📦" },
-                { key: "phonepeEnabled", label: "📱 PhonePe Voucher", icon: "📲" }
+                { key: "upiEnabled", label: "UPI Instant Payout", icon: "🇮🇳" },
+                { key: "bankEnabled", label: "Direct Bank Transfer", icon: "🏦" },
+                { key: "googleEnabled", label: "Google Play Gift Code", icon: "🎮" },
+                { key: "amazonEnabled", label: "Amazon Gift Voucher", icon: "🛒" },
+                { key: "phonepeEnabled", label: "PhonePe Voucher", icon: "📱" }
               ].map((m) => (
                 <div
                   key={m.key}
-                  style={{
-                    background: config[m.key] ? "rgba(16, 185, 129, 0.12)" : "rgba(239, 68, 68, 0.12)",
-                    border: `1px solid ${config[m.key] ? "rgba(16, 185, 129, 0.3)" : "rgba(239, 68, 68, 0.3)"}`,
-                    padding: "16px",
-                    borderRadius: "12px",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center"
-                  }}
+                  className={`method-toggle-card ${config[m.key] ? "method-card-active" : "method-card-disabled"}`}
                 >
                   <div>
-                    <div style={{ fontSize: "16px" }}>{m.icon}</div>
-                    <div style={{ color: "#F8FAFC", fontWeight: "600", fontSize: "14px", marginTop: "4px" }}>{m.label}</div>
-                    <div style={{ fontSize: "11px", color: config[m.key] ? "#34D399" : "#F87171" }}>
-                      {config[m.key] ? "ACTIVE in App" : "DISABLED"}
+                    <div style={{ fontSize: "20px" }}>{m.icon}</div>
+                    <div style={{ color: "#FFFFFF", fontWeight: "800", fontSize: "14.5px", marginTop: "4px" }}>
+                      {m.label}
+                    </div>
+                    <div style={{ fontSize: "11px", fontWeight: "800", color: config[m.key] ? "#00F5A0" : "#FF4B72", marginTop: "2px" }}>
+                      {config[m.key] ? "● ACTIVE in App" : "○ DISABLED"}
                     </div>
                   </div>
 
                   <button
                     onClick={() => handleToggleMethod(m.key)}
-                    style={{
-                      background: config[m.key] ? "#10B981" : "#EF4444",
-                      color: "#FFF",
-                      border: "none",
-                      padding: "8px 14px",
-                      borderRadius: "8px",
-                      fontWeight: "700",
-                      fontSize: "12px",
-                      cursor: "pointer"
-                    }}
+                    className={config[m.key] ? "btn-danger" : "btn-success"}
+                    style={{ padding: "8px 14px", fontSize: "12px", fontWeight: "800" }}
                   >
                     {config[m.key] ? "Disable" : "Enable"}
                   </button>
@@ -1100,158 +1418,141 @@ export default function Redeem() {
             </div>
 
             {/* CONVERSION RATE INPUT */}
-            <div style={{ background: "rgba(15, 23, 42, 0.8)", padding: "16px 20px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
+            <div className="conversion-box">
               <div>
-                <label style={{ color: "#FFFFFF", fontWeight: "800", fontSize: "15px", display: "block" }}>
-                  💰 App Global Coin Conversion Rate
+                <label style={{ color: "#FFFFFF", fontWeight: "900", fontSize: "16px", display: "block" }}>
+                  💰 Global Game Coin Exchange Ratio
                 </label>
-                <span style={{ fontSize: "12px", color: "#E2E8F0", fontWeight: "600" }}>
-                  Set how many coins equal ₹1 (e.g. 100 coins = ₹1)
+                <span style={{ fontSize: "12.5px", color: "#E2E8F0", fontWeight: "600" }}>
+                  Calibrate the platform economy: how many reward coins yield ₹1 Indian Rupee in withdrawal value.
                 </span>
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
                 <input
                   type="number"
-                  className="form-input"
+                  className="search-input"
                   value={config.conversionRate || 100}
                   onChange={(e) => setConfig({ ...config, conversionRate: Number(e.target.value) })}
-                  style={{ width: "120px", textAlign: "center", fontWeight: "700", fontSize: "16px" }}
+                  style={{ width: "120px", textAlign: "center", fontWeight: "800", fontSize: "17px", color: "#FFB800" }}
                 />
-                <span style={{ color: "#FFFFFF", fontWeight: "700" }}>Coins = ₹1</span>
+                <span style={{ color: "#FFFFFF", fontWeight: "800", fontSize: "14px" }}>Coins = ₹1 INR</span>
 
                 <button
                   onClick={() => saveRewardConfig()}
                   disabled={savingConfig}
-                  className="btn-primary"
-                  style={{ padding: "8px 16px" }}
+                  className="btn-glow"
+                  style={{ padding: "10px 20px", fontSize: "13px" }}
                 >
-                  {savingConfig ? "Saving..." : "Save Rate"}
+                  {savingConfig ? "Saving Ratio..." : "Save Exchange Rate"}
                 </button>
               </div>
             </div>
           </div>
 
           {/* 2. ADD NEW REWARD TIER FORM */}
-          <div className="glass-card" style={{ padding: "24px" }}>
-            <h3 style={{ margin: "0 0 16px 0", color: "#FFFFFF", fontSize: "18px", fontWeight: "800" }}>
-              ➕ Add New Reward Option Card
+          <div className="table-card" style={{ padding: "26px" }}>
+            <h3 style={{ margin: "0 0 16px 0", color: "#FFFFFF", fontSize: "19px", fontWeight: "900" }}>
+              ➕ Mint New Player Withdrawal Tier
             </h3>
 
             <form onSubmit={handleAddTier} style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "flex-end" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "12px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase", marginBottom: "4px" }}>
-                  Withdraw Type:
-                </label>
+              <div style={{ minWidth: "200px" }}>
+                <label className="form-field-label">WITHDRAWAL METHOD</label>
                 <select
-                  className="form-input"
+                  className="select-input"
                   value={newTier.type}
                   onChange={(e) => setNewTier({ ...newTier, type: e.target.value })}
-                  style={{ width: "180px" }}
+                  style={{ width: "100%" }}
                 >
-                  <option value="upi">UPI Withdraw</option>
-                  <option value="bank">Bank Withdraw</option>
-                  <option value="google">Google Play Voucher</option>
-                  <option value="amazon">Amazon Gift Voucher</option>
-                  <option value="phonepe">PhonePe Gift Voucher</option>
+                  <option value="upi">🇮🇳 UPI Direct Payout</option>
+                  <option value="bank">🏦 Bank Transfer</option>
+                  <option value="google">🎮 Google Play Voucher</option>
+                  <option value="amazon">🛒 Amazon Gift Card</option>
+                  <option value="phonepe">📱 PhonePe Voucher</option>
                 </select>
               </div>
 
-              <div>
-                <label style={{ display: "block", fontSize: "12px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase", marginBottom: "4px" }}>
-                  Coins Cost:
-                </label>
+              <div style={{ minWidth: "160px" }}>
+                <label className="form-field-label">COINS REQUIRED</label>
                 <input
                   type="number"
-                  className="form-input"
+                  className="search-input"
                   placeholder="e.g. 1000"
                   value={newTier.coins}
                   onChange={(e) => setNewTier({ ...newTier, coins: e.target.value })}
-                  style={{ width: "140px" }}
+                  style={{ width: "100%" }}
+                  required
                 />
               </div>
 
-              <div>
-                <label style={{ display: "block", fontSize: "12px", color: "#FFFFFF", fontWeight: "800", textTransform: "uppercase", marginBottom: "4px" }}>
-                  Rupee Amount (₹):
-                </label>
+              <div style={{ minWidth: "160px" }}>
+                <label className="form-field-label">RUPEE VALUE (₹)</label>
                 <input
                   type="number"
-                  className="form-input"
+                  className="search-input"
                   placeholder="e.g. 10"
                   value={newTier.amount}
                   onChange={(e) => setNewTier({ ...newTier, amount: e.target.value })}
-                  style={{ width: "140px" }}
+                  style={{ width: "100%" }}
+                  required
                 />
               </div>
 
-              <button type="submit" className="btn-primary" style={{ padding: "10px 20px" }}>
-                Add Reward Option
+              <button type="submit" className="btn-glow" style={{ padding: "11px 24px", fontSize: "13px" }}>
+                Add Reward Option →
               </button>
             </form>
           </div>
 
           {/* 3. DYNAMIC REWARD TIERS LIST */}
-          <div className="glass-card" style={{ padding: "24px" }}>
-            <h3 style={{ margin: "0 0 16px 0", color: "#F8FAFC", fontSize: "18px", fontWeight: "700" }}>
-              📜 Active Reward Card Options ({config.tiers.length})
-            </h3>
+          <div className="table-card" style={{ padding: "26px" }}>
+            <div style={{ marginBottom: "18px" }}>
+              <h3 style={{ margin: "0 0 4px 0", color: "#FFFFFF", fontSize: "19px", fontWeight: "900" }}>
+                📜 Active In-App Redemption Card Options ({config.tiers.length})
+              </h3>
+              <span style={{ fontSize: "12.5px", color: "#E2E8F0", fontWeight: "600" }}>
+                Tiers rendered directly in the Android DailyKash / RGamer redemption screen
+              </span>
+            </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "16px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px" }}>
               {config.tiers.map((t) => (
                 <div
                   key={t.id}
+                  className="stock-card"
                   style={{
-                    background: t.enabled ? "rgba(15, 23, 42, 0.8)" : "rgba(239, 68, 68, 0.08)",
-                    border: `1px solid ${t.enabled ? "rgba(255,255,255,0.1)" : "rgba(239, 68, 68, 0.2)"}`,
-                    borderRadius: "12px",
-                    padding: "16px",
+                    borderLeft: `4px solid ${t.enabled ? "#00F5A0" : "#FF4B72"}`,
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center"
                   }}
                 >
                   <div>
-                    <span className="badge badge-info" style={{ textTransform: "uppercase", fontSize: "10px" }}>
-                      {t.type}
+                    <span className={`payout-method-badge ${getMethodBadgeClass(t.type)}`} style={{ margin: 0 }}>
+                      {getMethodIcon(t.type)} {t.type?.toUpperCase()}
                     </span>
-                    <div style={{ fontSize: "18px", fontWeight: "800", color: "#10B981", marginTop: "6px" }}>
+                    <div style={{ fontSize: "22px", fontWeight: "900", color: "#00F5A0", marginTop: "6px" }}>
                       ₹{t.amount}
                     </div>
-                    <div style={{ fontSize: "12px", color: "#F59E0B", fontWeight: "600" }}>
-                      💰 {t.coins} coins
+                    <div style={{ fontSize: "12px", color: "#FFB800", fontWeight: "800", marginTop: "2px" }}>
+                      🪙 {Number(t.coins).toLocaleString()} coins
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     <button
                       onClick={() => handleToggleTier(t.id)}
-                      style={{
-                        background: t.enabled ? "#10B981" : "#475569",
-                        color: "#FFF",
-                        border: "none",
-                        padding: "4px 10px",
-                        borderRadius: "6px",
-                        fontSize: "11px",
-                        fontWeight: "700",
-                        cursor: "pointer"
-                      }}
+                      className={t.enabled ? "btn-unban" : "btn-ban"}
+                      style={{ padding: "5px 12px", fontSize: "11px" }}
                     >
                       {t.enabled ? "Active" : "Disabled"}
                     </button>
 
                     <button
                       onClick={() => handleDeleteTier(t.id)}
-                      style={{
-                        background: "rgba(239, 68, 68, 0.2)",
-                        color: "#F87171",
-                        border: "1px solid rgba(239, 68, 68, 0.4)",
-                        padding: "4px 10px",
-                        borderRadius: "6px",
-                        fontSize: "11px",
-                        fontWeight: "700",
-                        cursor: "pointer"
-                      }}
+                      className="btn-danger"
+                      style={{ padding: "5px 12px", fontSize: "11px", justifyContent: "center" }}
                     >
                       Delete
                     </button>
@@ -1260,10 +1561,8 @@ export default function Redeem() {
               ))}
             </div>
           </div>
-
         </div>
       )}
-
     </div>
   );
 }
