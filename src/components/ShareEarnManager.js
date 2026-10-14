@@ -528,7 +528,7 @@ const ShareEarnManager = () => {
                     onChange={e => setSearchOffer(e.target.value)}
                     style={{padding:'6px 12px',borderRadius:6,border:'1px solid #334155',background:'#1e293b',color:'#e2e8f0',fontSize:13,width:240}}
                   />
-                  <span style={{color:'#64748b',fontSize:13}}>{offers.length} total</span>
+                  <span style={{color:'#CBD5E1',fontSize:13}}>{offers.length} total</span>
                 </div>
                 <div className="table-responsive">
                 <table className="admin-table">
@@ -600,10 +600,10 @@ const ShareEarnManager = () => {
                                 )}
                               </td>
                               <td style={{textAlign:'center'}}><strong style={{color:'#38bdf8'}}>{stats.clicks || 0}</strong></td>
-                              <td style={{textAlign:'center'}}><strong style={{color: (stats.installs || 0) > 0 ? '#34d399' : '#64748b'}}>{stats.installs || 0}</strong></td>
-                              <td style={{textAlign:'center'}}><strong style={{color: (stats.registrations || 0) > 0 ? '#a5b4fc' : '#64748b'}}>{stats.registrations || 0}</strong></td>
+                              <td style={{textAlign:'center'}}><strong style={{color: (stats.installs || 0) > 0 ? '#34d399' : '#CBD5E1'}}>{stats.installs || 0}</strong></td>
+                              <td style={{textAlign:'center'}}><strong style={{color: (stats.registrations || 0) > 0 ? '#a5b4fc' : '#CBD5E1'}}>{stats.registrations || 0}</strong></td>
                               <td style={{textAlign:'center'}}><span style={{color:'#f59e0b'}}>{stats.pending || 0}</span></td>
-                              <td style={{textAlign:'center'}}><strong style={{color: (stats.approved || 0) > 0 ? '#34d399' : '#94a3b8'}}>{stats.approved || 0}</strong></td>
+                              <td style={{textAlign:'center'}}><strong style={{color: (stats.approved || 0) > 0 ? '#34d399' : '#CBD5E1'}}>{stats.approved || 0}</strong></td>
                               <td>
                                 <span className={`status-pill ${(offer.status || "ACTIVE") === "ACTIVE" ? "active" : "inactive"}`}>
                                   {offer.status || "ACTIVE"}
@@ -680,7 +680,7 @@ const ShareEarnManager = () => {
                   <div className="form-group full">
                     <label>🎯 Target Destination URL (Where users will be redirected when clicking the tracking link) *</label>
                     <div style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:4,marginBottom:6}}>
-                      <span style={{fontSize:11,color:'#94a3b8',alignSelf:'center'}}>Quick Presets:</span>
+                      <span style={{fontSize:11,color:'#CBD5E1',alignSelf:'center'}}>Quick Presets:</span>
                       <button type="button" onClick={() => setFormData({...formData, destinationUrl: 'https://play.google.com/store/apps/details?id=com.google.android.apps.nbu.paisa.user', title: formData.title || 'Google Pay'})} style={{fontSize:11,padding:'2px 8px',borderRadius:4,background:'#1e293b',border:'1px solid #334155',color:'#a5b4fc',cursor:'pointer'}}>⚡ Google Pay</button>
                       <button type="button" onClick={() => setFormData({...formData, destinationUrl: 'https://play.google.com/store/apps/details?id=com.phonepe.app', title: formData.title || 'PhonePe'})} style={{fontSize:11,padding:'2px 8px',borderRadius:4,background:'#1e293b',border:'1px solid #334155',color:'#a5b4fc',cursor:'pointer'}}>⚡ PhonePe</button>
                       <button type="button" onClick={() => setFormData({...formData, destinationUrl: 'https://upstox.com/open-demat-account/', title: formData.title || 'Upstox Demat'})} style={{fontSize:11,padding:'2px 8px',borderRadius:4,background:'#1e293b',border:'1px solid #334155',color:'#a5b4fc',cursor:'pointer'}}>⚡ Upstox</button>
@@ -692,7 +692,7 @@ const ShareEarnManager = () => {
                         ⚠️ Warning: You entered the Admin Dashboard URL! The Destination URL must be the <strong>actual target app or website</strong> (e.g. Google Pay on Play Store or Demat website) that the user visits.
                       </div>
                     )}
-                    <small style={{ color: "#64748b", display: "block", marginTop: "4px" }}>
+                    <small style={{ color: "#CBD5E1", display: "block", marginTop: "4px" }}>
                       Do not enter the admin website here. Enter the Play Store link, Google Pay invite link, Demat sign-up link, etc.
                     </small>
                   </div>
@@ -706,7 +706,7 @@ const ShareEarnManager = () => {
                       onChange={(e) => setFormData({ ...formData, referralCode: e.target.value })}
                       placeholder="e.g. gpay999 or NAVI123"
                     />
-                    <small style={{ color: "#64748b", display: "block", marginTop: "4px" }}>
+                    <small style={{ color: "#CBD5E1", display: "block", marginTop: "4px" }}>
                       Users can tap to copy this code directly inside the Android app
                     </small>
                   </div>
@@ -989,8 +989,8 @@ const ShareEarnManager = () => {
                             <td><span className="chip-cat">{offer.category}</span></td>
                             <td><strong className="coin-val">+{Number(offer.rewardCoins||0).toLocaleString()}</strong></td>
                             <td style={{textAlign:'center'}}><strong style={{color:'#38bdf8'}}>{s.clicks||0}</strong></td>
-                            <td style={{textAlign:'center'}}><strong style={{color: (s.installs || 0) > 0 ? '#34d399' : '#64748b'}}>{s.installs||0}</strong></td>
-                            <td style={{textAlign:'center'}}><span style={{color: (s.registrations || 0) > 0 ? '#a78bfa' : '#64748b'}}>{s.registrations||0}</span></td>
+                            <td style={{textAlign:'center'}}><strong style={{color: (s.installs || 0) > 0 ? '#34d399' : '#CBD5E1'}}>{s.installs||0}</strong></td>
+                            <td style={{textAlign:'center'}}><span style={{color: (s.registrations || 0) > 0 ? '#a78bfa' : '#CBD5E1'}}>{s.registrations||0}</span></td>
                             <td style={{textAlign:'center'}}><span style={{color:'#fbbf24'}}>{s.claims||0}</span></td>
                             <td style={{textAlign:'center'}}><span style={{color:'#f59e0b'}}>{s.pending||0}</span></td>
                             <td style={{textAlign:'center'}}><strong style={{color:'#34d399'}}>{s.approved||0}</strong></td>

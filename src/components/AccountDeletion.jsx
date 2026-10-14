@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../Firebase";
@@ -179,7 +179,7 @@ export default function AccountDeletion() {
 
               <div className="form-group">
                 <label className="form-label">
-                  DailyKash User ID or Phone Number <span style={{ color: "#94A3B8", fontWeight: "normal" }}>(Optional)</span>
+                  DailyKash User ID or Phone Number <span style={{ color: "#A5B4FC", fontWeight: "normal" }}>(Optional)</span>
                 </label>
                 <input
                   type="text"
@@ -192,7 +192,7 @@ export default function AccountDeletion() {
 
               <div className="form-group">
                 <label className="form-label">
-                  Reason for Leaving <span style={{ color: "#94A3B8", fontWeight: "normal" }}>(Optional)</span>
+                  Reason for Leaving <span style={{ color: "#A5B4FC", fontWeight: "normal" }}>(Optional)</span>
                 </label>
                 <select
                   className="form-select"
@@ -229,10 +229,10 @@ export default function AccountDeletion() {
             </form>
           )}
 
-          <div style={{ marginTop: "24px", paddingTop: "18px", borderTop: "1px solid #E2E8F0" }}>
-            <p style={{ fontSize: "13px", color: "#64748B", margin: 0 }}>
+          <div style={{ marginTop: "24px", paddingTop: "18px", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+            <p style={{ fontSize: "13px", color: "#CBD5E1", margin: 0 }}>
               Need assistance or want to cancel? Email us directly from your registered email at{" "}
-              <a href="mailto:support@dailykash.app?subject=Account%20Deletion%20Assistance" style={{ color: "#4F46E5", fontWeight: "600" }}>
+              <a href="mailto:support@dailykash.app?subject=Account%20Deletion%20Assistance" style={{ color: "#818CF8", fontWeight: "600" }}>
                 support@dailykash.app
               </a>.
             </p>

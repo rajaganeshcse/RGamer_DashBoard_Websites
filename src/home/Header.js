@@ -55,23 +55,20 @@ const Header = () => {
           <div
             className={`header-status-pill ${getPillClass()}`}
             onClick={() => setShowDiagnostics(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setShowDiagnostics(true);
+              }
+            }}
+            role="button"
+            tabIndex={0}
             title="Click to view live backend diagnostics & latency metrics"
+            aria-label="Backend status. Click to open diagnostics"
           >
-            <span className={getDotClass()}></span>
+            <span className={getDotClass()} aria-hidden="true"></span>
             <span>{getStatusLabel()}</span>
           </div>
-
-          <button className="header-btn nav-notifications" onClick={() => navigate("/admin/notifications")}>
-            🔔 Notifications
-          </button>
-
-          <button className="header-btn nav-draw" onClick={() => navigate("/admin/LuckyDrawAdmin")}>
-            🎯 Lucky Draw
-          </button>
-
-          <button className="header-btn nav-login" onClick={() => navigate("/admin/dashboard")}>
-            ⚡ Overview
-          </button>
         </div>
       </header>
 
